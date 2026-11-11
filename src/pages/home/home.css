@@ -1,0 +1,62 @@
+/* Home page styles. Owned by the Home developer. Use tokens from styles/variables.css. */
+
+.home-section { margin-bottom: var(--space-3); }
+.home-feed { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-5); max-width: 34rem; }
+.home-more { margin-top: var(--space-5); font-weight: 700; }
+
+/* Important announcement: floats over the top of the screen like a phone notification */
+.major-float {
+  position: fixed;
+  top: calc(var(--safe-top) + var(--space-3));
+  left: var(--space-3);
+  right: var(--space-3);
+  z-index: 60;
+  max-width: 34rem;
+  margin: 0 auto;
+  touch-action: pan-y; /* vertical scrolling still works; sideways drags are the swipe */
+  user-select: none;
+  animation: note-drop 420ms var(--ease) both;
+}
+.major-note {
+  overflow: hidden;
+  background: var(--color-chocolate);
+  color: var(--color-cream);
+  border-radius: 24px;
+  border: 2px solid rgb(255 138 61 / 0.55);
+  box-shadow: var(--shadow-lg);
+}
+.major-note__row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); }
+.major-note__thumb, .major-note__icon { flex: none; width: 60px; height: 60px; border-radius: 16px; object-fit: cover; }
+.major-note__icon { display: grid; place-items: center; background: var(--color-cream); }
+.major-note__main {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--space-1) 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+}
+.major-note__label { font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-orange); }
+.major-note__title { font-size: var(--text-md); font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.major-note__text { font-size: var(--text-sm); opacity: 0.85; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.major-note__main[aria-expanded='true'] .major-note__title { display: block; }
+.major-note__close {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 248 239 / 0.14);
+  color: var(--color-cream);
+  font-size: 1.375rem;
+  line-height: 1;
+  font-weight: 700;
+}
+.major-note__full { display: grid; gap: var(--space-3); padding: 0 var(--space-4) var(--space-4); max-height: 70dvh; overflow-y: auto; }
+.major-note__full img { width: 100%; max-height: 15rem; object-fit: cover; border-radius: var(--radius-md); }
+.major-note__full p { white-space: pre-line; line-height: 1.45; }
+@keyframes note-drop { from { transform: translateY(-120%); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .major-float { animation: none; } }

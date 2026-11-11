@@ -1,0 +1,77 @@
+/* Profile page styles. Owned by the Profile developer. Use tokens from styles/variables.css. */
+
+.guest-hero {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  padding: var(--space-6) var(--space-5);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-5);
+}
+.guest-hero p { color: var(--color-cream); opacity: 0.88; }
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  margin-bottom: var(--space-5);
+  background: var(--color-cream-deep);
+  border-radius: var(--radius-pill);
+}
+.segmented button {
+  min-height: 44px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  font-weight: 700;
+  color: var(--text-secondary);
+  transition: background-color var(--duration-fast) var(--ease);
+}
+.segmented button[aria-pressed='true'] { background: var(--accent); color: var(--text-on-accent); }
+
+.auth-form { display: grid; gap: var(--space-4); max-width: 28rem; }
+.form-error { color: #a8323b; font-weight: 500; font-size: var(--text-sm); }
+.form-notice {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-pistachio-soft);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.account-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+}
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-family: var(--font-heading);
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+.account-hero__text { display: grid; gap: var(--space-1); justify-items: start; min-width: 0; }
+.account-hero__email { color: var(--color-cream); opacity: 0.85; font-size: var(--text-sm); overflow-wrap: anywhere; }
+
+.account-section { display: grid; gap: var(--space-3); margin-bottom: var(--space-4); }
+.account-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+.auth-form__intro { display: grid; gap: var(--space-2); }
+.account-links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
+
+/* Privacy page */
+.legal { display: grid; gap: var(--space-5); max-width: 40rem; }
+.legal section { display: grid; gap: var(--space-2); }
+.legal ul { margin: 0; padding-left: 1.25rem; display: grid; gap: var(--space-2); line-height: 1.5; }
+
+.guest-settings { margin-top: var(--space-6); }

@@ -1,0 +1,50 @@
+/* Games selection page and hosts. Owned by the Games developer. */
+
+.games-section { display: grid; gap: var(--space-3); margin-bottom: var(--space-6); }
+
+/* Four permanent slots: 2 x 2 on phones, one row on wide screens. */
+.slot-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.slot-grid > li { display: grid; }
+
+.slot-card {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  justify-items: start;
+  padding: var(--space-4);
+}
+.slot-card--empty {
+  border: 2px dashed var(--color-cream-line);
+  border-radius: var(--radius-md);
+  background: transparent;
+}
+
+.event-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }
+.event-card { display: grid; gap: var(--space-3); justify-items: start; }
+.event-card__meta { color: var(--color-pistachio); }
+.events-none { padding: var(--space-4); background: var(--color-cream-deep); border-radius: var(--radius-md); }
+
+.game-result { display: grid; gap: var(--space-4); justify-items: start; }
+.game-result__score {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  line-height: 1;
+}
+.game-result__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+@media (min-width: 900px) {
+  .slot-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.game-result__points { display: grid; gap: var(--space-2); justify-items: start; }
+.game-result__plus { font-family: var(--font-heading); font-size: var(--text-xl); font-weight: 700; color: #3f6b1f; }
+
+.slot-card__modes { display: flex; flex-wrap: wrap; gap: var(--space-1); }

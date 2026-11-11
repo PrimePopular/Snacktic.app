@@ -1,0 +1,16 @@
+.tap-test { display: grid; gap: var(--space-4); justify-items: center; padding: var(--space-5) 0; }
+.tap-test__time { font-family: var(--font-heading); font-size: var(--text-xl); font-weight: 700; }
+.tap-test__button {
+  width: min(70vw, 16rem);
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-orange);
+  color: var(--color-chocolate);
+  font-family: var(--font-heading);
+  font-size: 4rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-lg);
+  touch-action: manipulation;
+}
+.tap-test__button:active { transform: scale(0.95); }

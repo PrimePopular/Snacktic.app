@@ -1,0 +1,54 @@
+/* Rewards page styles. Use tokens from styles/variables.css. */
+
+.balance-hero {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-6) var(--space-5);
+  margin-bottom: var(--space-5);
+  overflow: hidden;
+  border-radius: 28px;
+  background: radial-gradient(circle at 88% 18%, #ffc08f 0 14%, transparent 15%), radial-gradient(circle at 78% 90%, #f7a3a9 0 20%, transparent 21%), var(--color-orange);
+  color: var(--color-chocolate);
+  box-shadow: var(--shadow-md);
+}
+.balance-hero__label { font-weight: 700; font-size: var(--text-sm); text-transform: uppercase; letter-spacing: 0.06em; }
+.balance-hero__number { font-family: var(--font-heading); font-size: 4.25rem; font-weight: 700; line-height: 1; letter-spacing: -0.03em; }
+.balance-hero__hint { max-width: 22rem; font-size: var(--text-sm); }
+
+.rewards-section { display: grid; gap: var(--space-3); margin-bottom: var(--space-6); }
+.gift-form { display: grid; gap: var(--space-3); max-width: 24rem; }
+
+.reward-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+.reward-card { display: grid; overflow: hidden; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 24px; box-shadow: var(--shadow-md); }
+.reward-card__media { position: relative; display: grid; place-items: center; aspect-ratio: 4 / 3; overflow: hidden; background: var(--color-orange); }
+.reward-card__media > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.reward-card__cost {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-chocolate);
+  color: var(--color-cream);
+  font-weight: 700;
+  font-size: var(--text-xs);
+}
+.reward-card__body { display: grid; gap: var(--space-2); justify-items: start; padding: var(--space-4); }
+
+.buy-sheet { display: grid; gap: var(--space-3); padding: var(--space-5); }
+.buy-sheet__actions { display: grid; gap: var(--space-2); }
+
+.activity-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.activity-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+.activity-row__title { font-weight: 700; }
+.activity-row__amount { font-family: var(--font-heading); font-weight: 700; font-size: var(--text-lg); }
+.activity-row__amount--in { color: #3f6b1f; }
+.activity-row__amount--out { color: #a8323b; }

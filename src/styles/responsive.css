@@ -1,0 +1,41 @@
+/* Mobile-first. Base styles are written for phones; these enhance larger screens. */
+
+@media (min-width: 600px) {
+  :root {
+    --text-xl: 2.125rem;
+    --text-2xl: 3rem;
+  }
+}
+
+/* Tablet and desktop: the bottom tab bar becomes a left rail. */
+@media (min-width: 900px) {
+  .app-shell {
+    padding-left: var(--rail-width);
+    padding-bottom: 0;
+  }
+
+  .app-nav {
+    top: 0;
+    bottom: 0;
+    right: auto;
+    width: var(--rail-width);
+    height: auto;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-6) var(--space-2);
+    border-top: 0;
+    border-right: 0;
+  }
+
+  .app-nav__brand { display: grid; }
+  .app-nav__list { flex-direction: column; gap: var(--space-2); }
+}
+
+@media (min-width: 900px) {
+  .app-nav__brand { margin-bottom: var(--space-4); place-items: center; }
+  .app-nav__list li { flex: none; }
+  .app-nav__link { height: auto; padding: var(--space-2) 0; }
+  .app-main { padding: var(--space-4) var(--space-6) var(--space-7); }
+  .top-bar { padding-inline: var(--space-6); }
+}

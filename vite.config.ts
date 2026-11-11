@@ -1,7 +1,8 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-// Plain Vite + React. No extra plugins: keep the toolchain small and free.
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-});
+  base: '/Snacktic.app/',
+})

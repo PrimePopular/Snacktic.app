@@ -105,3 +105,41 @@ self.addEventListener('fetch', (event) => {
   }
   // Anything else (maps, other sites) is left alone.
 });
+
+// ---- Phone notifications (Web Push) ----------------------------------------
+// A message sent by our server arrives here even when Snacktic is closed.
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { title: 'Snacktic', body: event.data ? event.data.text() : '' };
+  }
+  const title = data.title || 'Snacktic';
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || '',
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      data: { link: typeof data.link === 'string' && data.link.startsWith('/') ? data.link : '/' },
+    }),
+  );
+});
+
+// Tapping the notification opens Snacktic on the right screen (the app uses # addresses).
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const link = (event.notification.data && event.notification.data.link) || '/';
+  const target = new URL(`/#${link}`, self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+      for (const client of windows) {
+        if ('focus' in client) {
+          client.navigate(target).catch(() => {});
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(target);
+    }),
+  );
+});

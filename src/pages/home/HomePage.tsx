@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdCard, listLiveAds, NudgeCard, nudges } from '../../features/ads';
 import type { Ad, Nudge } from '../../features/ads';
 import { listLiveAnnouncements } from '../../features/announcements';
+import { WeatherCard } from '../../features/weather';
 import type { Announcement } from '../../features/announcements';
 import { EventCard, listCategories, listUpcomingEvents } from '../../features/events';
 import type { EventCategory, EventItem } from '../../features/events';
@@ -68,7 +69,14 @@ type FeedSlot =
  * A nudge card goes in after the 6th card and every 5th after that, so it never touches an ad
  * either. Ads and nudges take turns through their lists.
  */
-function weave(entries: FeedEntry[], ads: Ad[]): FeedSlot[] {
+function weave(entries: FeedEntry[], allAds: Ad[]): FeedSlot[] {
+  // A fresh random order each time the feed loads, so ads come round in a different order and a
+  // student with only a few ads will see the same one again now and then. Points are paid once per ad.
+  const ads = [...allAds];
+  for (let i = ads.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [ads[i], ads[j]] = [ads[j], ads[i]];
+  }
   const slots: FeedSlot[] = [];
   let adIndex = 0;
   let nudgeIndex = 0;
@@ -171,6 +179,8 @@ export default function HomePage() {
       />
 
       <OfflineNotice />
+
+      <WeatherCard />
 
       {state.kind === 'loading' && <SkeletonCards label="Loading your feed" />}
 

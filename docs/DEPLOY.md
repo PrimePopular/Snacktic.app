@@ -14,7 +14,7 @@ build, not in `npm run dev`.
 ## 2. Cloudflare Pages (the free website)
 1. Create a free Cloudflare account, then **Workers & Pages > Create > Pages > Connect to Git** and choose
    the Snacktic repository.
-2. Build settings: **Build command** `npm run build`, **Build output directory** `dist`.
+2. Build settings: **Build command** `npm run build`. If Cloudflare asks for a **Deploy command** (it does when the project is a Worker), use `npx wrangler deploy`: the `wrangler.jsonc` file in this project tells it to publish the `dist` folder. If it asks for a **Build output directory** instead (a Pages project), use `dist`.
 3. Under environment variables add `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` and
    `VITE_CONTACT_EMAIL` (the same values as your `.env.local`).
 4. Deploy. You get an address like `snacktic.pages.dev`. Every time you push to GitHub it updates itself.

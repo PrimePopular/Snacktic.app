@@ -124,4 +124,15 @@
   font-weight: 700;
   text-decoration: none;
 }
-.points-chip__coin { width: 18px; height: 18px; border-radius: 50%; background: var(--color-chocolate); box-shadow: inset -3px -3px 0 rgb(255 255 255 / 0.18); }
+.points-chip__coin {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3cf 0%, #ffc94f 55%, #e8922c 100%);
+  border: 2px solid var(--color-chocolate);
+  box-shadow: 0 1px 0 rgb(53 35 31 / 0.35);
+}
+/* A small ring and a crumb in the middle, so it reads as a cookie coin. */
+.points-chip__coin::before { content: ''; position: absolute; inset: 3px; border-radius: 50%; border: 1.5px solid rgb(53 35 31 / 0.4); }
+.points-chip__coin::after { content: ''; position: absolute; width: 4px; height: 4px; top: 7px; left: 7px; border-radius: 50%; background: var(--color-chocolate); }

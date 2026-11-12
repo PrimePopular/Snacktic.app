@@ -4,6 +4,7 @@ import { isAdminRole, roleLabel, useAuth } from '../../features/authentication';
 import { Button, Card, CheckboxField, PageHeader } from '../../shared/components';
 import { InstallCard } from '../../pwa/install';
 import { DetailsForm } from './DetailsForm';
+import { PushSettings } from '../../features/push';
 import { SendPoints } from './SendPoints';
 import { SoundToggle } from './SoundToggle';
 
@@ -69,6 +70,7 @@ export function AccountProfile() {
       <Card className="account-section">
         <h3>Settings</h3>
         <SoundToggle />
+        <PushSettings />
       </Card>
 
       <Card className="account-section">

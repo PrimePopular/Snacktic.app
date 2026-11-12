@@ -1,0 +1,15 @@
+.weather-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 28px;
+  background: var(--color-pistachio-soft);
+  border: 1px solid var(--border);
+}
+.weather-card__emoji { font-size: 2rem; line-height: 1; }
+.weather-card strong { font-family: var(--font-heading); }
+.weather-card p { margin: 0; font-size: var(--text-sm); }
+.push-settings { display: grid; gap: var(--space-2); justify-items: start; margin-top: var(--space-3); }
+.push-settings h4 { margin: 0; }

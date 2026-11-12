@@ -6,6 +6,7 @@ import { Link } from '../core/router';
 import { Button, EmptyState, Loading, Logo, Modal } from '../shared/components';
 import { AdsPage } from './pages/AdsPage';
 import { AnnouncementsPage } from './pages/AnnouncementsPage';
+import { CampusPage } from './pages/CampusPage';
 import { CategoriesPage } from './pages/CategoriesPage';
 import { EventsPage } from './pages/EventsPage';
 import { FindFriendAdminPage } from './pages/FindFriendAdminPage';
@@ -27,7 +28,7 @@ import './admin.css';
  * table and owner/admin checks inside the functions. The checks below only decide what to
  * display. Never trust them for security.
  */
-type Tab = 'students' | 'team' | 'announcements' | 'events' | 'places' | 'shops' | 'ads' | 'findfriend' | 'share' | 'categories' | 'rewards' | 'points' | 'games';
+type Tab = 'students' | 'team' | 'announcements' | 'events' | 'places' | 'shops' | 'ads' | 'findfriend' | 'share' | 'campus' | 'categories' | 'rewards' | 'points' | 'games';
 
 function Shell({ role, children }: { role?: Role; children: ReactNode }) {
   return (
@@ -62,6 +63,7 @@ const sections: Section[] = [
   { id: 'ads', label: 'Ads', group: 'Owner only' },
   { id: 'findfriend', label: 'Find a Friend', group: 'Owner only' },
   { id: 'share', label: 'Share link (QR code)', group: 'Owner only' },
+  { id: 'campus', label: 'Campus location (weather)', group: 'Owner only' },
   { id: 'points', label: 'Points and limits', group: 'Owner only' },
   { id: 'games', label: 'Game points', group: 'Owner only' },
 ];
@@ -126,6 +128,7 @@ function Dashboard({ role }: { role: Role }) {
       {tab === 'ads' && owner && <AdsPage />}
       {tab === 'findfriend' && owner && <FindFriendAdminPage />}
       {tab === 'share' && owner && <ShareLinkPage />}
+      {tab === 'campus' && owner && <CampusPage />}
       {tab === 'categories' && <CategoriesPage />}
     </Shell>
   );

@@ -1,0 +1,12 @@
+.ff-rules, .ff-code, .ff-scan { display: grid; gap: var(--space-3); margin-bottom: var(--space-4); }
+.ff-rules h2, .ff-code h2, .ff-scan h2 { margin: 0; }
+.ff-rules ol { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-2); }
+.ff-join { margin: var(--space-4) 0; }
+.ff-typed { display: grid; gap: var(--space-2); }
+.ff-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.ff-list li { padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); background: var(--color-pistachio-soft); font-weight: 600; }
+.ff-board { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); max-width: 28rem; }
+.ff-board li { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-4); border-radius: var(--radius-md); background: var(--bg-surface); border: 1px solid var(--border); }
+.ff-board__place { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: var(--color-orange); font-weight: 700; }
+.ff-board__name { flex: 1; font-weight: 600; }
+.ff-board__count { font-family: var(--font-heading); font-weight: 700; }

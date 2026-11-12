@@ -11,13 +11,13 @@ Rewards (items with pictures, orders), gifting in Profile with daily receiving l
 account suspension, start-up animation, installable app and offline copies of public lists.
 
 ## Decided, not built yet (in this order)
-1. **Ads**: an admin section; ads appear naturally in feeds, tagged "Ad"; viewing one earns 1 or 2 Crumb
-   Points (owner sets it; one reward per ad per student). Never two ads back to back, and never as the first
-   or second card.
-2. **Products and Shops** in Discover (no stock status for now), with maps. **Maps for events** too:
-   OpenStreetMap map, "Open in Google Maps" button, address search and pasting a long Google Maps link to
-   fill the position.
-3. **Find a Friend** (special event, QR codes; uses two small free libraries, approved):
+1. ~~**Ads**~~ **Built (update 011).** Owner-only admin section. Ads show in the Home feed tagged "Ad", never first,
+   never second, never back to back. The database pays 0 to 5 points (owner sets it per ad), once per student per ad.
+2. ~~**Shops** in Discover~~ **Built (update 011).** Shops with address, hours, phone, partner products and a
+   "Near me" sort. **Maps:** no map is loaded inside the app any more. Places, shops and events have an
+   "Open in Google Maps" button (free, no key). Still to do: a "you are near a shop with this product" card.
+   Products sold by Snacktic itself are dropped: the products here are partner products shops pay to show.
+3. ~~**Find a Friend**~~ **Built (update 012):** owner starts, stops and pays prizes from the admin; in-app messages (bell in the top bar) tell a student they were found. Real phone push notifications (Web Push) are a later batch. Original notes:
    - Students tap Join and get a personal QR code.
    - Scanning someone's code pays the scanner (points per scan set by the owner).
    - Each code can be scanned once only. If A scanned B, B cannot scan A back; B should find someone else.

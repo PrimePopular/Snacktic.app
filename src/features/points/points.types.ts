@@ -1,5 +1,6 @@
 export type TransactionKind =
   | 'game_award'
+  | 'ad_view'
   | 'campaign_award'
   | 'gift_sent'
   | 'gift_received'
@@ -42,6 +43,7 @@ export interface AdminRedemption extends Redemption {
 
 export const kindLabels: Record<TransactionKind, string> = {
   game_award: 'Game reward',
+  ad_view: 'Ad reward',
   campaign_award: 'Campaign reward',
   gift_sent: 'Gift sent',
   gift_received: 'Gift received',

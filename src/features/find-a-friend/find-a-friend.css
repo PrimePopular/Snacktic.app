@@ -1,0 +1,26 @@
+/* The "live" tag shown on every screen while Find a Friend is on. */
+.ff-tag {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 var(--space-4) var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-rose);
+  color: var(--color-chocolate);
+  text-decoration: none;
+  font-size: var(--text-sm);
+}
+.ff-tag strong { font-family: var(--font-heading); }
+.ff-tag__dot { width: 10px; height: 10px; border-radius: 50%; background: var(--color-chocolate); animation: ff-pulse 1.4s ease-in-out infinite; }
+@keyframes ff-pulse { 50% { transform: scale(1.6); opacity: 0.4; } }
+@media (prefers-reduced-motion: reduce) { .ff-tag__dot { animation: none; } }
+
+/* QR code and scanner */
+.qr-code { display: block; width: min(16rem, 100%); aspect-ratio: 1; margin: 0 auto; border-radius: var(--radius-md); background: #fff; }
+.qr-code--loading { background: var(--color-cream-deep); }
+.scanner { display: grid; gap: var(--space-3); justify-items: center; }
+.scanner__view { position: relative; width: min(22rem, 100%); aspect-ratio: 1; overflow: hidden; border-radius: var(--radius-lg); background: var(--color-charcoal); }
+.scanner__video { width: 100%; height: 100%; object-fit: cover; }
+.scanner__frame { position: absolute; inset: 15%; border: 3px solid var(--color-orange); border-radius: var(--radius-md); }

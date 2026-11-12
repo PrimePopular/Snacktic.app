@@ -31,15 +31,27 @@ export function linkLabel(url: string): string {
   return 'Open link';
 }
 
-/** OpenStreetMap embed centred on a point, with a pin. Free, no account and no key needed. */
-export function osmEmbedUrl(latitude: number, longitude: number): string {
-  const dLon = 0.004;
-  const dLat = 0.003;
-  const bbox = [longitude - dLon, latitude - dLat, longitude + dLon, latitude + dLat].map((n) => n.toFixed(6)).join('%2C');
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${latitude.toFixed(6)}%2C${longitude.toFixed(6)}`;
+/**
+ * A link that opens Google Maps (the app on a phone, the website otherwise). Free: no key, no
+ * account and no map is loaded inside Snacktic. Uses the exact point when there is one, otherwise
+ * the typed address or place name.
+ */
+export function googleMapsUrl(target: { latitude?: number | null; longitude?: number | null; address?: string }): string | null {
+  const { latitude, longitude, address } = target;
+  const query =
+    typeof latitude === 'number' && typeof longitude === 'number'
+      ? `${latitude.toFixed(6)},${longitude.toFixed(6)}`
+      : (address ?? '').trim();
+  return query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : null;
 }
 
-/** Opens the phone's maps app on a point. Free, no key needed. */
-export function mapsOpenUrl(latitude: number, longitude: number): string {
-  return `https://www.google.com/maps/search/?api=1&query=${latitude.toFixed(6)},${longitude.toFixed(6)}`;
+/** Straight-line distance in metres between two points (good enough to sort shops by "near me"). */
+export function distanceMetres(aLat: number, aLon: number, bLat: number, bLon: number): number {
+  const rad = (d: number) => (d * Math.PI) / 180;
+  const h = Math.sin(rad(bLat - aLat) / 2) ** 2 + Math.cos(rad(aLat)) * Math.cos(rad(bLat)) * Math.sin(rad(bLon - aLon) / 2) ** 2;
+  return 2 * 6_371_000 * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+export function distanceLabel(metres: number): string {
+  return metres < 1000 ? `${Math.max(10, Math.round(metres / 10) * 10)} m away` : `${(metres / 1000).toFixed(1)} km away`;
 }

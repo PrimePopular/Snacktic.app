@@ -6,13 +6,16 @@ import type { EventCategory, EventItem } from '../../features/events';
 import { listLivePlaces, PlaceCard } from '../../features/places';
 import type { Place } from '../../features/places';
 import { isSaved, recordInterest } from '../../features/recommendations';
+import { listLiveShops, ShopCard } from '../../features/shops';
+import type { Shop } from '../../features/shops';
 import { isDatabaseConfigured } from '../../services/database';
 import { pictureUrl } from '../../services/pictures';
 import { OfflineNotice } from '../../pwa/OfflineNotice';
 import { Button, EmptyState, Modal, PageHeader, SkeletonCards, TextField } from '../../shared/components';
+import { distanceLabel, distanceMetres } from '../../shared/url';
 import './discover.css';
 
-type Section = 'events' | 'places' | 'news';
+type Section = 'events' | 'places' | 'shops' | 'news';
 type Filter = number | 'all' | 'saved';
 type DateFilter = 'any' | 'today' | 'tomorrow' | 'weekend';
 
@@ -143,6 +146,9 @@ export default function DiscoverPage() {
   const [section, setSection] = useState<Section>('events');
   const [events, setEvents] = useState<LoadState<{ items: EventItem[]; categories: EventCategory[] }>>({ kind: 'loading' });
   const [places, setPlaces] = useState<LoadState<{ items: Place[]; categories: EventCategory[] }>>({ kind: 'loading' });
+  const [shops, setShops] = useState<LoadState<Shop[]>>({ kind: 'loading' });
+  const [here, setHere] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [hereMessage, setHereMessage] = useState('');
   const [news, setNews] = useState<LoadState<Announcement[]>>({ kind: 'loading' });
   const [eventFilter, setEventFilter] = useState<Filter>('all');
   const [placeFilter, setPlaceFilter] = useState<Filter>('all');
@@ -171,6 +177,30 @@ export default function DiscoverPage() {
     }
   }, []);
 
+  const loadShops = useCallback(async () => {
+    setShops({ kind: 'loading' });
+    try {
+      setShops({ kind: 'ready', data: await listLiveShops() });
+    } catch (error) {
+      console.error('[discover] shops', error);
+      setShops({ kind: 'error' });
+    }
+  }, []);
+
+  /** Asks the phone for its position once, only when the student taps "Near me". It is never stored or sent anywhere. */
+  function findNearMe() {
+    if (!navigator.geolocation) return setHereMessage('This browser cannot find your location.');
+    setHereMessage('Finding you…');
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setHere({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+        setHereMessage('');
+      },
+      () => setHereMessage('Could not get your location. Allow location access and try again.'),
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 },
+    );
+  }
+
   const loadNews = useCallback(async () => {
     setNews({ kind: 'loading' });
     try {
@@ -185,8 +215,9 @@ export default function DiscoverPage() {
     if (!isDatabaseConfigured) return;
     void loadEvents();
     void loadPlaces();
+    void loadShops();
     void loadNews();
-  }, [loadEvents, loadPlaces, loadNews]);
+  }, [loadEvents, loadPlaces, loadShops, loadNews]);
 
   if (!isDatabaseConfigured) {
     return (
@@ -202,12 +233,13 @@ export default function DiscoverPage() {
   const tabs: { id: Section; label: string }[] = [
     { id: 'events', label: 'Events' },
     { id: 'places', label: 'Places' },
+    { id: 'shops', label: 'Shops' },
     { id: 'news', label: 'News' },
   ];
 
   return (
     <>
-      <PageHeader tone="rose" title="Discover" description="Events, places to try and news around campus." />
+      <PageHeader tone="rose" title="Discover" description="Events, places to try, shops and news around campus." />
 
       <div className="segmented discover-tabs" role="group" aria-label="Discover sections">
         {tabs.map((t) => (
@@ -220,7 +252,7 @@ export default function DiscoverPage() {
       <OfflineNotice />
 
       {section !== 'news' && (
-        <TextField label="Search" type="search" placeholder={section === 'events' ? 'Search events' : 'Search places'} value={query} onChange={(e) => setQuery(e.target.value)} autoComplete="off" />
+        <TextField label="Search" type="search" placeholder={section === 'events' ? 'Search events' : section === 'places' ? 'Search places' : 'Search shops and products'} value={query} onChange={(e) => setQuery(e.target.value)} autoComplete="off" />
       )}
 
       {section === 'events' && (
@@ -298,6 +330,54 @@ export default function DiscoverPage() {
                       {shown.map((place) => (
                         <li key={place.id}>
                           <PlaceCard place={place} category={categories.find((c) => c.id === place.categoryId)} />
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                );
+              })()
+            ))}
+        </>
+      )}
+
+      {section === 'shops' && (
+        <>
+          {shops.kind === 'loading' && <SkeletonCards label="Loading shops" />}
+          {shops.kind === 'error' && (
+            <EmptyState title="We couldn't load shops" action={<Button onClick={() => void loadShops()}>Try again</Button>}>
+              Check your connection and try again. If this keeps happening, the latest database updates may not have been run.
+            </EmptyState>
+          )}
+          {shops.kind === 'ready' &&
+            (shops.data.length === 0 ? (
+              <EmptyState title="No shops yet">Shops around campus, and what they have, will show up here.</EmptyState>
+            ) : (
+              (() => {
+                const withDistance = shops.data
+                  .filter((shop) => matchesSearch(`${shop.name} ${shop.description} ${shop.address} ${shop.products.map((p) => p.name).join(' ')}`, query))
+                  .map((shop) => ({
+                    shop,
+                    metres: here && shop.latitude !== null && shop.longitude !== null ? distanceMetres(here.latitude, here.longitude, shop.latitude, shop.longitude) : null,
+                  }));
+                if (here) withDistance.sort((a, b) => (a.metres ?? Infinity) - (b.metres ?? Infinity));
+                return (
+                  <>
+                    <div className="filter-bar">
+                      <button type="button" className={`filter-button ${here ? 'filter-button--active' : ''}`} onClick={findNearMe}>
+                        {here ? 'Sorted by distance' : 'Near me'}
+                      </button>
+                      {here && (
+                        <button type="button" className="link-button" onClick={() => setHere(null)}>
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    {hereMessage && <p className="text-secondary text-small" role="status">{hereMessage}</p>}
+                    {withDistance.length === 0 && <p className="events-none text-secondary">Nothing matches your search.</p>}
+                    <ul className="event-grid">
+                      {withDistance.map(({ shop, metres }) => (
+                        <li key={shop.id}>
+                          <ShopCard shop={shop} distance={metres === null ? undefined : distanceLabel(metres)} />
                         </li>
                       ))}
                     </ul>

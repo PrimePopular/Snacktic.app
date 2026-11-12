@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AdCard, listLiveAds, NudgeCard, nudges } from '../../features/ads';
+import type { Ad, Nudge } from '../../features/ads';
 import { listLiveAnnouncements } from '../../features/announcements';
 import type { Announcement } from '../../features/announcements';
 import { EventCard, listCategories, listUpcomingEvents } from '../../features/events';
@@ -41,6 +43,7 @@ type LoadState =
       major: Announcement[];
       events: EventItem[];
       places: Place[];
+      ads: Ad[];
       eventCategories: EventCategory[];
       placeCategories: EventCategory[];
     };
@@ -54,6 +57,35 @@ interface FeedEntry {
   place?: Place;
 }
 
+type FeedSlot =
+  | { kind: 'entry'; entry: FeedEntry }
+  | { kind: 'ad'; ad: Ad; key: string }
+  | { kind: 'nudge'; nudge: Nudge; key: string };
+
+/**
+ * Mixes ads and nudge cards into the ranked feed. An ad goes in after the 3rd card and then after
+ * every 5th card after that, so an ad is never first, never second and never next to another ad.
+ * A nudge card goes in after the 6th card and every 5th after that, so it never touches an ad
+ * either. Ads and nudges take turns through their lists.
+ */
+function weave(entries: FeedEntry[], ads: Ad[]): FeedSlot[] {
+  const slots: FeedSlot[] = [];
+  let adIndex = 0;
+  let nudgeIndex = 0;
+  entries.forEach((entry, i) => {
+    slots.push({ kind: 'entry', entry });
+    const n = i + 1;
+    if (ads.length > 0 && n >= 3 && (n - 3) % 5 === 0) {
+      slots.push({ kind: 'ad', ad: ads[adIndex % ads.length], key: `ad-${n}` });
+      adIndex += 1;
+    } else if (n >= 6 && (n - 6) % 5 === 0) {
+      slots.push({ kind: 'nudge', nudge: nudges[nudgeIndex % nudges.length], key: `nudge-${n}` });
+      nudgeIndex += 1;
+    }
+  });
+  return slots;
+}
+
 /**
  * Home: a feed to scroll through. Only a major announcement is pinned on top, as a slim bar;
  * everything else lives in Discover. Events are the first cards in the feed. Discoveries, games
@@ -65,10 +97,15 @@ export default function HomePage() {
   const load = useCallback(async () => {
     setState({ kind: 'loading' });
     try {
-      const [announcements, events, places, eventCategories, placeCategories] = await Promise.all([
+      const [announcements, events, places, ads, eventCategories, placeCategories] = await Promise.all([
         listLiveAnnouncements(),
         listUpcomingEvents(),
         listLivePlaces(),
+        // Ads are optional: if they cannot load, the rest of the feed still works.
+        listLiveAds().catch((error: unknown) => {
+          console.error('[home] ads', error);
+          return [] as Ad[];
+        }),
         listCategories('event'),
         listCategories('place'),
       ]);
@@ -77,6 +114,7 @@ export default function HomePage() {
         major: announcements.filter((a) => a.level === 'major'),
         events,
         places,
+        ads,
         eventCategories,
         placeCategories,
       });
@@ -104,7 +142,7 @@ export default function HomePage() {
       ...state.events.map((event): FeedEntry => ({ id: event.id, categoryId: event.categoryId, startsAt: event.startsAt, event })),
       ...state.places.map((place): FeedEntry => ({ id: place.id, categoryId: place.categoryId, place })),
     ];
-    return rankForHome(entries, getAffinities(), Date.now());
+    return weave(rankForHome(entries, getAffinities(), Date.now()), state.ads);
   }, [state]);
 
   if (!isDatabaseConfigured) {
@@ -152,16 +190,21 @@ export default function HomePage() {
         <>
           <h2 className="home-section">For you</h2>
           <ul className="home-feed">
-            {ordered.map((entry) => (
-              <li key={entry.id}>
-                {entry.event && (
-                  <EventCard event={entry.event} category={state.eventCategories.find((c) => c.id === entry.categoryId)} />
-                )}
-                {entry.place && (
-                  <PlaceCard place={entry.place} category={state.placeCategories.find((c) => c.id === entry.categoryId)} />
-                )}
-              </li>
-            ))}
+            {ordered.map((slot) => {
+              if (slot.kind === 'ad') return <li key={slot.key}><AdCard ad={slot.ad} /></li>;
+              if (slot.kind === 'nudge') return <li key={slot.key}><NudgeCard nudge={slot.nudge} /></li>;
+              const entry = slot.entry;
+              return (
+                <li key={entry.id}>
+                  {entry.event && (
+                    <EventCard event={entry.event} category={state.eventCategories.find((c) => c.id === entry.categoryId)} />
+                  )}
+                  {entry.place && (
+                    <PlaceCard place={entry.place} category={state.placeCategories.find((c) => c.id === entry.categoryId)} />
+                  )}
+                </li>
+              );
+            })}
           </ul>
           <p className="home-more">
             <Link to="/discover">See everything in Discover</Link>

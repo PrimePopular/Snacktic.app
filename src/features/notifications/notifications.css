@@ -1,0 +1,31 @@
+.bell-button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-cream-deep);
+  color: var(--color-chocolate);
+}
+.bell-button__badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 20px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--color-rose);
+  color: var(--color-chocolate);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+}
+.notes { display: grid; gap: var(--space-3); }
+.notes h2 { margin: 0; }
+.notes__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); max-height: 60vh; overflow-y: auto; }
+.notes__item { display: grid; gap: var(--space-1); justify-items: start; padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-cream-deep); }
+.notes__item--new { background: var(--color-orange-soft); }
+.notes__item p { margin: 0; }

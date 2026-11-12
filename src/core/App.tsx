@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import AdminApp from '../admin/AdminApp';
 import { useAuth } from '../features/authentication';
+import { FindFriendTag } from '../features/find-a-friend';
+import FindFriendPage from '../pages/find-a-friend/FindFriendPage';
 import { flushPendingResults } from '../features/points';
 import DiscoverPage from '../pages/discover/DiscoverPage';
 import { GameHost } from '../pages/games/GameHost';
@@ -28,6 +30,7 @@ const routes: RouteDef[] = [
   { path: '/games', title: 'Games', render: () => <GamesPage /> },
   { path: '/games/:id', title: 'Games', render: (p) => <GameHost id={p.id} /> },
   { path: '/games/events/:id', title: 'Special event', render: (p) => <SpecialEventHost id={p.id} /> },
+  { path: '/find-a-friend', title: 'Find a Friend', render: () => <FindFriendPage /> },
   { path: '/rewards', title: 'Rewards', render: () => <RewardsPage /> },
   { path: '/profile', title: 'Profile', render: () => <ProfilePage /> },
   { path: '/privacy', title: 'Privacy', render: () => <PrivacyPage /> },
@@ -102,6 +105,7 @@ export default function App() {
         Skip to content
       </a>
       <TopBar />
+      <FindFriendTag />
       <main id="main-content" className="app-main" tabIndex={-1}>
         <Router routes={routes} notFound={notFound} />
       </main>

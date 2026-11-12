@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { DetailSheet, FeedCard, useCardActions } from '../feed';
 import type { DetailLink } from '../feed';
 import { playTap } from '../../services/sound';
-import { linkLabel, phoneHref, safeLink } from '../../shared/url';
+import { googleMapsUrl, linkLabel, phoneHref, safeLink } from '../../shared/url';
 import { recordInterest } from '../recommendations';
 import { eventImageUrl } from './eventsService';
 import type { EventCategory, EventItem } from './events.types';
@@ -95,6 +95,7 @@ export function EventCard({ event, category }: EventCardProps) {
         status={actions.status}
         onToggleSaved={actions.toggle}
         onShare={() => void actions.share()}
+        map={googleMapsUrl({ address: event.locationText }) ? { openUrl: googleMapsUrl({ address: event.locationText }) as string } : undefined}
         contact={links.length > 0 || event.contactName ? { heading: 'Want to know more?', name: event.contactName || undefined, links } : undefined}
       />
     </>

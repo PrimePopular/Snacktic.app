@@ -2,7 +2,7 @@
 
 Good snacks, good moments. A campus Progressive Web App (React, TypeScript, Vite, Supabase).
 
-**Status: Phase 1 complete.** Application shell with working navigation and placeholder pages for the five sections. No backend yet.
+**Status: working app with a Supabase backend.** Home feed, Discover (events, places, shops, news), Rewards, Profile, Games framework, admin dashboard and installable offline support. See `docs/ROADMAP.md` for what is done and what is next. Database updates are in `supabase/` and run in number order (latest: `012_find_a_friend_and_notifications.sql`).
 
 ## Run it
 

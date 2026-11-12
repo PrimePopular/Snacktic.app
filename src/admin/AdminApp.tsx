@@ -4,13 +4,17 @@ import { isAdminRole, isOwnerRole, roleLabel, useAuth } from '../features/authen
 import type { Role } from '../features/authentication';
 import { Link } from '../core/router';
 import { Button, EmptyState, Loading, Logo, Modal } from '../shared/components';
+import { AdsPage } from './pages/AdsPage';
 import { AnnouncementsPage } from './pages/AnnouncementsPage';
 import { CategoriesPage } from './pages/CategoriesPage';
 import { EventsPage } from './pages/EventsPage';
+import { FindFriendAdminPage } from './pages/FindFriendAdminPage';
 import { GamesAdminPage } from './pages/GamesAdminPage';
 import { PlacesPage } from './pages/PlacesPage';
 import { PointsAdminPage } from './pages/PointsAdminPage';
 import { RewardsAdminPage } from './pages/RewardsAdminPage';
+import { ShareLinkPage } from './pages/ShareLinkPage';
+import { ShopsPage } from './pages/ShopsPage';
 import { StudentsPage } from './pages/StudentsPage';
 import { TeamPage } from './pages/TeamPage';
 import './admin.css';
@@ -23,7 +27,7 @@ import './admin.css';
  * table and owner/admin checks inside the functions. The checks below only decide what to
  * display. Never trust them for security.
  */
-type Tab = 'students' | 'team' | 'announcements' | 'events' | 'places' | 'categories' | 'rewards' | 'points' | 'games';
+type Tab = 'students' | 'team' | 'announcements' | 'events' | 'places' | 'shops' | 'ads' | 'findfriend' | 'share' | 'categories' | 'rewards' | 'points' | 'games';
 
 function Shell({ role, children }: { role?: Role; children: ReactNode }) {
   return (
@@ -50,10 +54,14 @@ const sections: Section[] = [
   { id: 'announcements', label: 'News & announcements', group: 'Content' },
   { id: 'events', label: 'Events', group: 'Content' },
   { id: 'places', label: 'Places', group: 'Content' },
+  { id: 'shops', label: 'Shops', group: 'Content' },
   { id: 'categories', label: 'Categories', group: 'Content' },
   { id: 'rewards', label: 'Rewards and orders', group: 'Content' },
   { id: 'students', label: 'Students', group: 'Owner only' },
   { id: 'team', label: 'Team', group: 'Owner only' },
+  { id: 'ads', label: 'Ads', group: 'Owner only' },
+  { id: 'findfriend', label: 'Find a Friend', group: 'Owner only' },
+  { id: 'share', label: 'Share link (QR code)', group: 'Owner only' },
   { id: 'points', label: 'Points and limits', group: 'Owner only' },
   { id: 'games', label: 'Game points', group: 'Owner only' },
 ];
@@ -114,6 +122,10 @@ function Dashboard({ role }: { role: Role }) {
       {tab === 'announcements' && <AnnouncementsPage />}
       {tab === 'events' && <EventsPage />}
       {tab === 'places' && <PlacesPage />}
+      {tab === 'shops' && <ShopsPage />}
+      {tab === 'ads' && owner && <AdsPage />}
+      {tab === 'findfriend' && owner && <FindFriendAdminPage />}
+      {tab === 'share' && owner && <ShareLinkPage />}
       {tab === 'categories' && <CategoriesPage />}
     </Shell>
   );

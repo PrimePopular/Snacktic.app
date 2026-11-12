@@ -1,3 +1,4 @@
+import { useLiveFindFriend } from '../../features/find-a-friend';
 import { classicGames, classicSlots, isEventActive, specialEvents } from '../../games/registry';
 import { Button, Card, PageHeader } from '../../shared/components';
 import './games.css';
@@ -14,6 +15,7 @@ function formatDate(iso: string): string {
  */
 export default function GamesPage() {
   const activeEvents = specialEvents.filter((event) => isEventActive(event));
+  const findFriend = useLiveFindFriend();
 
   return (
     <>
@@ -60,10 +62,21 @@ export default function GamesPage() {
         <p className="text-secondary text-small">
           Limited-time games. They show up for a little while, then they're gone.
         </p>
-        {activeEvents.length === 0 ? (
+        {activeEvents.length === 0 && !findFriend ? (
           <p className="events-none text-secondary">No special events right now. Check back soon.</p>
         ) : (
           <ul className="event-list">
+            {findFriend && (
+              <li>
+                <Card as="article" tone="dark" className="event-card">
+                  <span className="badge">Live now</span>
+                  <h3>{findFriend.name}</h3>
+                  <p>Scan friends' codes and earn Crumb Points for every friend you find.</p>
+                  <p className="event-card__meta text-xs">Ends {formatDate(findFriend.endsAt)}</p>
+                  <Button to="/find-a-friend">Join in</Button>
+                </Card>
+              </li>
+            )}
             {activeEvents.map((event) => (
               <li key={event.id}>
                 <Card as="article" tone="dark" className="event-card">

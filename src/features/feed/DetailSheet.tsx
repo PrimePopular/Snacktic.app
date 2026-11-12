@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import type { ReactNode } from 'react';
 import { Button, Modal } from '../../shared/components';
 import { CardArt } from './CardArt';
 import { HeartIcon, ShareIcon } from './FeedCard';
@@ -29,8 +30,10 @@ interface DetailSheetProps {
   status: string;
   onToggleSaved: () => void;
   onShare: () => void;
-  /** An embedded map (OpenStreetMap) and a link to open it in the phone's maps app. */
-  map?: { embedUrl: string; openUrl: string };
+  /** A link that opens the place in Google Maps. No map is loaded inside the app. */
+  map?: { openUrl: string };
+  /** Extra sections shown after the description (for example a shop's products). */
+  children?: ReactNode;
   contact?: { heading: string; name?: string; links: DetailLink[] };
 }
 
@@ -52,7 +55,7 @@ function HighlightIcon({ kind }: { kind: Highlight['icon'] }) {
  * The details page for an event or place, shown as a nearly full-height sheet: picture, title,
  * highlights, like and share, the description, an optional map and who to contact.
  */
-export function DetailSheet({ open, onClose, title, categoryId, imageUrl, categoryName, highlights, description, saved, status, onToggleSaved, onShare, map, contact }: DetailSheetProps) {
+export function DetailSheet({ open, onClose, title, categoryId, imageUrl, categoryName, highlights, description, saved, status, onToggleSaved, onShare, map, contact, children }: DetailSheetProps) {
   const titleId = useId();
   const tint = (categoryId ?? 0) % 3;
 
@@ -101,15 +104,12 @@ export function DetailSheet({ open, onClose, title, categoryId, imageUrl, catego
             </section>
           )}
 
+          {children}
+
           {map && (
             <section className="detail__section">
-              <h3>Map</h3>
-              <iframe className="detail__map" title={`Map showing ${title}`} src={map.embedUrl} loading="lazy" referrerPolicy="no-referrer" />
-              <p className="text-xs text-secondary">
-                Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors
-              </p>
               <a className="btn btn--secondary" href={map.openUrl} target="_blank" rel="noopener noreferrer">
-                Open in Maps
+                Open in Google Maps
               </a>
             </section>
           )}

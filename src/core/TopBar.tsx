@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../features/authentication';
+import { NotificationsBell } from '../features/notifications';
+import { ShareButton } from '../features/share';
 import { getBalance, POINTS_CHANGED_EVENT } from '../features/points';
 import { Logo } from '../shared/components';
 import { Link } from './router';
@@ -41,6 +43,8 @@ export function TopBar() {
         <Logo size={30} showWordmark />
       </Link>
       <div className="top-bar__right">
+        <ShareButton />
+        <NotificationsBell />
         {balance !== null && (
           <Link to="/rewards" className="points-chip" aria-label={`${balance} Crumb Points. Open Rewards`}>
             <span className="points-chip__coin" aria-hidden="true" />

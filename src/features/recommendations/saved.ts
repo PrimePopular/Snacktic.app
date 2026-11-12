@@ -1,7 +1,7 @@
 /** Events and places a student has tapped the heart on. Kept only on their own device. */
 const KEY = 'snacktic.saved';
 
-export type SavedKind = 'event' | 'place';
+export type SavedKind = 'event' | 'place' | 'shop';
 
 const keyOf = (kind: SavedKind, id: string) => `${kind}:${id}`;
 

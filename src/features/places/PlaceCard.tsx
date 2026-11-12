@@ -3,7 +3,7 @@ import { DetailSheet, FeedCard, useCardActions } from '../feed';
 import type { DetailLink } from '../feed';
 import { pictureUrl } from '../../services/pictures';
 import { playTap } from '../../services/sound';
-import { linkLabel, mapsOpenUrl, osmEmbedUrl, phoneHref, safeLink } from '../../shared/url';
+import { googleMapsUrl, linkLabel, phoneHref, safeLink } from '../../shared/url';
 import type { EventCategory } from '../events';
 import { recordInterest } from '../recommendations';
 import type { Place } from './places.types';
@@ -31,10 +31,8 @@ export function PlaceCard({ place, category }: PlaceCardProps) {
   if (link) links.push({ href: link, label: linkLabel(link), primary: true, onClick: () => recordInterest(place.categoryId, 3) });
   if (phone) links.push({ href: phone, label: `Call ${place.phone.trim()}`, onClick: () => recordInterest(place.categoryId, 3) });
 
-  const hasPosition = place.latitude !== null && place.longitude !== null;
-  const map = hasPosition
-    ? { embedUrl: osmEmbedUrl(place.latitude as number, place.longitude as number), openUrl: mapsOpenUrl(place.latitude as number, place.longitude as number) }
-    : undefined;
+  const mapUrl = googleMapsUrl({ latitude: place.latitude, longitude: place.longitude, address: place.address });
+  const map = mapUrl ? { openUrl: mapUrl } : undefined;
 
   return (
     <>

@@ -1,7 +1,7 @@
 /** Owner-side tools for game reward rules and the day-reset time zone. Reads are open; writes are owner only. */
 import { supabase } from '../../services/database';
 
-export type AwardType = 'fixed' | 'by_score';
+export type AwardType = 'fixed' | 'by_score' | 'milestones';
 
 export interface GameRule {
   gameId: string;

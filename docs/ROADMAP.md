@@ -41,3 +41,12 @@ account suspension, start-up animation, installable app and offline copies of pu
 - Orders: buying a reward spends points and tells the student an agent will contact them on WhatsApp; the
   team delivers in person at school. Items are physical.
 - Collect only what is needed. Phone number is optional at sign-up and required when ordering.
+
+
+## Update 014: the first two games
+- **Crumbly** (number merging) and **Crumb Quest** (word game) are in the Games page, slots 1 and 2. Their pages are in `public/games/` and run inside the app. They only report results; the database pays.
+- Daily challenges: first try each day free, retries cost Crumb Points (default 30, owner sets it in Admin, Game challenges). A try must be started on the server (`start_game_attempt`) and pays once.
+- Crumbly Classic pays one-time score milestones (default 5,000: 10, 10,000: 20, 20,000: 30; editable). Crumbly Daily pays by score up to 150 a day. Crumb Quest Daily Quest pays per level cleared (5, 8, 10, 12, 14, 16, 18, 20, 22, 25 = 150). Crumb Quest Classic Bake pays a few points a day.
+- Run `supabase/014_game_challenges.sql`. All numbers are editable in the admin (Game points, Game challenges).
+- Known weakness: scores are produced by the game running on the phone. The database caps the score, the time and the daily total, but a determined cheater could still send a high but possible score.
+- Still to do: the third game (5 stages), the trivia bank (on hold), ad-based retries (maybe later, switchable).

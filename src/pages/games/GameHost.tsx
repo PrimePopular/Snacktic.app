@@ -33,9 +33,13 @@ function PointsMessage({ outcome }: { outcome: Outcome }) {
         <div className="game-result__points">
           <p className="game-result__plus">+{outcome.points} Crumb Points</p>
           <p className="text-secondary text-small">
-            {outcome.reason === 'daily_first'
-              ? 'Daily bonus! Replays today earn fewer points.'
-              : 'Replays earn fewer points than your first round of the day.'}
+            {outcome.reason === 'challenge'
+              ? 'Daily challenge done! Come back tomorrow for a new one, or try again today for Crumb Points.'
+              : outcome.reason === 'milestone'
+                ? 'New score milestone reached!'
+                : outcome.reason === 'daily_first'
+                  ? 'Daily bonus! Replays today earn fewer points.'
+                  : 'Replays earn fewer points than your first round of the day.'}
           </p>
         </div>
       );

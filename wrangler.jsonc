@@ -2,7 +2,7 @@
   // Cloudflare reads this file when you deploy. "name" must match the project name shown in your
   // Cloudflare dashboard. If yours is different, change the line below to match.
   // wrangler.jsonc
-"name": "snacktic-app",
+"name": "snacktic",
   "compatibility_date": "2026-11-01",
   "assets": {
     "directory": "./dist",

@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FFF8EF">
+<title>Crumbly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  /* ---- Demo page only: this stands in for your web app ---- */
+  html, body { margin: 0; min-height: 100%; background: #FFF8EF; color: #242220; overscroll-behavior: none; }
+  body {
+    box-sizing: border-box;
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; align-items: center; justify-content: center;
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+             max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+  #game-slot { width: 100%; }
+  #result { position: fixed; left: 0; right: 0; bottom: 2px; margin: 0; text-align: center; color: #35231F; font-size: 11px; pointer-events: none; }
+
+  /* ---- Crumbly styles: all class names start with "sn-" so they won't clash with your app ---- */
+  :root {
+    --sn-choc: #35231F;       /* Chocolate Brown */
+    --sn-cream: #FFF8EF;      /* Warm Cream */
+    --sn-orange: #FF8A3D;     /* Tangerine Orange */
+    --sn-rose: #E96B73;       /* Strawberry Rose */
+    --sn-pistachio: #B8C99A;  /* Pistachio Green */
+    --sn-char: #242220;       /* Charcoal Text */
+  }
+  /* Height the game may use. Set --sn-avail-h on a parent element if the game lives inside a smaller area. */
+  @supports (height: 100dvh) { :root { --sn-avail-h: 100dvh; } }
+
+  .sn-wrap {
+    position: relative;
+    container-type: inline-size;   /* lets the screens scale their text with the game width */
+    /* Fits both the width AND the height of any phone or tablet (portrait 9:16 game), up to 640px wide */
+    width: min(100%, calc((var(--sn-avail-h, 100vh) - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 9 / 16), 640px);
+    margin: 0 auto;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(53, 35, 31, 0.25);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sn-wrap.sn-daily { box-shadow: 0 0 0 3px var(--sn-rose), 0 10px 30px rgba(53, 35, 31, 0.25); }
+
+  .sn-canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 9 / 16;
+    border-radius: 18px;
+    background: var(--sn-choc);
+    touch-action: none;
+    cursor: pointer;
+  }
+
+  /* ---- Full-size screens that sit on top of the game (home, how to play, daily, game over) ---- */
+  .sn-screen {
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding: 0 9cqw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s, visibility 0.25s;
+  }
+  .sn-screen.sn-show { opacity: 1; visibility: visible; }
+  .sn-screen > *:not(.sn-blob) { position: relative; z-index: 1; }
+
+  .sn-home, .sn-help, .sn-dintro { background: var(--sn-cream); color: var(--sn-choc); }
+  .sn-over { background: rgba(36, 34, 32, 0.93); color: var(--sn-cream); }
+
+  /* Decorative blobs */
+  .sn-blob { position: absolute; border-radius: 50%; pointer-events: none; }
+  .sn-blob.o { width: 62cqw; height: 62cqw; background: var(--sn-orange); top: -24cqw; left: -22cqw; }
+  .sn-blob.r { width: 56cqw; height: 56cqw; background: var(--sn-rose); bottom: -28cqw; right: -16cqw; }
+  .sn-blob.p { width: 46cqw; height: 46cqw; background: var(--sn-pistachio); bottom: -26cqw; left: -12cqw; }
+
+  /* Home screen */
+  .sn-logo svg { width: 34cqw; height: auto; display: block; }
+  .sn-title {
+    margin: 2cqw 0 0;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 44px; font-size: 16cqw;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .sn-y { color: var(--sn-orange); }   /* the orange last letter of the name */
+  .sn-tag { margin: 2.5cqw 0 5cqw; font-size: 16px; font-size: 4.6cqw; color: var(--sn-char); }
+  .sn-chips { display: flex; gap: 2cqw; flex-wrap: wrap; justify-content: center; margin-bottom: 5cqw; }
+  .sn-best {
+    padding: 1.4cqw 4.5cqw;
+    border-radius: 999px; background: rgba(53, 35, 31, 0.08);
+    font-size: 13px; font-size: 3.9cqw;
+  }
+
+  /* Buttons */
+  .sn-btn {
+    width: 100%; max-width: 66cqw;
+    border: 0; border-radius: 999px;
+    padding: 3.6cqw 0;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 18px; font-size: 5.2cqw;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .sn-btn:active { transform: scale(0.97); }
+  .sn-btn.primary { background: var(--sn-orange); color: var(--sn-choc); box-shadow: 0 1.2cqw 0 #D96F25; }
+  .sn-btn.daily {
+    margin-top: 4cqw; padding: 2.4cqw 0; line-height: 1.15;
+    background: var(--sn-rose); color: var(--sn-choc); box-shadow: 0 1.2cqw 0 #C4505A;
+  }
+  .sn-btn.daily small { display: block; margin-top: 0.8cqw; font-weight: 500; font-size: 11px; font-size: 3.3cqw; opacity: 0.85; }
+  .sn-btn.daily.sn-done { background: rgba(53, 35, 31, 0.1); box-shadow: none; }
+  .sn-btn.ghost { margin-top: 4cqw; padding: 3cqw 0; background: transparent; color: var(--sn-choc); border: 0.7cqw solid var(--sn-choc); font-size: 16px; font-size: 4.6cqw; }
+  .sn-over .sn-btn.ghost { color: var(--sn-cream); border-color: rgba(255, 248, 239, 0.5); }
+  .sn-link {
+    margin-top: 4cqw; background: none; border: 0; cursor: pointer;
+    font-family: inherit; font-size: 12px; font-size: 3.6cqw;
+    color: var(--sn-choc); opacity: 0.65; text-decoration: underline;
+    padding: 1.5cqw 3cqw;
+  }
+
+  /* How to play + daily intro */
+  .sn-h2 { margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 700; font-size: 30px; font-size: 9.5cqw; }
+  .sn-sub { margin: 1.5cqw 0 5cqw; font-size: 14px; font-size: 4cqw; opacity: 0.75; }
+  .sn-step {
+    display: flex; align-items: center; gap: 3.5cqw;
+    width: 100%; box-sizing: border-box;
+    margin-bottom: 3cqw; padding: 3.4cqw 4cqw;
+    border-radius: 5cqw; background: rgba(53, 35, 31, 0.07);
+    text-align: left;
+  }
+  .sn-num {
+    flex: none; width: 9.5cqw; height: 9.5cqw; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--sn-orange); color: var(--sn-choc);
+    font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 700; font-size: 5cqw;
+  }
+  .sn-num.rose { background: var(--sn-rose); }
+  .sn-step b { display: block; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 16px; font-size: 4.7cqw; }
+  .sn-step span { display: block; font-size: 13px; font-size: 3.8cqw; line-height: 1.3; color: var(--sn-char); }
+  .sn-mini { display: flex !important; align-items: center; gap: 1.5cqw; margin-top: 1.6cqw; font-weight: 700; }
+  .sn-mini i {
+    width: 7.5cqw; height: 7.5cqw; border-radius: 2cqw;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-style: normal; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 3.8cqw;
+  }
+  .sn-tip { margin: 1cqw 0 5cqw; font-size: 12px; font-size: 3.6cqw; opacity: 0.75; }
+
+  /* Game over + daily result */
+  .sn-new {
+    margin-top: 3cqw; padding: 1.2cqw 4cqw; border-radius: 999px;
+    background: var(--sn-pistachio); color: var(--sn-choc);
+    font-weight: 700; font-size: 13px; font-size: 3.8cqw;
+  }
+  .sn-bigscore { margin: 2cqw 0; font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 700; font-size: 64px; font-size: 20cqw; color: var(--sn-orange); line-height: 1; }
+  .sn-stats { margin: 0 0 6cqw; font-size: 14px; font-size: 4.2cqw; opacity: 0.8; }
+  .sn-sub2 { margin: 1.5cqw 0 0; font-size: 14px; font-size: 4cqw; opacity: 0.75; }
+  .sn-streak { margin: -2cqw 0 3cqw; padding: 1.2cqw 4cqw; border-radius: 999px; background: rgba(255, 248, 239, 0.14); font-weight: 700; font-size: 13px; font-size: 3.8cqw; }
+  .sn-next { margin: 0 0 6cqw; font-size: 13px; font-size: 3.8cqw; opacity: 0.8; }
+  .sn-next b { font-variant-numeric: tabular-nums; }
+  .sn-p { margin: 3cqw 0 7cqw; font-size: 14px; font-size: 4.1cqw; line-height: 1.4; opacity: 0.85; }
+
+  /* In-game buttons (Back / Quit, Restart, Sound) along the bottom */
+  .sn-controls {
+    position: absolute;
+    left: 5.5%; right: 5.5%; bottom: 1.4%;
+    display: flex; align-items: center; gap: 2.5cqw;
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+  }
+  .sn-controls.sn-show { opacity: 1; visibility: visible; }
+  .sn-daily .sn-controls [data-act="restart"] { display: none; }   /* no restarts in the daily challenge */
+  .sn-ctl {
+    display: inline-flex; align-items: center; gap: 1.6cqw;
+    height: 11cqw; padding: 0 3.6cqw;
+    border: 0; border-radius: 999px;
+    background: rgba(255, 248, 239, 0.1);
+    color: var(--sn-cream);
+    font-family: inherit; font-weight: 500;
+    font-size: 12px; font-size: 3.7cqw;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.15s;
+  }
+  .sn-ctl:active { transform: scale(0.95); background: rgba(255, 248, 239, 0.2); }
+  .sn-ctl svg { width: 4.4cqw; height: 4.4cqw; }
+  .sn-ctl.push { margin-left: auto; }
+
+  /* ---- Loading screen: the Crumbly logo animation ---- */
+  .sn-loading {
+    padding: 0 4cqw;
+    background: radial-gradient(ellipse at 50% 42%, #fffdf8 0%, var(--sn-cream) 58%, #f9eddf 100%);
+    color: var(--sn-choc);
+  }
+  .sn-blob.sn-ld-top {
+    width: 50cqw; height: 36cqw; top: -18cqw; left: -23cqw;
+    background: var(--sn-orange);
+    border-radius: 42% 58% 65% 35% / 48% 36% 64% 52%;
+    transform: rotate(-18deg);
+    animation: sn-blob-in 1s 0.1s both;
+  }
+  .sn-blob.sn-ld-bottom {
+    width: 58cqw; height: 35cqw; right: -35cqw; bottom: -16cqw;
+    background: #f6a15e;
+    border-radius: 62% 38% 42% 58% / 47% 55% 45% 53%;
+    transform: rotate(18deg);
+    animation: sn-blob-in 1s 0.25s both;
+  }
+  .sn-blob.sn-spark {
+    width: 2cqw; height: 2cqw; border-radius: 0.7cqw;
+    background: var(--sn-orange); opacity: 0;
+    animation: sn-sparkle 2.8s ease-in-out infinite;
+  }
+  .sn-blob.sn-spark.a { top: 22%; left: 17%; transform: rotate(25deg); animation-delay: 1.4s; }
+  .sn-blob.sn-spark.b { top: 32%; right: 15%; width: 1.4cqw; height: 1.4cqw; background: var(--sn-rose); animation-delay: 1.8s; }
+  .sn-blob.sn-spark.c { bottom: 24%; left: 22%; width: 1.4cqw; height: 1.4cqw; background: var(--sn-pistachio); animation-delay: 2.1s; }
+
+  .sn-ld-eyebrow {
+    margin: 0 0 5.5cqw;
+    color: #8d7468;
+    font-size: 10px; font-size: 2.6cqw;
+    font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase;
+    opacity: 0;
+    animation: sn-fade-up 0.55s 0.15s forwards;
+  }
+  .sn-ld-logo { position: relative; width: 52cqw; height: 52cqw; display: grid; place-items: center; }
+  .sn-ld-shadow {
+    position: absolute; width: 31cqw; height: 4.5cqw; bottom: 4cqw;
+    border-radius: 50%; background: #6c351d; opacity: 0;
+    filter: blur(12px); transform: scale(0.5);
+    animation: sn-shadow-in 0.75s 0.55s forwards;
+  }
+  .sn-ld-cookie {
+    position: relative; z-index: 1; width: 45cqw; height: 45cqw; overflow: visible;
+    filter: drop-shadow(0 9px 7px rgb(74 35 20 / 12%));
+  }
+  .sn-ld-body { transform-box: fill-box; transform-origin: 50% 85%; animation: sn-cookie-drop 1.05s cubic-bezier(.18,.9,.25,1.25) 0.2s both; }
+  .sn-ld-bite { transform-box: fill-box; transform-origin: center; animation: sn-bite-pop 0.42s cubic-bezier(.2,1.5,.4,1) 1.08s both; }
+  .sn-ld-badge { transform-box: fill-box; transform-origin: 50% 50%; animation: sn-badge-pop 0.62s cubic-bezier(.2,1.8,.35,1) 1.38s both; }
+  .sn-ld-rays path { stroke-dasharray: 22; stroke-dashoffset: 22; animation: sn-ray-draw 0.32s ease-out forwards; }
+  .sn-ld-rays path:nth-child(1) { animation-delay: 1.72s; }
+  .sn-ld-rays path:nth-child(2) { animation-delay: 2.08s; }
+  .sn-ld-rays path:nth-child(3) { animation-delay: 2.44s; }
+  .sn-ld-crumb { opacity: 0; transform-box: fill-box; transform-origin: center; animation: sn-crumb-fly 0.7s ease-out 1s both; }
+  .sn-ld-crumb.c2 { animation-delay: 1.12s; }
+  .sn-ld-crumb.c3 { animation-delay: 1.2s; }
+
+  .sn-ld-word {
+    display: flex; align-items: baseline; margin: 0;
+    color: var(--sn-choc);
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: 64px; font-size: 16.5cqw;
+    font-weight: 700; letter-spacing: -0.085em; line-height: 0.98;
+  }
+  .sn-ld-letter {
+    display: inline-block; opacity: 0;
+    transform: translateY(5.5cqw) scale(0.88);
+    animation: sn-letter-in 0.48s cubic-bezier(.2,.8,.25,1) both;
+  }
+  .sn-ld-letter:nth-child(1) { animation-delay: 1.45s; }
+  .sn-ld-letter:nth-child(2) { animation-delay: 1.52s; }
+  .sn-ld-letter:nth-child(3) { animation-delay: 1.59s; }
+  .sn-ld-letter:nth-child(4) { animation-delay: 1.66s; }
+  .sn-ld-letter:nth-child(5) { animation-delay: 1.73s; }
+  .sn-ld-letter:nth-child(6) { animation-delay: 1.80s; }
+  .sn-ld-letter:nth-child(7) { animation-delay: 1.87s; }
+  .sn-ld-letter:nth-child(8) { animation-delay: 1.94s; }
+  .sn-ld-letter.orange { color: #ef6c25; }
+
+  .sn-ld-tag {
+    margin: 3cqw 0 0; color: #59433b;
+    font-size: 13px; font-size: 3.6cqw;
+    font-weight: 500; letter-spacing: 0.045em;
+    opacity: 0;
+    animation: sn-fade-up 0.6s 2.18s forwards;
+  }
+  .sn-ld-tag strong { color: #ef6c25; font-weight: 700; }
+
+  .sn-ld-loader {
+    width: 37cqw; height: 1cqw; min-height: 3px; margin-top: 9cqw;
+    overflow: hidden; border-radius: 99px; background: #ead9c7;
+    opacity: 0;
+    animation: sn-fade-in 0.3s 2.15s forwards;
+  }
+  .sn-ld-fill {
+    display: block; width: 0; height: 100%; border-radius: inherit;
+    background: linear-gradient(90deg, var(--sn-orange), #f2b15e);
+    animation: sn-load 2.5s 2.2s cubic-bezier(.55,.05,.25,1) forwards;
+  }
+
+  @keyframes sn-cookie-drop {
+    0% { opacity: 0; transform: translateY(-115px) rotate(-32deg) scale(.55); }
+    68% { opacity: 1; transform: translateY(9px) rotate(5deg) scale(1.035); }
+    84% { transform: translateY(-5px) rotate(-2deg) scale(.99); }
+    100% { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
+  }
+  @keyframes sn-bite-pop { from { transform: scale(0); } to { transform: scale(1); } }
+  @keyframes sn-badge-pop {
+    0% { opacity: 0; transform: scale(0) rotate(-25deg); }
+    70% { opacity: 1; transform: scale(1.18) rotate(7deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+  }
+  @keyframes sn-ray-draw { to { stroke-dashoffset: 0; } }
+  @keyframes sn-letter-in { to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes sn-fade-up { to { opacity: 1; transform: translateY(0); } }
+  @keyframes sn-fade-in { to { opacity: 1; } }
+  @keyframes sn-shadow-in { to { opacity: .18; transform: scale(1); } }
+  @keyframes sn-load { to { width: 100%; } }
+  @keyframes sn-blob-in { from { opacity: 0; scale: .7; } to { opacity: .95; scale: 1; } }
+  @keyframes sn-crumb-fly {
+    0% { opacity: 0; transform: translate(0, 0) scale(.3) rotate(0); }
+    25% { opacity: .9; }
+    100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1) rotate(100deg); }
+  }
+  @keyframes sn-sparkle {
+    0%, 100% { opacity: 0; scale: .5; }
+    50% { opacity: .8; scale: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sn-loading *, .sn-loading *::before, .sn-loading *::after {
+      animation-duration: 0.01ms !important;
+      animation-delay: 0ms !important;
+      animation-iteration-count: 1 !important;
+    }
+    .sn-ld-letter, .sn-ld-tag, .sn-ld-eyebrow, .sn-ld-loader { opacity: 1; transform: none; }
+    .sn-ld-fill { width: 100%; }
+  }
+</style>
+</head>
+<body>
+  <!-- The game mounts inside this element -->
+  <div id="game-slot"></div>
+
+  <p id="result"></p>
+
+<script>
+/*
+  Crumbly: a self-contained mini game with two modes.
+
+    Classic ......... play as often as you like. Rows rise slowly at first, and there is a 5 minute limit.
+    Daily Challenge . ONE try per day, the same puzzle for everyone. It starts with 2 rows already on
+                      the board, the rows rise faster, and there is a 5 minute limit. Has a streak and a share button.
+
+  Usage inside your web app:
+
+    const game = new Crumbly(document.getElementById('slot'), {
+      showHome: true,                   // optional: show the home screen first (default true)
+      sound: true,                      // optional: sound effects (default on)
+      haptics: true,                    // optional: phone vibration (default on)
+      getDate: () => '2026-11-08',      // optional: today's date as YYYY-MM-DD (use your SERVER's date, see note below)
+      dailyStart: '2026-11-08',         // optional: the date of Daily Challenge #1
+      shareUrl: 'https://your.app',     // optional: link added to the shared result text
+      onScore: (score) => {},           // optional: called whenever the score changes
+      onGameOver: (result) => {}        // optional: { mode, score, best, maxTile, seconds,
+                                        //             and for daily: dailyNumber, date, streak }
+    });
+
+    game.restart();          // skip the menus and start a classic game (optionally game.restart(seed))
+    game.getDailyStatus();   // { date, number, played, score, streak }
+    game.setSound(false);    // turn sound effects on/off
+    game.setHaptics(false);  // turn vibration on/off
+    game.destroy();          // remove the game and its listeners (call when leaving the screen)
+
+  Note on the daily challenge: "one try" is saved in the player's browser, which a determined player can clear.
+  If daily scores earn real points or prizes, also check them on your server (one result per user per date).
+  The new day starts at midnight UTC (1:00 AM in Nigeria).
+
+  Rules: tap a column to drop the cookie. Touching cookies with the same number
+  merge into one cookie of the next number. Bigger groups merge into bigger
+  cookies, and merges can chain. A new row rises from the bottom every few
+  seconds (watch the bar under the board) and the rises speed up. The game ends
+  when a rising row would push a cookie out of the top, or when every column is full.
+*/
+(function (global) {
+  'use strict';
+
+  // ---- Brand colours ----
+  const C = {
+    choc: '#35231F',       // Chocolate Brown
+    cream: '#FFF8EF',      // Warm Cream
+    orange: '#FF8A3D',     // Tangerine Orange
+    rose: '#E96B73',       // Strawberry Rose
+    pistachio: '#B8C99A',  // Pistachio Green
+    char: '#242220'        // Charcoal Text
+  };
+
+  // Snack colours: [background, text]. Higher numbers use darker/lighter shades of the brand colours.
+  const TILE_COLORS = [
+    [C.cream,     C.choc],   // 2
+    [C.pistachio, C.choc],   // 4
+    [C.orange,    C.choc],   // 8
+    [C.rose,      C.choc],   // 16
+    ['#F4C28B',   C.choc],   // 32
+    ['#8FAA6B',   C.choc],   // 64
+    ['#D9582B',   C.cream],  // 128
+    ['#B84A5A',   C.cream],  // 256
+    ['#7A5446',   C.cream],  // 512
+    ['#FFD9B0',   C.choc],   // 1024
+    ['#F2A93B',   C.choc]    // 2048
+  ];
+
+  const FONT_HEAD = '"Space Grotesk", system-ui, sans-serif';
+  const FONT_BODY = '"DM Sans", system-ui, sans-serif';
+
+  // ---- Settings (tweak these!) ----
+  const COLS = 5, ROWS = 7;     // board size
+  const CELL = 64;              // cell size in logical pixels
+  const W = 360, H = 640;       // logical canvas size (drawn sharp at any real screen size)
+  const BX = (W - COLS * CELL) / 2;  // board left
+  const BY = 118;                    // board top
+  const STEP_MS = 280;          // pause between merge steps (higher = slower chains)
+  const MAX_SPAWN = 64;         // biggest cookie that can be handed to the player
+
+  // Loading screen (the logo animation that plays before a game starts)
+  const LOAD_TOTAL_MS = 4700;   // length of the logo animation at normal speed
+  const LOAD_SPEED = 1.5;       // 1 = original speed, 2 = twice as fast (shorter wait)
+
+  // Difficulty. A new row rises every (riseStart - riseRamp x time) ms, never faster than riseMin.
+  // After hardCap ms the rows come every capInterval ms, so no game can last longer than hardCap.
+  const MODES = {
+    classic: { riseStart: 32000, riseMin: 1000, riseRamp: 0.08, hardCap: 300000, capInterval: 400, preRows: 0 },
+    daily:   { riseStart: 22000, riseMin: 1000, riseRamp: 0.07, hardCap: 300000, capInterval: 400, preRows: 2 }
+  };
+
+  // ---- Helpers ----
+  function hashStr(s) {         // text -> number (used to turn a date into the daily puzzle seed)
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+
+  function addDays(dateStr, n) {
+    return new Date(Date.parse(dateStr) + n * 86400000).toISOString().slice(0, 10);
+  }
+
+  function fmtNum(n) { return Number(n || 0).toLocaleString('en-US'); }
+  function fmtTime(sec) { sec = Math.max(0, Math.round(sec)); return Math.floor(sec / 60) + ':' + ('0' + (sec % 60)).slice(-2); }
+  function pad2(n) { return ('0' + n).slice(-2); }
+
+  function tileStyle(v) {
+    const i = Math.max(0, Math.round(Math.log2(v)) - 1);
+    return TILE_COLORS[i % TILE_COLORS.length];
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  // Small tile used in the "how to play" screen
+  function miniTile(v) {
+    const s = tileStyle(v);
+    return '<i style="background:' + s[0] + ';color:' + s[1] + '">' + v + '</i>';
+  }
+
+  // Cookie + notification logo mark
+  function cookieSVG() {
+    const chips = [[38, 52, 4], [60, 45, 3.5], [45, 78, 4.5], [68, 70, 4], [30, 72, 3], [62, 92, 3.5], [80, 84, 3]]
+      .map(function (c) { return '<circle cx="' + c[0] + '" cy="' + c[1] + '" r="' + c[2] + '" fill="#1F130F"/>'; })
+      .join('');
+    return '<svg viewBox="0 0 130 124" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Crumbly cookie">' +
+      '<defs><mask id="snBite"><rect width="130" height="124" fill="#fff"/><circle cx="92" cy="38" r="23" fill="#000"/></mask></defs>' +
+      '<ellipse cx="52" cy="117" rx="30" ry="4" fill="' + C.orange + '" opacity="0.28"/>' +
+      '<g mask="url(#snBite)">' +
+        '<circle cx="52" cy="68" r="44" fill="' + C.choc + '"/>' +
+        '<path d="M20 52 A38 38 0 0 1 52 28" stroke="#5A3A31" stroke-width="4" fill="none" stroke-linecap="round"/>' +
+        chips +
+      '</g>' +
+      '<circle cx="88" cy="36" r="12" fill="' + C.orange + '"/>' +
+      '<text x="88" y="41.5" text-anchor="middle" font-family="Space Grotesk, system-ui, sans-serif" font-weight="700" font-size="15" fill="' + C.cream + '">1</text>' +
+      '<g stroke="' + C.orange + '" stroke-width="4" stroke-linecap="round">' +
+        '<line x1="98" y1="18" x2="101" y2="9"/><line x1="106" y1="25" x2="114" y2="19"/><line x1="108" y1="35" x2="117" y2="35"/>' +
+      '</g></svg>';
+  }
+
+  // Logo animation shown while the game loads
+  function loadingHTML() {
+    const letters = 'Crumbly'.split('').map(function (ch, i) {
+      return '<span class="sn-ld-letter' + (i === 6 ? ' orange' : '') + '">' + ch + '</span>';
+    }).join('');
+
+    return `
+      <span class="sn-blob sn-ld-top"></span>
+      <span class="sn-blob sn-ld-bottom"></span>
+      <span class="sn-blob sn-spark a"></span>
+      <span class="sn-blob sn-spark b"></span>
+      <span class="sn-blob sn-spark c"></span>
+
+      <p class="sn-ld-eyebrow">A little something good is coming</p>
+
+      <div class="sn-ld-logo" aria-hidden="true">
+        <span class="sn-ld-shadow"></span>
+        <svg class="sn-ld-cookie" viewBox="0 0 200 200">
+          <defs>
+            <radialGradient id="snLdCookieGrad" cx="35%" cy="28%" r="78%">
+              <stop offset="0%" stop-color="#9b5735"/>
+              <stop offset="48%" stop-color="#71351f"/>
+              <stop offset="100%" stop-color="#3a1d16"/>
+            </radialGradient>
+            <linearGradient id="snLdChipGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#2a1511"/>
+              <stop offset="100%" stop-color="#160c0a"/>
+            </linearGradient>
+            <mask id="snLdBite">
+              <rect width="200" height="200" fill="white"/>
+              <circle class="sn-ld-bite" cx="145" cy="43" r="31" fill="black"/>
+            </mask>
+          </defs>
+
+          <g class="sn-ld-body">
+            <g mask="url(#snLdBite)">
+              <circle cx="91" cy="104" r="72" fill="url(#snLdCookieGrad)" stroke="#3b1d15" stroke-width="4"/>
+              <path d="M40 65c15-24 49-38 75-28" fill="none" stroke="#bd8057" stroke-width="5" stroke-linecap="round" opacity=".25"/>
+              <g fill="url(#snLdChipGrad)">
+                <ellipse cx="55" cy="75" rx="8" ry="10" transform="rotate(22 55 75)"/>
+                <ellipse cx="91" cy="58" rx="7" ry="9" transform="rotate(-18 91 58)"/>
+                <ellipse cx="119" cy="91" rx="9" ry="11" transform="rotate(28 119 91)"/>
+                <ellipse cx="69" cy="119" rx="9" ry="11" transform="rotate(-24 69 119)"/>
+                <ellipse cx="111" cy="139" rx="7" ry="9" transform="rotate(18 111 139)"/>
+                <ellipse cx="145" cy="119" rx="6" ry="8" transform="rotate(-15 145 119)"/>
+                <ellipse cx="43" cy="103" rx="5" ry="7"/>
+                <ellipse cx="92" cy="101" rx="5" ry="6"/>
+              </g>
+              <g fill="#d59a6e" opacity=".23">
+                <circle cx="49" cy="91" r="2.5"/><circle cx="104" cy="45" r="2"/>
+                <circle cx="130" cy="126" r="2.5"/><circle cx="80" cy="151" r="2"/>
+                <circle cx="135" cy="70" r="2"/>
+              </g>
+            </g>
+          </g>
+
+          <g class="sn-ld-crumb" style="--dx:-27px;--dy:25px" fill="#a85d35"><circle cx="29" cy="143" r="4"/></g>
+          <g class="sn-ld-crumb c2" style="--dx:24px;--dy:30px" fill="#d28a50"><circle cx="157" cy="147" r="3.5"/></g>
+          <g class="sn-ld-crumb c3" style="--dx:-20px;--dy:-22px" fill="#7d3e25"><circle cx="34" cy="44" r="3"/></g>
+
+          <g class="sn-ld-badge">
+            <circle cx="148" cy="42" r="19" fill="#f36f2b"/>
+            <circle cx="148" cy="42" r="15.5" fill="#ff8a3d"/>
+            <text x="148" y="49" text-anchor="middle" fill="#fffaf4"
+                  font-family="Space Grotesk, sans-serif" font-size="21" font-weight="700">1</text>
+          </g>
+          <g class="sn-ld-rays" fill="none" stroke="#ff8a3d" stroke-width="5.5" stroke-linecap="round">
+            <path d="M177 16l8-10"/>
+            <path d="M184 39l13-2"/>
+            <path d="M177 61l10 7"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="sn-ld-word" role="img" aria-label="Crumbly">${letters}</div>
+      <p class="sn-ld-tag">Good snacks, <strong>good moments.</strong></p>
+      <div class="sn-ld-loader" aria-hidden="true"><span class="sn-ld-fill"></span></div>`;
+  }
+
+  function Crumbly(container, options) {
+    if (typeof container === 'string') container = document.querySelector(container);
+    options = options || {};
+
+    const storageKey = options.storageKey || 'crumblyBest';
+    const getDate = options.getDate || function () { return new Date().toISOString().slice(0, 10); };
+    const dailyStart = options.dailyStart || '2026-11-08';
+
+    // ---- Build the DOM ----
+    const wrap = document.createElement('div');
+    wrap.className = 'sn-wrap';
+    const canvas = document.createElement('canvas');
+    canvas.className = 'sn-canvas';
+    canvas.width = W * 2;
+    canvas.height = H * 2;
+    wrap.appendChild(canvas);
+
+    // In-game buttons along the bottom: Back (Quit in the daily), Restart, Sound
+    const ICON_BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+    const ICON_RESTART = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>';
+    const controls = document.createElement('div');
+    controls.className = 'sn-controls';
+    controls.innerHTML =
+      '<button class="sn-ctl" data-act="back" aria-label="Back to home">' + ICON_BACK + 'Back</button>' +
+      '<button class="sn-ctl" data-act="restart" aria-label="Restart game">' + ICON_RESTART + 'Restart</button>' +
+      '<button class="sn-ctl push" data-act="fx">Sound: On</button>';
+    wrap.appendChild(controls);
+    const backBtn = controls.querySelector('[data-act="back"]');
+
+    function makeScreen(cls, html) {
+      const d = document.createElement('div');
+      d.className = 'sn-screen ' + cls;
+      d.innerHTML = html;
+      wrap.appendChild(d);
+      return d;
+    }
+
+    const screens = {
+      home: makeScreen('sn-home',
+        '<div class="sn-blob o"></div><div class="sn-blob r"></div><div class="sn-blob p"></div>' +
+        '<div class="sn-logo">' + cookieSVG() + '</div>' +
+        '<h1 class="sn-title" aria-label="Crumbly">Crumbl<span class="sn-y" aria-hidden="true">y</span></h1>' +
+        '<p class="sn-tag">Good snacks, good moments.</p>' +
+        '<div class="sn-chips"><div class="sn-best">Best <b data-best>0</b></div>' +
+          '<div class="sn-best" data-streakchip>Streak <b data-streak>0</b></div></div>' +
+        '<button class="sn-btn primary" data-act="play">Play</button>' +
+        '<button class="sn-btn daily" data-act="daily"><span>Daily Challenge</span><small data-dsub>New puzzle · one try today</small></button>' +
+        '<button class="sn-btn ghost" data-act="help">How to play</button>' +
+        '<button class="sn-link" data-act="fx">Sound: On</button>'),
+
+      help: makeScreen('sn-help',
+        '<div class="sn-blob o"></div><div class="sn-blob r"></div>' +
+        '<h2 class="sn-h2">How to play</h2>' +
+        '<p class="sn-sub">You’ll get it in 10 seconds.</p>' +
+        '<div class="sn-step"><div class="sn-num">1</div><div><b>Tap a column</b><span>Your cookie drops to the bottom of it.</span></div></div>' +
+        '<div class="sn-step"><div class="sn-num">2</div><div><b>Match to merge</b><span>Same numbers that touch become one bigger cookie.</span>' +
+          '<span class="sn-mini">' + miniTile(2) + '+' + miniTile(2) + '→' + miniTile(4) + '</span></div></div>' +
+        '<div class="sn-step"><div class="sn-num">3</div><div><b>Beat the rise</b><span>A new row pops up every few seconds. Don’t let it reach the top!</span></div></div>' +
+        '<p class="sn-tip">Tip: chain merges multiply your points.</p>' +
+        '<button class="sn-btn primary" data-act="helpdone" data-helpbtn>Let’s go!</button>'),
+
+      dintro: makeScreen('sn-dintro',
+        '<div class="sn-blob r"></div><div class="sn-blob p"></div>' +
+        '<h2 class="sn-h2">Daily Challenge</h2>' +
+        '<p class="sn-sub" data-dintronum>Challenge #1</p>' +
+        '<div class="sn-step"><div class="sn-num rose">1</div><div><b>One try a day</b><span>You get a single run, so make it count.</span></div></div>' +
+        '<div class="sn-step"><div class="sn-num rose">=</div><div><b>Same puzzle for everyone</b><span>Everyone gets the same cookies today.</span></div></div>' +
+        '<div class="sn-step"><div class="sn-num rose">!</div><div><b>Tougher than classic</b><span>It starts with 2 rows and the rows rise faster. 3 minutes max.</span></div></div>' +
+        '<button class="sn-btn primary" style="margin-top:3cqw" data-act="dstart">Start</button>' +
+        '<button class="sn-btn ghost" data-act="home">Not yet</button>'),
+
+      loading: makeScreen('sn-loading', ''),
+
+      quit: makeScreen('sn-over',
+        '<h2 class="sn-h2">End today’s run?</h2>' +
+        '<p class="sn-p">Your score so far counts, and you can’t try again until tomorrow.</p>' +
+        '<button class="sn-btn primary" data-act="keep">Keep playing</button>' +
+        '<button class="sn-btn ghost" data-act="endrun">End run</button>'),
+
+      over: makeScreen('sn-over',
+        '<h2 class="sn-h2">Out of room!</h2>' +
+        '<div class="sn-new" data-new>New best!</div>' +
+        '<div class="sn-bigscore" data-score>0</div>' +
+        '<p class="sn-stats"><span data-statbest></span> · <span data-time></span></p>' +
+        '<button class="sn-btn primary" data-act="again">Play again</button>' +
+        '<button class="sn-btn ghost" data-act="home">Home</button>'),
+
+      dres: makeScreen('sn-over',
+        '<h2 class="sn-h2" data-dtitle>Daily complete!</h2>' +
+        '<p class="sn-sub2" data-dnum>Challenge #1</p>' +
+        '<div class="sn-new" data-dnew>New daily best!</div>' +
+        '<div class="sn-bigscore" data-dscore>0</div>' +
+        '<p class="sn-stats" data-dstats></p>' +
+        '<div class="sn-streak" data-dstreak></div>' +
+        '<p class="sn-next">Next challenge in <b data-countdown>--:--:--</b></p>' +
+        '<button class="sn-btn primary" data-act="share" data-sharebtn>Share result</button>' +
+        '<button class="sn-btn ghost" data-act="home">Home</button>')
+    };
+
+    container.appendChild(wrap);
+    const ctx = canvas.getContext('2d');
+
+    function q(sel) { return wrap.querySelector(sel); }
+
+    function showScreen(name) {
+      for (const k in screens) screens[k].classList.toggle('sn-show', k === name);
+      controls.classList.toggle('sn-show', name === null); // buttons only show while playing
+    }
+
+    // ---- Resize: keep the canvas sharp at any size (phones, tablets, desktops) ----
+    function fit() {
+      const w = canvas.clientWidth;
+      if (!w) return;
+      const s = Math.min(3, (w / W) * (window.devicePixelRatio || 1));
+      const pw = Math.max(1, Math.round(W * s)), ph = Math.max(1, Math.round(H * s));
+      if (canvas.width !== pw || canvas.height !== ph) { canvas.width = pw; canvas.height = ph; }
+      ctx.setTransform(pw / W, 0, 0, ph / H, 0, 0); // draw in logical coordinates
+    }
+    fit();
+    let resizeObs = null;
+    if (window.ResizeObserver) { resizeObs = new ResizeObserver(fit); resizeObs.observe(wrap); }
+    window.addEventListener('resize', fit);
+    window.addEventListener('orientationchange', fit);
+
+    // Make sure the brand fonts are ready for the canvas text
+    try {
+      if (document.fonts && document.fonts.load) {
+        document.fonts.load('700 30px "Space Grotesk"');
+        document.fonts.load('500 13px "DM Sans"');
+        document.fonts.load('700 13px "DM Sans"');
+      }
+    } catch (e) {}
+
+    // ---- State ----
+    let grid, ghosts, floaters, seedVal = 0, tileIdx = 0, riseIdx = 0;
+    let current, next, score, best = 0;
+    let mode = 'classic', cfg = MODES.classic;
+    let state = 'menu';          // 'menu' | 'idle' | 'resolving' | 'paused' | 'over'
+    let prevState = 'idle';
+    let wait = 0, chain = 0, lastTile = null;
+    let hoverCol = -1, flash = null, rafId = 0;
+    let elapsed = 0, riseTimer = 0, riseTotal = MODES.classic.riseStart;
+    let soundOn = options.sound !== false;
+    let hapticsOn = options.haptics !== false;
+    let helpSeenMem = false, pendingNext = null;
+    let loading = false, loadTimer = 0, tickTimer = 0;
+
+    try {
+      best = +localStorage.getItem(storageKey) || 0;
+      const saved = localStorage.getItem(storageKey + 'Fx'); // player's sound/haptics choice
+      if (saved === 'off') { soundOn = false; hapticsOn = false; }
+    } catch (e) {}
+
+    // ---- Daily challenge: saved progress, streak, countdown ----
+    // dstore.today = the latest daily run { date, num, score, secs, maxTile, done, newBest }
+    let dstore = { today: null, streak: { last: '', count: 0 }, best: 0 };
+    let dailyRec = null;
+
+    try {
+      const raw = localStorage.getItem(storageKey + 'Daily');
+      if (raw) {
+        const o = JSON.parse(raw);
+        if (o && typeof o === 'object') {
+          dstore = { today: o.today || null, streak: o.streak || { last: '', count: 0 }, best: +o.best || 0 };
+        }
+      }
+    } catch (e) {}
+
+    function saveDstore() {
+      try { localStorage.setItem(storageKey + 'Daily', JSON.stringify(dstore)); } catch (e) {}
+    }
+
+    function dailyNumber(dateStr) {
+      return Math.max(1, Math.round((Date.parse(dateStr) - Date.parse(dailyStart)) / 86400000) + 1);
+    }
+
+    function bumpStreak(date) {
+      const s = dstore.streak;
+      if (s.last === date) return;
+      s.count = (s.last && addDays(s.last, 1) === date) ? s.count + 1 : 1;
+      s.last = date;
+    }
+
+    function closeRecord(rec, sc, secs, maxTile) {
+      rec.done = true;
+      rec.score = sc;
+      rec.secs = secs;
+      rec.maxTile = maxTile;
+      rec.newBest = sc > dstore.best;
+      if (rec.newBest) dstore.best = sc;
+      bumpStreak(rec.date);
+      dstore.today = rec;
+      saveDstore();
+    }
+
+    // A run that was started but never finished (page closed or refreshed) counts as used
+    if (dstore.today && !dstore.today.done) {
+      closeRecord(dstore.today, dstore.today.score || 0, dstore.today.secs || 0, dstore.today.maxTile || 8);
+    }
+
+    function todayRec() {
+      return (dstore.today && dstore.today.date === getDate()) ? dstore.today : null;
+    }
+
+    function displayStreak() {
+      const s = dstore.streak, t = getDate();
+      return (s.last === t || (s.last && addDays(s.last, 1) === t)) ? s.count : 0;
+    }
+
+    function fmtCountdown() {
+      const n = new Date();
+      const nextMidnight = Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() + 1);
+      const s = Math.max(0, Math.floor((nextMidnight - n.getTime()) / 1000));
+      return pad2(Math.floor(s / 3600)) + ':' + pad2(Math.floor(s / 60) % 60) + ':' + pad2(s % 60);
+    }
+
+    // ---- Sound (made with the Web Audio API, so no audio files are needed) ----
+    let audioCtx = null;
+
+    function ensureAudio() { // must be called from a tap/click, browsers block audio before that
+      if (!audioCtx) {
+        try {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) audioCtx = new AC();
+        } catch (e) {}
+      }
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function tone(freq, dur, type, vol, slideTo, delay) {
+      if (!soundOn || !audioCtx) return;
+      const t0 = audioCtx.currentTime + (delay || 0);
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, t0);
+      if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(vol || 0.2, t0 + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.02);
+    }
+
+    function sfxDrop()    { tone(220, 0.09, 'sine', 0.25, 110); }
+    function sfxInvalid() { tone(130, 0.1, 'square', 0.08, 90); }
+    function sfxRise()    { tone(95, 0.3, 'sawtooth', 0.12, 55); }
+    function sfxClick()   { tone(440, 0.06, 'triangle', 0.12); }
+    function sfxMerge(newValue, chainNo) {
+      // Higher cookies and longer chains make higher notes, so chains sound like a rising run
+      const semis = (Math.log2(newValue) - 1) * 2 + (chainNo - 1) * 3;
+      const f = Math.min(1800, 261.63 * Math.pow(2, semis / 12));
+      tone(f, 0.2, 'triangle', 0.22);
+      tone(f * 2, 0.14, 'sine', 0.08, 0, 0.03);
+    }
+    function sfxGameOver() {
+      tone(392, 0.25, 'triangle', 0.22, 0, 0);
+      tone(330, 0.25, 'triangle', 0.22, 0, 0.2);
+      tone(262, 0.5, 'triangle', 0.25, 196, 0.4);
+    }
+
+    // ---- Haptics (phone vibration. Not supported on iPhones/Safari, harmless there) ----
+    function buzz(pattern) {
+      if (hapticsOn && navigator.vibrate) {
+        try { navigator.vibrate(pattern); } catch (e) {}
+      }
+    }
+
+    function saveFx() {
+      try { localStorage.setItem(storageKey + 'Fx', (soundOn || hapticsOn) ? 'on' : 'off'); } catch (e) {}
+    }
+
+    function refreshFx() {
+      const label = (soundOn || hapticsOn) ? 'Sound: On' : 'Sound: Off';
+      wrap.querySelectorAll('[data-act="fx"]').forEach(function (el) { el.textContent = label; });
+    }
+
+    function toggleFx() {
+      const turnOn = !(soundOn || hapticsOn);
+      soundOn = turnOn;
+      hapticsOn = turnOn;
+      saveFx();
+      refreshFx();
+      if (turnOn) { tone(520, 0.1, 'triangle', 0.2); buzz(15); }
+    }
+
+    // ---- Menus ----
+    function helpSeen() {
+      if (helpSeenMem) return true;
+      try { return localStorage.getItem(storageKey + 'Help') === '1'; } catch (e) { return false; }
+    }
+
+    function markHelpSeen() {
+      helpSeenMem = true;
+      try { localStorage.setItem(storageKey + 'Help', '1'); } catch (e) {}
+    }
+
+    function refreshHome() {
+      q('[data-best]').textContent = fmtNum(best);
+      const st = displayStreak();
+      q('[data-streakchip]').style.display = st > 0 ? '' : 'none';
+      q('[data-streak]').textContent = st;
+      const rec = todayRec();
+      q('[data-dsub]').textContent = rec
+        ? 'Done · ' + fmtNum(rec.score) + ' pts · next in ' + fmtCountdown()
+        : 'New puzzle · one try today';
+      q('.sn-btn.daily').classList.toggle('sn-done', !!rec);
+      wrap.querySelectorAll('[data-countdown]').forEach(function (el) { el.textContent = fmtCountdown(); });
+    }
+
+    function goHome() {
+      state = 'menu';
+      wrap.classList.remove('sn-daily');
+      refreshHome();
+      refreshFx();
+      showScreen('home');
+    }
+
+    function openHelp() {
+      q('[data-helpbtn]').textContent = pendingNext ? 'Let’s go!' : 'Got it';
+      showScreen('help');
+    }
+
+    function openDailyIntro() {
+      q('[data-dintronum]').textContent = 'Challenge #' + dailyNumber(getDate());
+      showScreen('dintro');
+    }
+
+    // Plays the logo animation, then runs `done` (starts a game, or goes home)
+    function runLoading(done) {
+      loading = true;
+      state = 'menu'; // the game is paused while the animation plays
+      screens.loading.innerHTML = loadingHTML(); // fresh markup replays the animation from the start
+      if (screens.loading.getAnimations) {
+        screens.loading.getAnimations({ subtree: true }).forEach(function (a) { a.playbackRate = LOAD_SPEED; });
+      }
+      showScreen('loading');
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      clearTimeout(loadTimer);
+      loadTimer = setTimeout(function () {
+        loading = false;
+        done();
+      }, reduce ? 600 : LOAD_TOTAL_MS / LOAD_SPEED);
+    }
+
+    function startGame(m) {
+      runLoading(function () {
+        mode = m;
+        wrap.classList.toggle('sn-daily', m === 'daily');
+        backBtn.innerHTML = ICON_BACK + (m === 'daily' ? 'Quit' : 'Back');
+        showScreen(null);
+        restart(m === 'daily' ? hashStr('crumbly-daily-' + dailyRec.date) : undefined);
+      });
+    }
+
+    function startDaily() {
+      const date = getDate();
+      const existing = todayRec();
+      if (existing) { showDailyResult(existing, false); return; }
+      dailyRec = { date: date, num: dailyNumber(date), score: 0, secs: 0, maxTile: 8, done: false, newBest: false };
+      dstore.today = dailyRec;
+      saveDstore(); // saved right away: leaving or refreshing now still uses today's try
+      startGame('daily');
+    }
+
+    function showOver(result, isNewBest) {
+      q('[data-score]').textContent = fmtNum(result.score);
+      q('[data-statbest]').textContent = 'Best ' + fmtNum(result.best);
+      q('[data-time]').textContent = fmtTime(result.seconds);
+      q('[data-new]').style.display = isNewBest ? '' : 'none';
+      showScreen('over');
+    }
+
+    function showDailyResult(rec, fresh) {
+      q('[data-dtitle]').textContent = fresh ? 'Daily complete!' : 'Today’s result';
+      q('[data-dnum]').textContent = 'Challenge #' + rec.num;
+      q('[data-dnew]').style.display = (fresh && rec.newBest && rec.score > 0) ? '' : 'none';
+      q('[data-dscore]').textContent = fmtNum(rec.score);
+      q('[data-dstats]').textContent = 'Biggest cookie ' + rec.maxTile + ' · ' + fmtTime(rec.secs);
+      const st = displayStreak();
+      const el = q('[data-dstreak]');
+      el.style.display = st > 0 ? '' : 'none';
+      el.textContent = 'Streak: ' + st + (st === 1 ? ' day' : ' days');
+      q('[data-countdown]').textContent = fmtCountdown();
+      q('[data-sharebtn]').textContent = 'Share result';
+      state = 'menu';
+      showScreen('dres');
+    }
+
+    function doShare(btn) {
+      const rec = todayRec() || dstore.today;
+      if (!rec) return;
+      const lines = ['Crumbly Daily #' + rec.num,
+        'Score ' + fmtNum(rec.score) + ' · Biggest cookie ' + rec.maxTile + ' · ' + fmtTime(rec.secs)];
+      const st = displayStreak();
+      if (st > 1) lines.push('Streak: ' + st + ' days');
+      if (options.shareUrl) lines.push(options.shareUrl);
+      const text = lines.join('\n');
+      const flashLabel = function (msg) {
+        btn.textContent = msg;
+        setTimeout(function () { btn.textContent = 'Share result'; }, 1800);
+      };
+      if (navigator.share) { navigator.share({ text: text }).catch(function () {}); return; }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { flashLabel('Copied!'); }, function () { flashLabel('Couldn’t copy'); });
+      } else flashLabel('Sharing not supported');
+    }
+
+    function askQuit() {
+      if (state !== 'idle' && state !== 'resolving') return;
+      prevState = state;
+      state = 'paused';
+      showScreen('quit');
+    }
+
+    function onClick(e) {
+      const el = e.target.closest ? e.target.closest('[data-act]') : null;
+      if (!el || loading) return; // ignore taps while the logo animation plays
+      ensureAudio(); // first tap unlocks sound in the browser
+      sfxClick();
+      const act = el.getAttribute('data-act');
+      // Inside Snacktic the app owns the menus: leaving the game goes back to the app.
+      if (options.onExit && (act === 'home' || (act === 'back' && mode !== 'daily'))) { options.onExit(); return; }
+      if (act === 'play') {
+        if (!helpSeen()) { pendingNext = 'classic'; openHelp(); } // first time: show the instructions first
+        else startGame('classic');
+      } else if (act === 'daily') {
+        const rec = todayRec();
+        if (rec) showDailyResult(rec, false);
+        else if (!helpSeen()) { pendingNext = 'daily'; openHelp(); }
+        else openDailyIntro();
+      } else if (act === 'help') {
+        pendingNext = null;
+        openHelp();
+      } else if (act === 'helpdone') {
+        markHelpSeen();
+        const go = pendingNext;
+        pendingNext = null;
+        if (go === 'classic') startGame('classic');
+        else if (go === 'daily') openDailyIntro();
+        else goHome();
+      } else if (act === 'dstart') {
+        startDaily();
+      } else if (act === 'again' || act === 'restart') {
+        startGame('classic');
+      } else if (act === 'home') {
+        goHome();
+      } else if (act === 'back') {
+        if (mode === 'daily') askQuit();
+        else runLoading(goHome);
+      } else if (act === 'keep') {
+        state = prevState;
+        showScreen(null);
+      } else if (act === 'endrun') {
+        gameOver();
+      } else if (act === 'share') {
+        doShare(el);
+      } else if (act === 'fx') {
+        toggleFx();
+      }
+    }
+    wrap.addEventListener('click', onClick);
+
+    // Counts down to the next daily challenge (and refreshes the home screen when a new day starts)
+    tickTimer = setInterval(function () {
+      if (screens.home.classList.contains('sn-show') || screens.dres.classList.contains('sn-show')) refreshHome();
+    }, 1000);
+
+    // ---- Game logic ----
+    // Every random number comes from the seed + a counter, so the Nth cookie and the Nth rising row are the same
+    // for everyone who plays the same seed (that is what makes the daily puzzle the same for all players).
+    function rollAt(a, b, c) {
+      let h = seedVal | 0;
+      h = Math.imul(h ^ (a + 1), 0x9E3779B1); h ^= h >>> 15;
+      h = Math.imul(h ^ (b + 1), 0x85EBCA77); h ^= h >>> 13;
+      h = Math.imul(h ^ (c + 1), 0xC2B2AE3D); h ^= h >>> 16;
+      h = Math.imul(h, 0x27D4EB2F); h ^= h >>> 15;
+      return (h >>> 0) / 4294967296;
+    }
+
+    function newTile(v, c, r) {
+      return { v: v, c: c, r: r, x: c, y: r, pop: 1 }; // x,y = display position (animated)
+    }
+
+    function maxOnBoard() {
+      let m = 8;
+      for (let r = 0; r < ROWS; r++)
+        for (let c = 0; c < COLS; c++)
+          if (grid[r][c]) m = Math.max(m, grid[r][c].v);
+      return m;
+    }
+
+    function randomValue(roll) {
+      // Small cookies are common; bigger ones unlock as your biggest cookie grows
+      const pool = [];
+      for (let v = 2; v <= Math.min(MAX_SPAWN, maxOnBoard() / 2); v *= 2) pool.push(v);
+      const weights = pool.map(function (_, i) { return pool.length - i; });
+      const total = weights.reduce(function (a, b) { return a + b; }, 0);
+      let x = roll * total;
+      for (let i = 0; i < pool.length; i++) {
+        x -= weights[i];
+        if (x < 0) return pool[i];
+      }
+      return pool[0];
+    }
+
+    function nextSnack() { return randomValue(rollAt(1, tileIdx++, 0)); }
+
+    // Value for a rising-row cookie that doesn't instantly merge with its neighbours
+    function valueAvoiding(forbidden, row, c) {
+      for (let i = 0; i < 8; i++) {
+        const v = randomValue(rollAt(2, row, c * 8 + i));
+        if (!forbidden.has(v)) return v;
+      }
+      let v = 2;
+      while (forbidden.has(v)) v *= 2;
+      return v;
+    }
+
+    function riseInterval() {
+      if (elapsed >= cfg.hardCap) return cfg.capInterval;
+      return Math.max(cfg.riseMin, cfg.riseStart - elapsed * cfg.riseRamp);
+    }
+
+    function restart(seed) {
+      cfg = MODES[mode];
+      seedVal = (seed != null ? seed : (Date.now() & 0xffffffff)) | 0;
+      tileIdx = 0;
+      riseIdx = 0;
+      grid = Array.from({ length: ROWS }, function () { return Array(COLS).fill(null); });
+      ghosts = [];
+      floaters = [];
+      score = 0;
+      chain = 0;
+      lastTile = null;
+      flash = null;
+      wait = 0;
+      elapsed = 0;
+      riseTotal = cfg.riseStart;
+      riseTimer = cfg.riseStart;
+      state = 'idle';
+      for (let k = 0; k < cfg.preRows; k++) addRow(); // the daily starts with rows already on the board
+      current = nextSnack();
+      next = nextSnack();
+      if (options.onScore) options.onScore(0);
+    }
+
+    function landingRow(c) {
+      for (let r = ROWS - 1; r >= 0; r--) if (!grid[r][c]) return r;
+      return -1; // column is full
+    }
+
+    function drop(c) {
+      if (state !== 'idle') return;
+      const r = landingRow(c);
+      if (r < 0) { flash = { c: c, t: 300 }; sfxInvalid(); buzz([15, 40, 15]); return; }
+
+      const t = newTile(current, c, r);
+      t.y = -1.2; // starts above the board and slides down
+      grid[r][c] = t;
+      lastTile = t;
+      current = next;
+      next = nextSnack();
+      chain = 0;
+      state = 'resolving';
+      wait = STEP_MS;
+      sfxDrop();
+      buzz(10);
+    }
+
+    // Pushes every row up one and adds a fresh row at the bottom
+    function addRow() {
+      for (let r = 0; r < ROWS - 1; r++) {
+        grid[r] = grid[r + 1];
+        for (let c = 0; c < COLS; c++) if (grid[r][c]) grid[r][c].r = r;
+      }
+      grid[ROWS - 1] = Array(COLS).fill(null);
+
+      for (let c = 0; c < COLS; c++) {
+        const forbidden = new Set();
+        const above = grid[ROWS - 2][c];
+        if (above) forbidden.add(above.v);
+        if (c > 0) forbidden.add(grid[ROWS - 1][c - 1].v);
+        const t = newTile(valueAvoiding(forbidden, riseIdx, c), c, ROWS - 1);
+        t.y = ROWS + 0.2; // starts just below the board and slides up
+        grid[ROWS - 1][c] = t;
+      }
+      riseIdx++;
+    }
+
+    // A new row pushes up from the bottom
+    function rise() {
+      // If any cookie is in the top row it would be pushed out: game over
+      if (grid[0].some(Boolean)) { gameOver(); return; }
+
+      addRow();
+      riseTotal = riseInterval();
+      riseTimer = riseTotal;
+      chain = 0;
+      lastTile = null;
+      state = 'resolving';
+      wait = STEP_MS;
+      sfxRise();
+      buzz(35);
+    }
+
+    // Find groups of 2+ touching tiles with the same number
+    function findGroups() {
+      const seen = Array.from({ length: ROWS }, function () { return Array(COLS).fill(false); });
+      const groups = [];
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const t = grid[r][c];
+          if (!t || seen[r][c]) continue;
+          const stack = [t], group = [];
+          seen[r][c] = true;
+          while (stack.length) {
+            const cur = stack.pop();
+            group.push(cur);
+            const nbrs = [[cur.r - 1, cur.c], [cur.r + 1, cur.c], [cur.r, cur.c - 1], [cur.r, cur.c + 1]];
+            for (const n of nbrs) {
+              const nr = n[0], nc = n[1];
+              if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+              const nt = grid[nr][nc];
+              if (nt && !seen[nr][nc] && nt.v === t.v) {
+                seen[nr][nc] = true;
+                stack.push(nt);
+              }
+            }
+          }
+          if (group.length >= 2) groups.push({ v: t.v, tiles: group });
+        }
+      }
+      return groups;
+    }
+
+    function applyGravity() {
+      for (let c = 0; c < COLS; c++) {
+        let write = ROWS - 1;
+        for (let r = ROWS - 1; r >= 0; r--) {
+          const t = grid[r][c];
+          if (t) {
+            if (r !== write) { grid[write][c] = t; grid[r][c] = null; t.r = write; }
+            write--;
+          }
+        }
+      }
+    }
+
+    function stepResolve() {
+      const groups = findGroups();
+      if (!groups.length) { endTurn(); return; }
+
+      chain++;
+      let biggest = 0;
+      for (const g of groups) {
+        const n = g.tiles.length;
+        const newValue = g.v * Math.pow(2, n - 1); // 2 tiles -> x2, 3 tiles -> x4, 4 tiles -> x8...
+        biggest = Math.max(biggest, newValue);
+        // The merged cookie forms where you dropped, otherwise at the lowest cookie of the group
+        const target = g.tiles.find(function (t) { return t === lastTile; }) ||
+                       g.tiles.reduce(function (a, b) { return b.r > a.r ? b : a; });
+        const tc = target.c, tr = target.r;
+
+        for (const t of g.tiles) {
+          grid[t.r][t.c] = null;
+          ghosts.push({ v: t.v, x: t.x, y: t.y, tx: tc, ty: tr, life: 1 }); // slide-in animation
+        }
+        const nt = newTile(newValue, tc, tr);
+        nt.pop = 1.35;
+        grid[tr][tc] = nt;
+
+        const pts = newValue * chain; // chains multiply the points
+        score += pts;
+        floaters.push({
+          text: '+' + pts + (chain > 1 ? '  x' + chain : ''),
+          x: BX + tc * CELL + CELL / 2,
+          y: BY + tr * CELL,
+          life: 1
+        });
+      }
+      lastTile = null;
+      applyGravity();
+      wait = STEP_MS;
+      sfxMerge(biggest, chain);
+      buzz(Math.min(60, 15 + chain * 10));
+      if (mode === 'daily' && dailyRec) { dailyRec.score = score; saveDstore(); } // so a refresh can't lose the score
+      if (options.onScore) options.onScore(score);
+    }
+
+    function endTurn() {
+      if (grid[0].every(Boolean)) gameOver(); // every column full
+      else state = 'idle';
+    }
+
+    function gameOver() {
+      state = 'over';
+      sfxGameOver();
+      buzz([80, 50, 160]);
+      const seconds = Math.round(elapsed / 1000);
+      let result;
+
+      if (mode === 'daily') {
+        closeRecord(dailyRec, score, seconds, maxOnBoard());
+        result = { mode: 'daily', score: score, best: dstore.best, maxTile: dailyRec.maxTile, seconds: seconds,
+                   dailyNumber: dailyRec.num, date: dailyRec.date, streak: displayStreak() };
+        showDailyResult(dailyRec, true);
+      } else {
+        const isNewBest = score > best;
+        if (isNewBest) {
+          best = score;
+          try { localStorage.setItem(storageKey, best); } catch (e) {}
+        }
+        result = { mode: 'classic', score: score, best: best, maxTile: maxOnBoard(), seconds: seconds };
+        showOver(result, isNewBest && score > 0);
+      }
+      state = 'over';
+      if (options.onGameOver) options.onGameOver(result);
+    }
+
+    // ---- Update (animation + timing) ----
+    function update(dt) {
+      const k = dt / 16.67; // normalise to ~60fps
+
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const t = grid[r][c];
+          if (!t) continue;
+          t.x += (t.c - t.x) * Math.min(1, 0.3 * k);
+          t.y += (t.r - t.y) * Math.min(1, 0.3 * k);
+          t.pop += (1 - t.pop) * Math.min(1, 0.15 * k);
+        }
+      }
+      for (const g of ghosts) {
+        g.x += (g.tx - g.x) * Math.min(1, 0.35 * k);
+        g.y += (g.ty - g.y) * Math.min(1, 0.35 * k);
+        g.life -= 0.06 * k;
+      }
+      ghosts = ghosts.filter(function (g) { return g.life > 0; });
+
+      for (const f of floaters) { f.y -= 0.6 * k; f.life -= 0.02 * k; }
+      floaters = floaters.filter(function (f) { return f.life > 0; });
+
+      if (flash) { flash.t -= dt; if (flash.t <= 0) flash = null; }
+
+      if (state === 'idle' || state === 'resolving') {
+        elapsed += dt;
+        riseTimer = Math.max(0, riseTimer - dt);
+      }
+
+      if (state === 'resolving') {
+        wait -= dt;
+        if (wait <= 0) stepResolve();
+      } else if (state === 'idle' && riseTimer <= 0) {
+        rise(); // the rise waits until any merge chain has finished
+      }
+    }
+
+    // ---- Drawing ----
+    function drawTile(v, cx, cy, size, scale, alpha) {
+      const s = size * (scale || 1);
+      const style = tileStyle(v);
+      ctx.globalAlpha = alpha == null ? 1 : alpha;
+      ctx.fillStyle = style[0];
+      roundRect(ctx, cx - s / 2, cy - s / 2, s, s, 10 * (s / 56));
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.28)'; // soft highlight on top
+      roundRect(ctx, cx - s / 2 + 3, cy - s / 2 + 3, s - 6, s * 0.28, 7);
+      ctx.fill();
+
+      const len = String(v).length;
+      const fs = s * (len <= 2 ? 0.46 : len === 3 ? 0.37 : len === 4 ? 0.3 : 0.24);
+      ctx.fillStyle = style[1];
+      ctx.font = '700 ' + fs + 'px ' + FONT_HEAD;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(v, cx, cy + 1);
+      ctx.textBaseline = 'alphabetic';
+      ctx.globalAlpha = 1;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      ctx.textBaseline = 'alphabetic';
+
+      // Header: score, best (or daily number), current cookie, next cookie
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(255,248,239,0.6)';
+      ctx.font = '700 12px ' + FONT_BODY;
+      ctx.fillText('SCORE', 20, 34);
+      ctx.fillStyle = C.cream;
+      ctx.font = '700 30px ' + FONT_HEAD;
+      ctx.fillText(score, 20, 68);
+      ctx.font = '500 13px ' + FONT_BODY;
+      if (mode === 'daily' && dailyRec) {
+        ctx.fillStyle = C.rose;
+        ctx.fillText('Daily #' + dailyRec.num, 20, 92);
+      } else {
+        ctx.fillStyle = 'rgba(255,248,239,0.6)';
+        ctx.fillText('Best ' + fmtNum(Math.max(best, score)), 20, 92);
+      }
+
+      drawTile(current, W / 2, 62, 56);
+
+      // Countdown to the "final surge" (when rows start arriving too fast to survive)
+      if (state === 'idle' || state === 'resolving' || state === 'paused') {
+        const left = cfg.hardCap - elapsed;
+        ctx.textAlign = 'center';
+        ctx.font = '700 10px ' + FONT_BODY;
+        if (left > 0) {
+          ctx.fillStyle = 'rgba(255,248,239,0.45)';
+          ctx.fillText('FINAL SURGE IN ' + fmtTime(Math.ceil(left / 1000)), W / 2, 106);
+        } else {
+          ctx.fillStyle = 'rgba(233,107,115,' + (0.7 + 0.3 * Math.sin(performance.now() / 120)) + ')';
+          ctx.fillText('FINAL SURGE!', W / 2, 106);
+        }
+      }
+
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(255,248,239,0.6)';
+      ctx.font = '700 12px ' + FONT_BODY;
+      ctx.fillText('NEXT', W - 50, 34);
+      drawTile(next, W - 50, 66, 40);
+
+      // Board background
+      ctx.fillStyle = C.char;
+      roundRect(ctx, BX - 6, BY - 6, COLS * CELL + 12, ROWS * CELL + 12, 14);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,248,239,0.05)';
+      for (let r = 0; r < ROWS; r++)
+        for (let c = 0; c < COLS; c++) {
+          roundRect(ctx, BX + c * CELL + 4, BY + r * CELL + 4, CELL - 8, CELL - 8, 9);
+          ctx.fill();
+        }
+
+      // Danger warning: pulsing rose outline when cookies reach the top two rows
+      let danger = false;
+      for (let r = 0; r < 2; r++)
+        for (let c = 0; c < COLS; c++) if (grid[r][c]) danger = true;
+      if (danger && (state === 'idle' || state === 'resolving')) {
+        ctx.strokeStyle = 'rgba(233,107,115,' + (0.6 + 0.4 * Math.sin(performance.now() / 120)) + ')';
+        ctx.lineWidth = 3;
+        roundRect(ctx, BX - 6, BY - 6, COLS * CELL + 12, ROWS * CELL + 12, 14);
+        ctx.stroke();
+      }
+
+      // Column highlight + landing preview
+      if (state === 'idle' && hoverCol >= 0) {
+        ctx.fillStyle = 'rgba(255,138,61,0.12)';
+        ctx.fillRect(BX + hoverCol * CELL, BY, CELL, ROWS * CELL);
+        const lr = landingRow(hoverCol);
+        if (lr >= 0) drawTile(current, BX + hoverCol * CELL + CELL / 2, BY + lr * CELL + CELL / 2, CELL - 8, 1, 0.35);
+      }
+      if (flash) { // full column feedback
+        ctx.fillStyle = 'rgba(233,107,115,' + (0.35 * flash.t / 300) + ')';
+        ctx.fillRect(BX + flash.c * CELL, BY, CELL, ROWS * CELL);
+      }
+
+      // Snacks (clipped so they slide in from the edges of the board)
+      ctx.save();
+      roundRect(ctx, BX - 6, BY - 6, COLS * CELL + 12, ROWS * CELL + 12, 14);
+      ctx.clip();
+      for (const g of ghosts)
+        drawTile(g.v, BX + g.x * CELL + CELL / 2, BY + g.y * CELL + CELL / 2, CELL - 8, 1, Math.max(0, g.life));
+      for (let r = 0; r < ROWS; r++)
+        for (let c = 0; c < COLS; c++) {
+          const t = grid[r][c];
+          if (t) drawTile(t.v, BX + t.x * CELL + CELL / 2, BY + t.y * CELL + CELL / 2, CELL - 8, t.pop);
+        }
+      ctx.restore();
+
+      // Floating score popups (outlined so they read on any cookie colour)
+      ctx.textAlign = 'center';
+      ctx.font = '700 18px ' + FONT_HEAD;
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 4;
+      for (const f of floaters) {
+        ctx.globalAlpha = Math.max(0, f.life);
+        ctx.strokeStyle = C.choc;
+        ctx.strokeText(f.text, f.x, f.y);
+        ctx.fillStyle = C.cream;
+        ctx.fillText(f.text, f.x, f.y);
+      }
+      ctx.globalAlpha = 1;
+
+      // Rising-row timer bar: fills up, then a new row rises
+      const barY = 574, barW = COLS * CELL;
+      const frac = Math.min(1, Math.max(0, 1 - riseTimer / riseTotal));
+      ctx.fillStyle = 'rgba(255,248,239,0.1)';
+      roundRect(ctx, BX, barY, barW, 6, 3);
+      ctx.fill();
+      if (frac > 0) {
+        const hot = frac > 0.75;
+        ctx.globalAlpha = hot ? 0.7 + 0.3 * Math.sin(performance.now() / 80) : 1;
+        ctx.fillStyle = hot ? C.rose : C.orange;
+        roundRect(ctx, BX, barY, Math.max(6, barW * frac), 6, 3);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // ---- Loop ----
+    let last = performance.now();
+    function loop(now) {
+      const dt = Math.min(now - last, 50); // clamp so tab-switching doesn't cause jumps
+      last = now;
+      update(dt);
+      draw();
+      rafId = requestAnimationFrame(loop);
+    }
+
+    // ---- Input ----
+    function logicalPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (W / rect.width),  // convert to logical coordinates
+        y: (e.clientY - rect.top) * (H / rect.height)
+      };
+    }
+
+    function colFromEvent(e) {
+      const c = Math.floor((logicalPos(e).x - BX) / CELL);
+      return c >= 0 && c < COLS ? c : -1;
+    }
+
+    function onDown(e) {
+      e.preventDefault();
+      if (state === 'menu' || state === 'over' || state === 'paused') return;
+      ensureAudio();
+
+      const c = colFromEvent(e);
+      hoverCol = c;
+      if (c >= 0) drop(c);
+    }
+    function onMove(e) { hoverCol = colFromEvent(e); }
+    function onLeave() { hoverCol = -1; }
+    function onUp(e) { if (e.pointerType !== 'mouse') hoverCol = -1; }
+
+    canvas.addEventListener('pointerdown', onDown);
+    canvas.addEventListener('pointermove', onMove);
+    canvas.addEventListener('pointerleave', onLeave);
+    canvas.addEventListener('pointerup', onUp);
+
+    // ---- Public API ----
+    function destroy() {
+      cancelAnimationFrame(rafId);
+      clearTimeout(loadTimer);
+      clearInterval(tickTimer);
+      if (resizeObs) resizeObs.disconnect();
+      window.removeEventListener('resize', fit);
+      window.removeEventListener('orientationchange', fit);
+      wrap.removeEventListener('click', onClick);
+      canvas.removeEventListener('pointerdown', onDown);
+      canvas.removeEventListener('pointermove', onMove);
+      canvas.removeEventListener('pointerleave', onLeave);
+      canvas.removeEventListener('pointerup', onUp);
+      if (audioCtx) { try { audioCtx.close(); } catch (e) {} }
+      wrap.remove();
+    }
+
+    this.restart = function (seed) {   // starts a classic game (skips the menus)
+      clearTimeout(loadTimer);
+      loading = false;
+      mode = 'classic';
+      wrap.classList.remove('sn-daily');
+      backBtn.innerHTML = ICON_BACK + 'Back';
+      showScreen(null);
+      restart(seed);
+    };
+    this.destroy = destroy;
+    this.getScore = function () { return score; };
+    this.getDailyStatus = function () {
+      const rec = todayRec(), date = getDate();
+      return { date: date, number: dailyNumber(date), played: !!rec, score: rec ? rec.score : null, streak: displayStreak() };
+    };
+    this.setSound = function (on) { soundOn = !!on; saveFx(); refreshFx(); };
+    this.setHaptics = function (on) { hapticsOn = !!on; saveFx(); refreshFx(); };
+
+    // Snacktic: start a chosen mode directly. The daily try is controlled by the server, so the saved local lock is ignored.
+    this.start = function (m) {
+      if (m === 'daily') { dstore.today = null; saveDstore(); startDaily(); }
+      else startGame('classic');
+    };
+
+    refreshFx();
+    restart();
+    if (options.showHome === false) showScreen(null);
+    else goHome();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  global.Crumbly = Crumbly;
+})(window);
+</script>
+
+<script>
+  // ---- Start the game. Inside Snacktic (embed=1) it reports to the app instead of showing a demo line. ----
+  (function () {
+    var params = new URLSearchParams(location.search);
+    var embedded = window.parent !== window && params.get('embed') === '1';
+    function send(msg) {
+      try { window.parent.postMessage(Object.assign({ source: 'snacktic-game', game: 'crumbly' }, msg), location.origin); } catch (e) {}
+    }
+    var game = new Crumbly(document.getElementById('game-slot'), {
+      showHome: !embedded,
+      onExit: embedded ? function () { send({ type: 'exit' }); } : undefined,
+      onGameOver: function (r) {
+        if (embedded) { send({ type: 'finish', mode: r.mode, score: r.score, seconds: r.seconds, maxTile: r.maxTile }); return; }
+        document.getElementById('result').textContent =
+          'Your app received: ' + r.mode + (r.dailyNumber ? ' #' + r.dailyNumber : '') + ', score ' + r.score +
+          ', biggest cookie ' + r.maxTile + ', time ' + r.seconds + 's';
+      }
+    });
+    if (embedded) game.start(params.get('mode') === 'daily' ? 'daily' : 'classic');
+  })();
+</script>
+</body>
+</html>

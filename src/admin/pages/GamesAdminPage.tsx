@@ -261,8 +261,11 @@ export function GamesAdminPage() {
             <SelectField label="How points are worked out" value={form.awardType} onChange={(e) => setForm({ ...form, awardType: e.target.value as AwardType })}>
               <option value="fixed">A fixed amount</option>
               <option value="by_score">Depends on the score</option>
+              <option value="milestones">Score milestones (each pays once)</option>
             </SelectField>
-            {form.awardType === 'fixed' ? (
+            {form.awardType === 'milestones' ? (
+              <p className="text-secondary text-small">The score thresholds and their points are set in Game challenges. The daily cap below still applies.</p>
+            ) : form.awardType === 'fixed' ? (
               <>
                 <TextField label="First completed round of the day" type="number" inputMode="numeric" min={0} value={form.first} onChange={(e) => setForm({ ...form, first: e.target.value })} />
                 <TextField label="Each replay after that" type="number" inputMode="numeric" min={0} value={form.replay} onChange={(e) => setForm({ ...form, replay: e.target.value })} />

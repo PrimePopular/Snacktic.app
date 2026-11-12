@@ -92,7 +92,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (url.origin === self.location.origin) {
-    if (request.mode === 'navigate') {
+    if (request.mode === 'navigate' && !url.pathname.startsWith('/games/')) {
       event.respondWith(networkFirstShell(request));
     } else {
       event.respondWith(staleWhileRevalidate(RUNTIME, request));

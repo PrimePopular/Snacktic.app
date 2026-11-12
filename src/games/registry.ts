@@ -5,10 +5,10 @@ import type { ClassicSlot, GameDefinition, SpecialEventDefinition } from './game
  * "coming soon" with its planned name, so the page layout never shifts when a game arrives.
  */
 export const classicSlots: { slot: ClassicSlot; plannedName: string }[] = [
-  { slot: 1, plannedName: 'Catch the Crumbs' },
-  { slot: 2, plannedName: 'Perfect Stack' },
-  { slot: 3, plannedName: 'Cookie Memory' },
-  { slot: 4, plannedName: 'One-Minute Challenge' },
+  { slot: 1, plannedName: 'Crumbly' },
+  { slot: 2, plannedName: 'Crumb Quest' },
+  { slot: 3, plannedName: 'Coming soon' },
+  { slot: 4, plannedName: 'Coming soon' },
 ];
 
 /**
@@ -25,7 +25,34 @@ export const classicSlots: { slot: ClassicSlot; plannedName: string }[] = [
  *   load: () => import('./catch-crumbs'),
  * },
  */
-export const classicGames: GameDefinition[] = [];
+export const classicGames: GameDefinition[] = [
+  {
+    id: 'crumbly',
+    slot: 1,
+    title: 'Crumbly',
+    summary: 'Merge matching cookies before the rows reach the top.',
+    instructions: 'Tap a column to drop a cookie. Touching cookies with the same number merge into the next number. Do not let a rising row push a cookie out of the top.',
+    estimatedSeconds: 180,
+    modes: [
+      { id: 'classic', label: 'Classic' },
+      { id: 'daily', label: 'Daily Challenge', dailyChallenge: true },
+    ],
+    load: () => import('./crumbly'),
+  },
+  {
+    id: 'crumb-quest',
+    slot: 2,
+    title: 'Crumb Quest',
+    summary: 'Build words from the letter cookies.',
+    instructions: 'Slide across the letters to spell words and fill the board. In the Daily Quest you race the cookie alarm through 10 levels.',
+    estimatedSeconds: 120,
+    modes: [
+      { id: 'classic-bake', label: 'Classic Bake' },
+      { id: 'daily-quest', label: 'Daily Quest', dailyChallenge: true },
+    ],
+    load: () => import('./crumb-quest'),
+  },
+];
 
 export function findGame(id: string): GameDefinition | undefined {
   return classicGames.find((game) => game.id === id);

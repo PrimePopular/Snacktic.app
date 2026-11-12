@@ -1,0 +1,6 @@
+.mode-chooser { display: grid; gap: var(--space-3); }
+.mode-chooser__card { display: grid; gap: var(--space-2); justify-items: start; }
+.mode-chooser__card h3 { margin: 0; }
+.mode-chooser__card p { margin: 0; }
+.game-frame-wrap { display: grid; gap: var(--space-3); justify-items: start; }
+.game-frame { width: 100%; height: min(78dvh, 46rem); min-height: 26rem; border: 0; border-radius: var(--radius-lg); background: var(--color-cream); }

@@ -27,6 +27,11 @@ export interface GameResult {
    * Leave it out for a game with a single mode.
    */
   mode?: string;
+  /**
+   * Daily challenges only: the id returned by startAttempt() when the student began the try. The result is
+   * paid for that try, once.
+   */
+  attemptId?: string;
 }
 
 export interface GameProps {

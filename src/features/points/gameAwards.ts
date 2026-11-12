@@ -15,7 +15,7 @@ import { notifyPointsChanged } from './pointsService';
 const QUEUE_KEY = 'snacktic.pendingResults';
 const DAY_MS = 86_400_000;
 
-export type AwardReason = 'daily_first' | 'replay' | 'cap_reached' | 'no_points' | 'already_recorded' | 'score_too_low';
+export type AwardReason = 'daily_first' | 'replay' | 'cap_reached' | 'no_points' | 'already_recorded' | 'score_too_low' | 'challenge' | 'milestone';
 
 export type AwardOutcome =
   | { status: 'awarded'; points: number; reason: AwardReason }
@@ -72,6 +72,10 @@ const SHOWABLE = [
   'That score is not possible',
   'That result is not valid',
   'Sign in to earn points',
+  'Your account is suspended',
+  'Start the challenge first',
+  'Not enough Crumb Points to try again',
+  'That game has no daily challenge right now',
 ];
 
 async function attempt(p: Pending): Promise<Attempt> {
@@ -103,7 +107,7 @@ async function attempt(p: Pending): Promise<Attempt> {
  */
 export async function submitGameResult(result: GameResult, signedIn: boolean): Promise<AwardOutcome> {
   const pending: Pending = {
-    clientId: crypto.randomUUID(),
+    clientId: result.attemptId ?? crypto.randomUUID(),
     gameId: result.gameId,
     mode: result.mode ?? 'default',
     score: result.score,
@@ -154,4 +158,35 @@ export async function flushPendingResults(): Promise<{ claimed: number; points: 
   }
   if (points > 0) notifyPointsChanged();
   return { claimed, points };
+}
+
+/* ------------------------------ daily challenge tries ------------------------ */
+
+function friendly(message: string): Error {
+  const known = SHOWABLE.find((text) => message.includes(text));
+  if (!known) console.error('[points] attempt', message);
+  return new Error(known ?? 'Something went wrong. Please try again.');
+}
+
+/** What the next try at a daily challenge would cost. Changes nothing. */
+export async function previewAttempt(gameId: string, mode: string): Promise<{ daily: boolean; cost: number; tries: number }> {
+  if (!supabase) throw new Error('The database is not connected yet.');
+  const { data, error } = await supabase.rpc('preview_game_attempt', { p_game_id: gameId, p_mode: mode });
+  if (error) throw friendly(error.message);
+  const row = ((data ?? []) as { is_daily: boolean; cost: number; tries_today: number }[])[0];
+  return { daily: Boolean(row?.is_daily), cost: row?.cost ?? 0, tries: row?.tries_today ?? 0 };
+}
+
+/**
+ * Starts a try at a daily challenge. The first try each day is free; later tries cost Crumb Points,
+ * taken here. Pass the returned attemptId as GameResult.attemptId when the round ends.
+ */
+export async function startAttempt(gameId: string, mode: string): Promise<{ attemptId: string; cost: number }> {
+  if (!supabase) throw new Error('The database is not connected yet.');
+  const { data, error } = await supabase.rpc('start_game_attempt', { p_game_id: gameId, p_mode: mode });
+  if (error) throw friendly(error.message);
+  const row = ((data ?? []) as { attempt_id: string; cost: number }[])[0];
+  if (!row) throw new Error('Something went wrong. Please try again.');
+  if (row.cost > 0) notifyPointsChanged();
+  return { attemptId: row.attempt_id, cost: row.cost };
 }

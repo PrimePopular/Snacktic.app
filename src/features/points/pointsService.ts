@@ -5,6 +5,7 @@
  * Everything here asks the database to do it, and the database checks the rules.
  */
 import { supabase } from '../../services/database';
+import { removePicture } from '../../services/pictures';
 import type { AdminRedemption, PointsTransaction, Redemption, RedemptionStatus, Reward, TransactionKind } from './points.types';
 
 function client() {
@@ -244,4 +245,19 @@ export async function adminSaveGiftLimits(limits: GiftLimits): Promise<void> {
   const [a, b] = await Promise.all([one('gift_max_received_per_day', limits.maxCount), one('gift_max_points_per_day', limits.maxPoints)]);
   if (a.error) throw failure(a.error.message);
   if (b.error) throw failure(b.error.message);
+}
+
+/**
+ * Deletes a reward. If past orders still point at it the database refuses, so say so plainly: the owner can hide it
+ * instead, and it can be deleted once those orders have been cleaned up (Admin, Storage cleanup).
+ */
+export async function adminDeleteReward(reward: Reward): Promise<void> {
+  const { error } = await client().from('rewards').delete().eq('id', reward.id);
+  if (error) {
+    if (error.code === '23503') {
+      throw new Error('This reward still has orders attached. Hide it for now. It can be deleted after those orders are cleaned up.');
+    }
+    throw new Error(error.message);
+  }
+  if (reward.imagePath) await removePicture(reward.imagePath).catch(() => undefined);
 }

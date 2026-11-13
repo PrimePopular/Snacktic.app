@@ -68,3 +68,14 @@ account suspension, start-up animation, installable app and offline copies of pu
 - Crumbly daily limit is back to the original 3 minutes. The "boxes already on the board" in the daily is the game's own design (`preRows: 2` in the original file).
 - Run `supabase/016_game_items_and_progress.sql`.
 - Next: delivery locations (GOUNI only), Find a Friend as a referral link, Support and Feedback, compact game cards, UI polish.
+
+## Update 017 (testing feedback)
+- Game result is a pop-up over the game. Play again and Retry go straight back into the same mode (no picker). A daily retry asks before charging.
+- Cookie Wall Race keeps its own original screens. Levels 4 and 5 ask the app for permission to start (first try free, retries cost points).
+- Crumb Quest: the game's own points pill, Home button and logo are hidden inside Snacktic (one Crumb Points display, in the bar). Wording says Crumb Points.
+- Crumbly: no exact time shown in the instructions.
+- Classic modes have no replay limit: Crumb Quest Classic Bake now pays one-time level milestones. Fixed-amount rules no longer show a maximum score.
+- Ads: a feed with only 2 cards still shows an ad at the end.
+- Weather uses each student's own place (phone location or a searched place), campus only as the fallback.
+- Rewards have a Delete button. Auto cleanup of finished orders and old data (Admin, Storage cleanup). Run `supabase/017_cleanup_and_classic_rules.sql`.
+- Next: scheduled notifications with times set in the admin and weather per student's place, delivery locations, Find a Friend as a referral link, Support and Feedback, a 3,000-student capacity review.

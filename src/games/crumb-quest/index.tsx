@@ -31,15 +31,29 @@ const MODES: ChooserMode[] = [
 ];
 
 /** Crumb Quest (the word game). The game page lives in public/games/crumb-quest.html and uses the app's Crumb Points. */
-export default function CrumbQuest({ onFinish, onExit }: GameProps) {
+/** The game keeps its own one-try lock for the daily quest. The server decides who may play, so clear it for this try. */
+function clearDailyLock() {
+  try {
+    localStorage.removeItem('crumbquest-daily');
+    localStorage.removeItem('crumbquest-progress-hard');
+  } catch {
+    /* storage unavailable: the game then uses its own lock */
+  }
+}
+
+export default function CrumbQuest({ start, onFinish, onExit }: GameProps) {
   const { status } = useAuth();
   const signedIn = status === 'signed-in';
-  const [session, setSession] = useState<{ mode: string; attemptId?: string } | null>(null);
+  const [session, setSession] = useState<{ mode: string; attemptId?: string } | null>(() => {
+    if (!start) return null;
+    if (start.mode === 'daily-quest') clearDailyLock();
+    return { mode: start.mode, attemptId: start.attemptId };
+  });
   const [notice, setNotice] = useState<string | null>(null);
   const done = useRef(false);
   const levels = useRef(0);
-  const startedAt = useRef(0);
-  const levelStartedAt = useRef(0);
+  const startedAt = useRef(Date.now());
+  const levelStartedAt = useRef(Date.now());
 
   if (!session) {
     return (
@@ -47,15 +61,7 @@ export default function CrumbQuest({ onFinish, onExit }: GameProps) {
         gameId={GAME_ID}
         modes={MODES}
         onStart={(mode, attemptId) => {
-          if (mode === 'daily-quest') {
-            // The server decides who may play today. Clear the game's own local one-try lock for this try.
-            try {
-              localStorage.removeItem('crumbquest-daily');
-              localStorage.removeItem('crumbquest-progress-hard');
-            } catch {
-              /* storage unavailable: the game then uses its own lock */
-            }
-          }
+          if (mode === 'daily-quest') clearDailyLock();
           startedAt.current = Date.now();
           levelStartedAt.current = Date.now();
           levels.current = 0;

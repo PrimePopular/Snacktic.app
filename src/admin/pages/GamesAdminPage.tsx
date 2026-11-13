@@ -59,7 +59,7 @@ function describe(r: GameRule): string {
     r.awardType === 'fixed'
       ? `First round ${r.dailyFirstAward}, replay ${r.replayAward}`
       : `${r.pointsPerScore} per score point, max ${r.maxRoundAward} a round, replays ${r.replayPercent}%`;
-  return `${pay} · Cap ${r.dailyCap}/day${r.minScore ? ` · Needs score ${r.minScore}+` : ''} · Max score ${r.maxScore} · Round ${r.minDurationMs / 1000}s to ${r.maxDurationMs / 1000}s`;
+  return `${pay} · Cap ${r.dailyCap}/day${r.minScore ? ` · Needs score ${r.minScore}+` : ''} ${r.awardType === 'fixed' ? '' : `· Max score ${r.maxScore} `}· Round ${r.minDurationMs / 1000}s to ${r.maxDurationMs / 1000}s`;
 }
 
 /** Owner only: what each game and mode pays, the limits that stop cheating, and when a day resets. */
@@ -283,7 +283,9 @@ export function GamesAdminPage() {
 
           <fieldset className="form-group">
             <legend>Cheat limits (from the game's SCORING.md)</legend>
-            <TextField label="Highest possible score" type="number" inputMode="numeric" min={1} value={form.maxScore} onChange={(e) => setForm({ ...form, maxScore: e.target.value })} hint="Any score above this is refused." />
+            {form.awardType !== 'fixed' && (
+              <TextField label="Highest possible score" type="number" inputMode="numeric" min={1} value={form.maxScore} onChange={(e) => setForm({ ...form, maxScore: e.target.value })} hint="Any score above this is refused." />
+            )}
             <TextField label="Shortest realistic round (seconds)" type="number" inputMode="decimal" min={0} value={form.minSeconds} onChange={(e) => setForm({ ...form, minSeconds: e.target.value })} />
             <TextField label="Longest realistic round (seconds)" type="number" inputMode="decimal" min={0} value={form.maxSeconds} onChange={(e) => setForm({ ...form, maxSeconds: e.target.value })} />
           </fieldset>

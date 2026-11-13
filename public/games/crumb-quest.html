@@ -715,6 +715,10 @@ body.show-tips .game-tip, body.show-tips .footer-note { display:block; }
 <style>
 /* Snacktic: make sure a finger drag always reaches the letter wheel instead of scrolling or selecting. */
 html, body { overscroll-behavior: none; }
+/* Inside Snacktic the app already shows the Crumb Points and the Leave button, so the game drops its own header and balance and uses the whole screen. */
+html.embed .topbar .brand, html.embed .crumb-chip, html.embed .daily-label, html.embed .home-nav, html.embed .home-score, html.embed .shop-note { display: none !important; }
+html.embed .topbar { min-height: 40px !important; justify-content: flex-end; border-bottom: 0; }
+html.embed .page-shell { min-height: 100%; padding-top: 0 !important; }
 .letter-wheel, .letter-wheel * { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
 </style>
 </head>
@@ -819,7 +823,7 @@ html, body { overscroll-behavior: none; }
               <div><strong>Level complete!</strong><span>Lovely work. Ready for the next level?</span></div>
               <button id="next-level" type="button" class="next-level-button">Next level <span aria-hidden="true">→</span></button>
             </div>
-            <div class="board-footer"><span class="crumb-note"><span aria-hidden="true">✦</span> Longer words earn more crumbs</span><span class="hint-actions"><button id="hint-button" class="hint-button" type="button" title="Reveal one letter"><span aria-hidden="true">✧</span> Hint <b>5 left</b></button><button id="shop-button" class="shop-button" type="button"><span aria-hidden="true">🛒</span> Buy hints</button></span></div>
+            <div class="board-footer"><span class="crumb-note"><span aria-hidden="true">✦</span> Longer words earn more points</span><span class="hint-actions"><button id="hint-button" class="hint-button" type="button" title="Reveal one letter"><span aria-hidden="true">✧</span> Hint <b>5 left</b></button><button id="shop-button" class="shop-button" type="button"><span aria-hidden="true">🛒</span> Buy hints</button></span></div>
           </section>
 
           <section class="play-card" aria-labelledby="letters-title">
@@ -842,7 +846,7 @@ html, body { overscroll-behavior: none; }
         <p class="how-to-lead">Here’s what you’ll see and how to use it.</p>
         <ul class="how-to-list">
           <li><span class="how-to-icon" aria-hidden="true">🔤</span><span><strong>Drag letters</strong> to make the words in the jar.</span></li>
-          <li><span class="how-to-icon" aria-hidden="true">✦</span><span><strong>Earn crumbs</strong> and spend them in the hint shop when you need a nudge.</span></li>
+          <li><span class="how-to-icon" aria-hidden="true">✦</span><span><strong>Earn Crumb Points</strong> and spend them in the hint shop when you need a nudge.</span></li>
           <li><span class="how-to-icon" aria-hidden="true">🍪</span><span><strong>Tap the tiny cookies</strong> hiding around the screen to uncover a bonus word.</span></li>
         </ul>
         <button id="close-how-to" class="submit-button how-to-start" type="button">Got it — let’s play <span aria-hidden="true">→</span></button>
@@ -852,8 +856,8 @@ html, body { overscroll-behavior: none; }
     <div class="how-to-modal shop-modal" id="shop-modal" role="dialog" aria-modal="true" aria-labelledby="shop-title" hidden>
       <section class="how-to-card">
         <p class="eyebrow"><span class="eyebrow-dot"></span> HINT SHOP</p>
-        <h2 id="shop-title">Buy hints with crumbs</h2>
-        <p class="how-to-lead">You have <strong id="shop-crumbs">0</strong> crumbs and <strong id="shop-bank">0</strong> hints. Each hint reveals one letter. Earn a free hint every 5 levels.</p>
+        <h2 id="shop-title">Buy hints with Crumb Points</h2>
+        <p class="how-to-lead">You have <strong id="shop-crumbs">0</strong> Crumb Points and <strong id="shop-bank">0</strong> hints. Each hint reveals one letter. Earn a free hint every 5 levels.</p>
         <div class="shop-list" id="shop-list">
           <button class="shop-pack" type="button" data-pack="0"><span class="shop-qty">1 hint</span><span class="shop-note">Just a nudge</span><span class="shop-price">20 ✦</span></button>
           <button class="shop-pack" type="button" data-pack="1"><span class="shop-qty">3 hints</span><span class="shop-note">Save 5 crumbs</span><span class="shop-price">55 ✦</span></button>
@@ -894,6 +898,8 @@ const veryHardRounds = [{"letters": ["A","N","T"], "words": ["AN","AT","ANT","TA
 // Crumb Quest: game logic (TypeScript). Types live in types.ts, level data in levels.ts.
 const SNACK = new URLSearchParams(location.search);
 const EMBED = window.parent !== window && SNACK.get('embed') === '1';
+if (EMBED)
+    document.documentElement.classList.add('embed');
 // Inside Snacktic, results go to the app (it decides about points). Elsewhere nothing happens.
 function report(msg) {
     if (!EMBED)
@@ -1453,7 +1459,7 @@ function buyHints(index) {
         return;
     }
     if (state.score < pack.cost) {
-        announce(`You need ${pack.cost} crumbs for that pack.`);
+        announce(`You need ${pack.cost} Crumb Points for that pack.`);
         playSound('error');
         return;
     }
@@ -1462,7 +1468,7 @@ function buyHints(index) {
     saveScore();
     saveHints();
     updateHintButton();
-    announce(`Bought ${pack.qty} hint${pack.qty > 1 ? 's' : ''} for ${pack.cost} crumbs.`);
+    announce(`Bought ${pack.qty} hint${pack.qty > 1 ? 's' : ''} for ${pack.cost} Crumb Points.`);
     playSound('success');
 }
 function renderBoard() {
@@ -1707,7 +1713,8 @@ function submitWord() {
         renderBoard();
         updateAnswer();
         document.querySelector(`[data-word="${word}"]`)?.classList.add('just-found');
-        announce(`+${earned} crumbs${multiplier > 1 ? ` · ${multiplier}× streak` : ''}`);
+        if (!EMBED)
+            announce(`+${earned} crumbs${multiplier > 1 ? ` · ${multiplier}× streak` : ''}`);
         playSound('success');
         if (state.found.size === round.words.length)
             finishRound();
@@ -1728,7 +1735,7 @@ function submitWord() {
         updateAnswer();
         updateStats();
         saveGameProgress();
-        announce(`Bonus word! +15 crumbs`);
+        announce(EMBED ? 'Bonus word!' : `Bonus word! +15 crumbs`);
         playSound('success');
         return;
     }
@@ -1817,7 +1824,7 @@ function finishRound() {
     if (finishedClassicJourney)
         announce(`You completed all ${classicRounds.length} levels. Congratulations!`);
     else if (freeHint || hardReward || dayCount)
-        announce([freeHint ? 'Free hint earned!' : '', hardReward ? `Daily reward +${hardReward} crumbs!` : '', dayCount ? `🔥 ${dayCount}-day streak` : ''].filter(Boolean).join(' '));
+        announce([freeHint ? 'Free hint earned!' : '', hardReward && !EMBED ? `Daily reward +${hardReward} crumbs!` : '', dayCount ? `🔥 ${dayCount}-day streak` : ''].filter(Boolean).join(' '));
     playConfettiSound();
     setTimeout(launchConfetti, 120);
     if (finishedRun)
@@ -1857,7 +1864,7 @@ function revealHint() {
     if (!candidates.length)
         return;
     if (state.hintBank <= 0) {
-        announce('No hints left. Buy more with crumbs!');
+        announce('No hints left. Buy more with Crumb Points!');
         openShop();
         return;
     }

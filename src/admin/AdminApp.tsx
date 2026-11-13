@@ -17,6 +17,7 @@ import { PlacesPage } from './pages/PlacesPage';
 import { PointsAdminPage } from './pages/PointsAdminPage';
 import { RewardsAdminPage } from './pages/RewardsAdminPage';
 import { ShareLinkPage } from './pages/ShareLinkPage';
+import { StorageCleanupPage } from './pages/StorageCleanupPage';
 import { ShopsPage } from './pages/ShopsPage';
 import { StudentsPage } from './pages/StudentsPage';
 import { TeamPage } from './pages/TeamPage';
@@ -30,7 +31,7 @@ import './admin.css';
  * table and owner/admin checks inside the functions. The checks below only decide what to
  * display. Never trust them for security.
  */
-type Tab = 'students' | 'team' | 'announcements' | 'events' | 'places' | 'shops' | 'ads' | 'findfriend' | 'share' | 'campus' | 'gamechallenges' | 'dailynotes' | 'categories' | 'rewards' | 'points' | 'games';
+type Tab = 'students' | 'team' | 'announcements' | 'events' | 'places' | 'shops' | 'ads' | 'findfriend' | 'share' | 'campus' | 'gamechallenges' | 'dailynotes' | 'cleanup' | 'categories' | 'rewards' | 'points' | 'games';
 
 function Shell({ role, children }: { role?: Role; children: ReactNode }) {
   return (
@@ -68,6 +69,7 @@ const sections: Section[] = [
   { id: 'campus', label: 'Campus location (weather)', group: 'Owner only' },
   { id: 'gamechallenges', label: 'Game challenges', group: 'Owner only' },
   { id: 'dailynotes', label: 'Daily notifications', group: 'Owner only' },
+  { id: 'cleanup', label: 'Storage cleanup', group: 'Owner only' },
   { id: 'points', label: 'Points and limits', group: 'Owner only' },
   { id: 'games', label: 'Game points', group: 'Owner only' },
 ];
@@ -135,6 +137,7 @@ function Dashboard({ role }: { role: Role }) {
       {tab === 'campus' && owner && <CampusPage />}
       {tab === 'gamechallenges' && owner && <GameChallengesPage />}
       {tab === 'dailynotes' && owner && <DailyNotificationsPage />}
+      {tab === 'cleanup' && owner && <StorageCleanupPage />}
       {tab === 'categories' && <CategoriesPage />}
     </Shell>
   );

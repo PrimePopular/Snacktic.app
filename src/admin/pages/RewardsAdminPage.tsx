@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useAuth, isOwnerRole } from '../../features/authentication';
-import { adminListRedemptions, adminListRewards, adminSaveReward, adminSetRedemptionStatus } from '../../features/points';
+import { adminDeleteReward, adminListRedemptions, adminListRewards, adminSaveReward, adminSetRedemptionStatus } from '../../features/points';
 import type { AdminRedemption, Reward } from '../../features/points';
 import { pictureUrl } from '../../services/pictures';
 import { Button, Card, CheckboxField, EmptyState, Loading, TextAreaField, TextField } from '../../shared/components';
@@ -256,6 +256,15 @@ export function RewardsAdminPage() {
                     }
                   >
                     {reward.active ? 'Hide' : 'Show'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => {
+                      if (window.confirm(`Delete "${reward.name}"? This cannot be undone.`)) void run(() => adminDeleteReward(reward), 'Deleted.');
+                    }}
+                  >
+                    Delete
                   </Button>
                 </div>
               </Card>

@@ -251,7 +251,7 @@ svg.onclick=e=>{if(G.over||busy||G.s.t)return;const[x,y]=toUnits(e),w=gapAt(x,y)
  const d=e.target.dataset;if(d.r!=null){const r=+d.r,c=+d.c;if(pm(G.s,0).some(a=>a[0]==r&&a[1]==c)){ap(G.s,{w:0,r,c});S.step(0);buzz(15);after()}}};
 
 /* ---- screens: home -> level -> loading logo -> game ---- */
-const DESC=['Wanders around and rarely blocks you.','Takes the shortest path, drops the odd wall.','Thinks 2 moves ahead. Solid casual opponent.','Thinks 3 moves ahead. Plays walls with purpose.','Impossible mode. Learns from every loss.'];
+const DESC=['Easy going.','Warming up.','Getting serious.','Daily Challenge.','Daily Challenge. Good luck!'];
 const screens={};['loading','home','level','help','set','over'].forEach(k=>screens[k]=$('s-'+k));
 let loading=false,loadTimer=0,helpFrom='home',setFrom='home';
 function syncSnd(){$('bmu').classList.toggle('off',!S.on.m);$('bfx').classList.toggle('off',!S.on.s);document.querySelectorAll('[data-tg]').forEach(b=>{const k=b.dataset.tg;b.classList.toggle('on',k=='m'?!!S.on.m:k=='s'?!!S.on.s:!!set[k])});const on=S.on.m||S.on.s;document.querySelectorAll('[data-snd]').forEach(b=>b.textContent='Sound: '+(on?'On':'Off'))}
@@ -262,13 +262,19 @@ function runLoading(done){loading=true;G.over=true;screens.loading.innerHTML=loa
  if(screens.loading.getAnimations)screens.loading.getAnimations({subtree:true}).forEach(a=>a.playbackRate=LOAD_SPEED);
  showScreen('loading');const rm=matchMedia('(prefers-reduced-motion:reduce)').matches;clearTimeout(loadTimer);
  loadTimer=setTimeout(()=>{loading=false;done()},rm?600:LOAD_TOTAL_MS/LOAD_SPEED)}
-const startGame=()=>{S.start();runLoading(()=>{showScreen(null);newGame()})};
+const startGameReal=()=>{S.start();runLoading(()=>{showScreen(null);newGame()})};
+/* Snacktic: the daily levels (4 and 5) must be approved by the app first (the first try each day is free, retries cost Crumb Points). */
+let approved=EMBED&&SNACK.get('approved')==='1';
+const startGame=()=>{if(EMBED&&level>3&&!approved){report({type:'request-start',level:level});return}approved=false;startGameReal()};
+function snToast(t){const d=document.createElement('div');d.textContent=t;d.setAttribute('role','alert');d.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);max-width:88%;padding:12px 18px;border-radius:999px;background:#35231F;color:#FFF8EF;font:600 14px/1.3 sans-serif;z-index:99;text-align:center';document.body.appendChild(d);setTimeout(()=>d.remove(),4000)}
+if(EMBED)addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==window.parent)return;const d=e.data;if(!d||d.source!=='snacktic-host')return;if(d.type==='start-approved'){approved=true;startGame()}else if(d.type==='start-denied')snToast(d.error||'Could not start this level.')});
+if(EMBED)document.querySelectorAll('[data-tg="assist"],[data-tg="suggest"]').forEach(n=>n.remove());
 $('wrap').addEventListener('pointerdown',()=>S.unlock(),{once:true});
 $('wrap').addEventListener('click',e=>{if(loading)return;
  const l=e.target.closest('[data-l]');if(l){const nl=+l.dataset.l;if(nl!=level){prog.assist=0;prog.pts=0;prog.wins=0;saveP()}level=nl;S.click();drawLevels();return}
  const tg=e.target.closest('[data-tg]');if(tg){const k=tg.dataset.tg;S.click();if(k=='m'||k=='s')S.toggle(k);else{set[k]=!set[k];saveP()}syncSnd();return}
  const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;S.click();
- if(EMBED){if(a=='home'||a=='back'||a=='levels'){G.over=true;report({type:'exit'});return}if(level>3&&(a=='restart'||a=='again'||a=='go'))return}
+ if(EMBED&&level>3&&a=='restart')return;
  if(a=='play'){drawLevels();showScreen('level')}
  else if(a=='help'){helpFrom=screens.level.classList.contains('sn-show')?'level':'home';showScreen('help')}
  else if(a=='helpdone')showScreen(helpFrom);
@@ -282,6 +288,6 @@ $('wrap').addEventListener('click',e=>{if(loading)return;
  else if(a=='mu'){S.toggle('m');syncSnd()}
  else if(a=='fx'){S.toggle('s');syncSnd()}
  else if(a=='snd'){const on=S.on.m||S.on.s;if(S.on.m==on)S.toggle('m');if(S.on.s==on)S.toggle('s');syncSnd()}});
-syncSnd();if(EMBED){level=Math.min(5,Math.max(1,+SNACK.get('level')||1));startGame()}else showScreen('home');
+syncSnd();if(EMBED&&SNACK.get('auto')==='1'){level=Math.min(5,Math.max(1,+SNACK.get('level')||1));startGame()}else showScreen('home');
 /* ---- phone-app bits: install button, offline cache ---- */
 /* Snacktic: the app registers its own service worker, so this game does not. */

@@ -1,8 +1,8 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import type { ComponentType, LazyExoticComponent } from 'react';
 import { navigate } from '../../core/router';
 import { useAuth } from '../../features/authentication';
-import { submitGameResult } from '../../features/points';
+import { previewAttempt, startAttempt, submitGameResult } from '../../features/points';
 import type { AwardOutcome } from '../../features/points';
 import type { GameDefinition, GameProps, GameResult } from '../../games/game.types';
 import { findGame } from '../../games/registry';
@@ -48,7 +48,7 @@ function PointsMessage({ outcome }: { outcome: Outcome }) {
       return <p className="text-secondary">You've reached today's points limit for this game. Come back tomorrow for the full daily bonus.</p>;
     }
     if (outcome.reason === 'already_recorded') return <p className="text-secondary">This result was already counted.</p>;
-    if (outcome.reason === 'score_too_low') return <p className="text-secondary">No points this time. Reach the target to earn points.</p>;
+    if (outcome.reason === 'score_too_low') return <p className="text-secondary">No points this time. Better luck next time!</p>;
     return null; // this game is not giving points
   }
 
@@ -77,6 +77,25 @@ export function GameHost({ id }: { id: string }) {
   const [result, setResult] = useState<GameResult | null>(null);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [round, setRound] = useState(0);
+  const [start, setStart] = useState<GameProps['start']>(undefined);
+  const [retryCost, setRetryCost] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  const isDaily = Boolean(result && game?.modes?.find((m) => m.id === result.mode)?.dailyChallenge);
+
+  // For a daily challenge, find out what a retry costs so the button can say so.
+  useEffect(() => {
+    setRetryCost(null);
+    if (!result || !isDaily || !game || auth.status !== 'signed-in') return;
+    let active = true;
+    void previewAttempt(game.id, result.mode?)
+      .then((p) => active && setRetryCost(p.cost))
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [result, isDaily, game, auth.status]);
 
   if (!game) {
     return (
@@ -89,39 +108,35 @@ export function GameHost({ id }: { id: string }) {
   function handleFinish(finished: GameResult) {
     setResult(finished);
     setOutcome('sending');
+    setProblem(null);
     void submitGameResult(finished, auth.status === 'signed-in').then((o) => {
       setOutcome(o);
       if (o.status === 'awarded' && o.points > 0) playCoin();
     });
   }
 
-  if (result) {
-    const isDaily = Boolean(game.modes?.find((m) => m.id === result.mode)?.dailyChallenge);
-    return (
-      <div className="game-overlay">
-        <Card tone="warm" className="game-result">
-          <h2 className="game-result__title">{game.title}</h2>
-          <p className="text-secondary">{isDaily ? 'Daily Challenge' : 'Your score'}</p>
-          <p className="game-result__score">{result.score}</p>
-          {outcome && <PointsMessage outcome={outcome} />}
-          <div className="game-result__actions">
-            <Button
-              onClick={() => {
-                setResult(null);
-                setOutcome(null);
-                setRound((r) => r + 1);
-              }}
-            >
-              {isDaily ? 'Retry' : 'Play again'}
-            </Button>
-            <Button variant="secondary" to="/games">
-              Leave game
-            </Button>
-          </div>
-          {isDaily && <p className="text-secondary text-small">The first try each day is free. Retrying costs Crumb Points.</p>}
-        </Card>
-      </div>
-    );
+  /** Straight back into the same mode, with no picker in between. A daily retry starts a new try (and charges) first. */
+  async function playAgain() {
+    if (!result || !game) return;
+    setProblem(null);
+    let next: GameProps['start'] = { mode: result.mode };
+    if (isDaily) {
+      if (retryCost && retryCost > 0 && !window.confirm(`Retrying costs ${retryCost} Crumb Points. Continue?`)) return;
+      setBusy(true);
+      try {
+        const attempt = await startAttempt(game.id, result.mode);
+        next = { mode: result.mode, attemptId: attempt.attemptId };
+      } catch (error) {
+        setProblem(error instanceof Error ? error.message : 'Something went wrong.');
+        setBusy(false);
+        return;
+      }
+      setBusy(false);
+    }
+    setStart(next);
+    setResult(null);
+    setOutcome(null);
+    setRound((r) => r + 1);
   }
 
   const GameComponent = componentFor(game);
@@ -130,8 +145,31 @@ export function GameHost({ id }: { id: string }) {
     <>
       <PageHeader title={game.title} description={game.instructions} />
       <Suspense fallback={<Loading label="Loading game" />}>
-        <GameComponent key={round} onFinish={handleFinish} onExit={() => navigate('/games')} />
+        <GameComponent key={round} start={start} onFinish={handleFinish} onExit={() => navigate('/games')} />
       </Suspense>
+      {result && (
+        <div className="game-overlay" role="dialog" aria-modal="true" aria-label={`${game.title} result`}>
+          <Card tone="warm" className="game-result">
+            <h2 className="game-result__title">{game.title}</h2>
+            <p className="text-secondary">{isDaily ? 'Daily Challenge' : 'Your score'}</p>
+            <p className="game-result__score">{result.score}</p>
+            {outcome && <PointsMessage outcome={outcome} />}
+            {problem && (
+              <p className="form-error" role="alert">
+                {problem}
+              </p>
+            )}
+            <div className="game-result__actions">
+              <Button disabled={busy} onClick={() => void playAgain()}>
+                {isDaily ? (retryCost && retryCost > 0 ? `Retry (${retryCost} Crumb Points)` : 'Retry') : 'Play again'}
+              </Button>
+              <Button variant="secondary" to="/games">
+                Leave game
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </>
   );
 }

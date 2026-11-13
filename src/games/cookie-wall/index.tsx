@@ -1,8 +1,9 @@
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
+import { useAuth } from '../../features/authentication';
+import { previewAttempt, startAttempt } from '../../features/points';
 import type { GameProps } from '../game.types';
 import { GameFrame } from '../shared/GameFrame';
-import { ModeChooser } from '../shared/ModeChooser';
-import type { ChooserMode } from '../shared/ModeChooser';
+import type { SendToGame } from '../shared/GameFrame';
 import type { ProgressSpec } from '../shared/gameProgress';
 
 const GAME_ID = 'cookie-wall';
@@ -10,64 +11,68 @@ const GAME_ID = 'cookie-wall';
 /** The game's own settings and progress are kept in the database too. */
 const PROGRESS: ProgressSpec = { gameId: GAME_ID, prefixes: ['snacktic-'] };
 
-/** Levels 1 to 3 are casual. Levels 4 and 5 are daily challenges: the first try is free, retries cost Crumb Points. */
-const MODES: ChooserMode[] = [
-  { id: 'level-1', label: 'Level 1: Crumb', description: 'Wanders around and rarely blocks you. A gentle start.' },
-  { id: 'level-2', label: 'Level 2: Nibbler', description: 'Takes the shortest path and drops the odd wall.' },
-  { id: 'level-3', label: 'Level 3: Snacker', description: 'Thinks two moves ahead. A solid casual opponent.' },
-  { id: 'level-4', label: 'Level 4: Gourmet', daily: true, description: 'Daily Challenge.' },
-  { id: 'level-5', label: 'Level 5: Cookie Monster', daily: true, description: 'Daily Challenge. The hardest opponent.' },
-];
-
-/** Cookie Wall Race: reach the far side first, building walls to slow the cookie monster. Page: public/games/cookie-wall/. */
-export default function CookieWall({ onFinish, onExit }: GameProps) {
-  const [session, setSession] = useState<{ mode: string; attemptId?: string } | null>(null);
+/**
+ * Cookie Wall Race keeps its own original screens (home, levels, how to play). Levels 1 to 3 are casual. Levels 4 and 5
+ * are daily challenges: the game asks the app for permission to start, and the app starts the try (free the first time
+ * each day, Crumb Points for a retry). Page: public/games/cookie-wall/.
+ */
+export default function CookieWall({ start, onFinish, onExit }: GameProps) {
+  const { status } = useAuth();
+  const signedIn = status === 'signed-in';
+  const firstLevel = start ? Number(start.mode.replace('level-', '')) || 1 : 0;
+  const attempt = useRef<string | undefined>(start?.attemptId);
+  const startedAt = useRef(Date.now());
   const done = useRef(false);
-  const startedAt = useRef(0);
 
-  if (!session) {
-    return (
-      <ModeChooser
-        gameId={GAME_ID}
-        modes={MODES}
-        onStart={(mode, attemptId) => {
-          startedAt.current = Date.now();
-          done.current = false;
-          setSession({ mode, attemptId });
-        }}
-      />
-    );
-  }
+  const src = start
+    ? `/games/cookie-wall/index.html?embed=1&auto=1&level=${firstLevel}${start.attemptId ? '&approved=1' : ''}`
+    : '/games/cookie-wall/index.html?embed=1';
 
-  function finish(won: boolean, seconds: number) {
-    if (done.current || !session) return;
+  function finish(level: number, won: boolean, seconds: number) {
+    if (done.current) return;
     done.current = true;
     onFinish({
       gameId: GAME_ID,
-      mode: session.mode,
+      mode: `level-${level}`,
       score: won ? 1 : 0,
       durationMs: Math.max(0, Math.round(seconds * 1000)),
       finishedAt: new Date().toISOString(),
-      attemptId: session.attemptId,
+      attemptId: level > 3 ? attempt.current : undefined,
     });
   }
 
-  /** Leaving a daily game counts as a loss, so a try cannot be used to peek and then be taken back. */
+  /** A daily level asks to start: begin the try on the server, then tell the game it may go ahead. */
+  async function approve(level: number, send: SendToGame) {
+    if (!signedIn) return send({ type: 'start-denied', error: 'Sign in to play the daily challenge.' });
+    try {
+      const preview = await previewAttempt(GAME_ID, `level-${level}`);
+      if (preview.cost > 0 && !window.confirm(`Trying again costs ${preview.cost} Crumb Points. Continue?`)) {
+        return send({ type: 'start-denied', error: 'No problem. Come back whenever you like.' });
+      }
+      const result = await startAttempt(GAME_ID, `level-${level}`);
+      attempt.current = result.attemptId;
+      startedAt.current = Date.now();
+      send({ type: 'start-approved', level });
+    } catch (error) {
+      send({ type: 'start-denied', error: error instanceof Error ? error.message : 'Something went wrong.' });
+    }
+  }
+
+  /** Leaving a daily game that has started counts as a loss, so a try cannot be used to peek and then be taken back. */
   function leave() {
-    if (session?.attemptId) finish(false, (Date.now() - startedAt.current) / 1000);
+    if (attempt.current && !done.current) finish(firstLevel || 4, false, (Date.now() - startedAt.current) / 1000);
     else onExit();
   }
 
-  const level = session.mode.replace('level-', '');
   return (
     <GameFrame
-      src={`/games/cookie-wall/index.html?embed=1&level=${level}`}
+      src={src}
       title="Cookie Wall Race"
       progress={PROGRESS}
       onLeave={leave}
-      onMessage={(message) => {
-        if (message.type === 'exit') return leave();
-        if (message.type === 'finish') finish(message.won === true, Number(message.seconds) || 0);
+      onMessage={(message, send) => {
+        if (message.type === 'request-start') return void approve(Number(message.level) || 4, send);
+        if (message.type === 'finish') finish(Number(message.level) || 1, message.won === true, Number(message.seconds) || 0);
       }}
     />
   );

@@ -39,6 +39,11 @@ export interface GameProps {
   onFinish: (result: GameResult) => void;
   /** Call if the player leaves mid-game. */
   onExit: () => void;
+  /**
+   * Set when the player chose Play again or Retry on the result pop-up: go straight into that mode instead of
+   * showing the mode picker. For a daily challenge the try has already been started (attemptId).
+   */
+  start?: { mode: string; attemptId?: string };
 }
 
 /** A mode shown on the game's card. The id must match the mode in the admin's game rules. */

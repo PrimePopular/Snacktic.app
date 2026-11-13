@@ -91,6 +91,8 @@ function weave(entries: FeedEntry[], allAds: Ad[]): FeedSlot[] {
       nudgeIndex += 1;
     }
   });
+  // A short feed (2 or more cards) still shows an ad at the end, so a new ad is never hidden just because the feed is small.
+  if (ads.length > 0 && entries.length >= 2 && entries.length < 3) slots.push({ kind: 'ad', ad: ads[0], key: 'ad-end' });
   return slots;
 }
 

@@ -13,3 +13,9 @@
 .weather-card p { margin: 0; font-size: var(--text-sm); }
 .push-settings { display: grid; gap: var(--space-2); justify-items: start; margin-top: var(--space-3); }
 .push-settings h4 { margin: 0; }
+
+.weather-card__text { flex: 1; }
+.weather-picker { display: grid; gap: var(--space-3); }
+.weather-picker h2 { margin: 0; }
+.weather-picker form { display: grid; gap: var(--space-2); }
+.weather-picker__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }

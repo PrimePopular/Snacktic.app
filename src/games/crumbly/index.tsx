@@ -16,8 +16,8 @@ const MODES: ChooserMode[] = [
 ];
 
 /** Crumbly (the number-merging game). The game page lives in public/games/crumbly.html and reports each finished round. */
-export default function Crumbly({ onFinish, onExit }: GameProps) {
-  const [session, setSession] = useState<{ mode: string; attemptId?: string } | null>(null);
+export default function Crumbly({ start, onFinish, onExit }: GameProps) {
+  const [session, setSession] = useState<{ mode: string; attemptId?: string } | null>(start ? { mode: start.mode, attemptId: start.attemptId } : null);
   const done = useRef(false);
 
   if (!session) return <ModeChooser gameId={GAME_ID} modes={MODES} onStart={(mode, attemptId) => setSession({ mode, attemptId })} />;

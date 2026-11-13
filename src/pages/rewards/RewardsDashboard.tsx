@@ -127,6 +127,7 @@ export function RewardsDashboard() {
           <ul className="reward-grid">
             {rewards.map((reward) => {
               const missing = reward.costPoints - balance;
+              const soldOut = reward.stock === 0;
               return (
                 <li key={reward.id}>
                   <article className="reward-card">
@@ -137,8 +138,9 @@ export function RewardsDashboard() {
                     <div className="reward-card__body">
                       <h3>{reward.name}</h3>
                       {reward.description && <p className="text-secondary text-small">{reward.description}</p>}
-                      <Button disabled={missing > 0 || Boolean(profile?.suspended)} onClick={() => startBuying(reward)}>
-                        {missing > 0 ? `Need ${missing.toLocaleString()} more` : 'Get this'}
+                      {reward.stock !== null && reward.stock > 0 && reward.stock <= 5 && <p className="text-small"><strong>Only {reward.stock} left</strong></p>}
+                      <Button disabled={soldOut || missing > 0 || Boolean(profile?.suspended)} onClick={() => startBuying(reward)}>
+                        {soldOut ? 'Sold out' : missing > 0 ? `Need ${missing.toLocaleString()} more` : 'Get this'}
                       </Button>
                     </div>
                   </article>

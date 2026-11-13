@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#35231F">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Snacktic"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Snacktic</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head><body>
+<div id="game-slot"><div class="sn-wrap" id="wrap"><div class="sn-sizer"></div>
+<div class="sn-game" id="gm">
+ <div class="sn-hud"><div class="sn-who"><span class="sn-dot" id="dot0" style="background:#E96B73"></span>You<div class="pills" id="pw0"></div></div>
+ <div class="sn-who"><div class="pills" id="pw1"></div><span id="aiN">Rival</span><span class="sn-dot" style="background:#B8C99A"></span></div></div>
+ <svg id="bd" viewBox="0 0 404 404"></svg>
+ <div class="sn-status"><span class="badge" id="bdg">1</span><span id="st"></span></div>
+</div>
+<div class="sn-controls" id="ctl">
+ <button class="sn-ctl" data-act="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Back</button>
+ <button class="sn-ctl" data-act="restart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>Restart</button>
+ <button class="sn-ctl push" id="bmu" data-act="mu">♪ Music</button><button class="sn-ctl" id="bfx" data-act="fx">FX</button>
+</div>
+<div class="sn-screen sn-home" id="s-home"><div class="sn-blob o"></div><div class="sn-blob r"></div><div class="sn-blob p"></div>
+ <div class="sn-logo" id="logo"></div>
+ <h1 class="sn-title" aria-label="Snacktic">Snackt<span class="sn-i" aria-hidden="true">ı</span>c</h1>
+ <p class="sn-tag">Good snacks, good moments.</p>
+ <div class="sn-best" id="rec"></div>
+ <button class="sn-btn primary" data-act="play">Play</button>
+ <button class="sn-btn ghost" data-act="help">How to play</button>
+ <button class="sn-link" data-act="settings">Settings</button>
+</div>
+<div class="sn-screen sn-help" id="s-level"><div class="sn-blob o"></div><div class="sn-blob r"></div>
+ <h2 class="sn-h2">Pick your challenge</h2><p class="sn-sub">Choose a difficulty, then play.</p>
+ <div id="lvls" style="width:100%"></div>
+ <button class="sn-btn primary" data-act="go">Start game</button>
+ <button class="sn-link" data-act="help">How to play</button><button class="sn-link" data-act="home">Home</button>
+</div>
+<div class="sn-screen sn-help" id="s-help"><div class="sn-blob o"></div><div class="sn-blob r"></div>
+ <h2 class="sn-h2">How to play</h2><p class="sn-sub">You’ll get it in 10 seconds.</p>
+ <div class="sn-step"><div class="sn-num">1</div><div><b>Step across</b><span>Tap an orange dot to move one square. Hop over your rival when you meet.</span></div></div>
+ <div class="sn-step"><div class="sn-num">2</div><div><b>Build walls</b><span>Tap a gap between two squares to drop a 2-square wall. You get 10.</span></div></div>
+ <div class="sn-step"><div class="sn-num">3</div><div><b>Win the race</b><span>Reach the top row before your rival reaches the bottom. You can’t seal anyone in completely.</span></div></div>
+ <p class="sn-tip">Tip: walls cost a turn, so use them when your rival is ahead.</p>
+ <button class="sn-btn primary" data-act="helpdone">Let’s go!</button>
+</div>
+<div class="sn-screen sn-help" id="s-set"><div class="sn-blob o"></div><div class="sn-blob r"></div>
+ <h2 class="sn-h2">Settings</h2><p class="sn-sub">Make Snacktic yours.</p>
+ <button class="sn-step sn-tg" data-tg="assist"><div><b>Helpful mode</b><span>After repeated losses, your rival goes a little easier.</span></div><i class="sn-sw"></i></button>
+ <button class="sn-step sn-tg" data-tg="suggest"><div><b>Level-up offers</b><span>When you’re winning, ask before trying a harder level.</span></div><i class="sn-sw"></i></button>
+ <button class="sn-step sn-tg" data-tg="m"><div><b>Music</b><span>Cozy background tune.</span></div><i class="sn-sw"></i></button>
+ <button class="sn-step sn-tg" data-tg="s"><div><b>Sound effects</b><span>Pops, stamps and jingles.</span></div><i class="sn-sw"></i></button>
+ <button class="sn-btn primary" data-act="setdone">Done</button>
+</div>
+<div class="sn-screen sn-loading" id="s-loading"></div>
+<div class="sn-screen sn-over" id="s-over">
+ <h2 class="sn-h2" id="ot"></h2><div class="sn-bigscore" id="oe"></div><p class="sn-stats" id="op"></p>
+ 
+ <div class="sn-new" id="note" style="display:none"></div>
+ <div class="sn-offer" id="offer"><span id="offerq"></span><div class="sn-row"><button class="sn-btn primary" data-act="yes">Yes, bring it!</button><button class="sn-btn ghost" data-act="no" style="margin-top:0">Not now</button></div></div>
+ <button class="sn-btn primary" data-act="again">Play again</button>
+ <button class="sn-btn ghost" data-act="levels">Change level</button>
+</div>
+</div></div>
+<script src="audio.js"></script>
+<script src="game.js"></script>
+<script>document.getElementById('logo').innerHTML=cookieSVG()</script>
+</body></html>

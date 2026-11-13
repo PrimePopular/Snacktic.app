@@ -22,6 +22,8 @@ export interface Reward {
   costPoints: number;
   active: boolean;
   imagePath: string | null;
+  /** How many are left. null means unlimited, 0 means sold out. */
+  stock: number | null;
 }
 
 export type RedemptionStatus = 'pending' | 'fulfilled' | 'cancelled';

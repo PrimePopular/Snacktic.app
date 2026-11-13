@@ -15,10 +15,15 @@ export type PushState =
   | 'off'
   | 'on';
 
+export type PushPref = 'weather' | 'prayer' | 'games' | 'products';
+export type PushPrefs = Record<PushPref, boolean>;
+
 export interface PushStatus {
   state: PushState;
-  weather: boolean;
+  prefs: PushPrefs;
 }
+
+const ALL_ON: PushPrefs = { weather: true, prayer: true, games: true, products: true };
 
 function isIos(): boolean {
   return /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -47,7 +52,7 @@ async function currentSubscription(): Promise<PushSubscription | null> {
 }
 
 export async function getPushStatus(): Promise<PushStatus> {
-  const off = (state: PushState): PushStatus => ({ state, weather: true });
+  const off = (state: PushState): PushStatus => ({ state, prefs: { ...ALL_ON } });
   if (!publicKey || !supabase) return off('not-configured');
   const capable = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
   if (!capable) return off(isIos() && !isInstalled() ? 'needs-install' : 'unsupported');
@@ -57,8 +62,8 @@ export async function getPushStatus(): Promise<PushStatus> {
     if (!registration) return off('unsupported'); // not registered, for example while developing on this computer
     const subscription = await registration.pushManager.getSubscription();
     if (!subscription) return off('off');
-    const { data } = await client().from('push_subscriptions').select('weather').eq('endpoint', subscription.endpoint).maybeSingle();
-    return { state: 'on', weather: data ? Boolean((data as { weather: boolean }).weather) : true };
+    const { data } = await client().from('push_subscriptions').select('weather, prayer, games, products').eq('endpoint', subscription.endpoint).maybeSingle();
+    return { state: 'on', prefs: data ? (data as PushPrefs) : { ...ALL_ON } };
   } catch (error) {
     console.error('[push] status', error);
     return off('unsupported');
@@ -95,9 +100,10 @@ export async function disablePush(): Promise<void> {
   if (error) console.error('[push] remove', error.message);
 }
 
-export async function setWeatherPush(on: boolean): Promise<void> {
+/** Turns one kind of notification on or off for this phone. */
+export async function setPushPref(kind: PushPref, on: boolean): Promise<void> {
   const subscription = await currentSubscription();
   if (!subscription) return;
-  const { error } = await client().rpc('set_push_weather', { p_endpoint: subscription.endpoint, p_on: on });
+  const { error } = await client().rpc('set_push_pref', { p_endpoint: subscription.endpoint, p_kind: kind, p_on: on });
   if (error) throw new Error('Could not change that setting. Please try again.');
 }

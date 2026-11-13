@@ -17,10 +17,11 @@ interface RewardForm {
   name: string;
   description: string;
   cost: string;
+  stock: string;
   active: boolean;
 }
 
-const emptyReward: RewardForm = { name: '', description: '', cost: '', active: true };
+const emptyReward: RewardForm = { name: '', description: '', cost: '', stock: '', active: true };
 const dateFormat = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 
 /** A WhatsApp chat link from a phone number. WhatsApp needs the country code (for example 234 for Nigeria). */
@@ -77,7 +78,7 @@ export function RewardsAdminPage() {
       setForm(emptyReward);
       picture.reset(null);
     } else {
-      setForm({ name: target.name, description: target.description, cost: String(target.costPoints), active: target.active });
+      setForm({ name: target.name, description: target.description, cost: String(target.costPoints), stock: target.stock === null ? '' : String(target.stock), active: target.active });
       picture.reset(target.imagePath);
     }
     setEditing(target);
@@ -88,10 +89,12 @@ export function RewardsAdminPage() {
     const cost = Number(form.cost);
     if (!form.name.trim()) return setFormError('Enter a name.');
     if (!Number.isInteger(cost) || cost < 1) return setFormError('The cost must be a whole number of points, at least 1.');
+    const stock = form.stock.trim() === '' ? null : Number(form.stock);
+    if (stock !== null && (!Number.isInteger(stock) || stock < 0)) return setFormError('How many are in stock must be a whole number, or empty for unlimited.');
     setFormError(null);
     const id = editing && editing !== 'new' ? editing.id : null;
     const ok = await run(async () => {
-      await adminSaveReward(id, { name: form.name, description: form.description, costPoints: cost, active: form.active, imagePath: picture.imagePath });
+      await adminSaveReward(id, { name: form.name, description: form.description, costPoints: cost, active: form.active, imagePath: picture.imagePath, stock });
       await picture.commit();
     }, id ? 'Reward updated.' : 'Reward added.');
     if (ok) setEditing(null);
@@ -117,6 +120,7 @@ export function RewardsAdminPage() {
           <TextField label="Item name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={120} />
           <TextAreaField label="Short description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} hint="Optional. One or two lines about the item." />
           <TextField label="Price in points" type="number" inputMode="numeric" min={1} value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
+          <TextField label="How many are in stock" type="number" inputMode="numeric" min={0} value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} hint="Leave empty for unlimited. When it reaches 0 the item shows as sold out. Cancelling an order puts one back." />
           <PictureField imagePath={picture.imagePath} uploading={picture.uploading} error={picture.error} onPick={(file) => void picture.pick(file)} onRemove={() => void picture.remove()} />
           <CheckboxField checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })}>
             Available to students
@@ -232,6 +236,7 @@ export function RewardsAdminPage() {
                 <div className="ann__meta">
                   <span className="badge badge--medium">{reward.costPoints} pts</span>
                   {!reward.active && <span className="badge badge--minor">Hidden</span>}
+                  {reward.stock !== null && <span className="badge badge--minor">{reward.stock === 0 ? 'Sold out' : `${reward.stock} left`}</span>}
                 </div>
                 {reward.imagePath && <img className="picture-thumb" src={pictureUrl(reward.imagePath)} alt="" loading="lazy" />}
                 <h3>{reward.name}</h3>
@@ -245,7 +250,7 @@ export function RewardsAdminPage() {
                     disabled={busy}
                     onClick={() =>
                       void run(
-                        () => adminSaveReward(reward.id, { name: reward.name, description: reward.description, costPoints: reward.costPoints, active: !reward.active, imagePath: reward.imagePath }),
+                        () => adminSaveReward(reward.id, { name: reward.name, description: reward.description, costPoints: reward.costPoints, active: !reward.active, imagePath: reward.imagePath, stock: reward.stock }),
                         reward.active ? 'Hidden from students.' : 'Available again.',
                       )
                     }

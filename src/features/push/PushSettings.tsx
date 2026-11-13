@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button, CheckboxField } from '../../shared/components';
-import { disablePush, enablePush, getPushStatus, setWeatherPush } from './pushService';
-import type { PushStatus } from './pushService';
+import { disablePush, enablePush, getPushStatus, setPushPref } from './pushService';
+import type { PushPref, PushStatus } from './pushService';
+
+const CHOICES: { kind: PushPref; label: string }[] = [
+  { kind: 'weather', label: 'Weather each morning' },
+  { kind: 'prayer', label: 'Prayer time reminder' },
+  { kind: 'games', label: 'Daily games reminder' },
+  { kind: 'products', label: 'New rewards in the shop' },
+];
 
 /** The notification switches in Profile. Hidden until the notification keys have been added. */
 export function PushSettings() {
@@ -51,9 +58,11 @@ export function PushSettings() {
       )}
       {status.state === 'on' && (
         <>
-          <CheckboxField checked={status.weather} disabled={busy} onChange={(event) => void run(() => setWeatherPush(event.target.checked))}>
-            Daily weather each morning
-          </CheckboxField>
+          {CHOICES.map((choice) => (
+            <CheckboxField key={choice.kind} checked={status.prefs[choice.kind]} disabled={busy} onChange={(event) => void run(() => setPushPref(choice.kind, event.target.checked))}>
+              {choice.label}
+            </CheckboxField>
+          ))}
           <Button variant="secondary" disabled={busy} onClick={() => void run(disablePush)}>
             Turn off notifications on this phone
           </Button>

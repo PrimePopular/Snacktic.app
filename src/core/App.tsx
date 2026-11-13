@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import AdminApp from '../admin/AdminApp';
 import { useAuth } from '../features/authentication';
 import { FindFriendTag } from '../features/find-a-friend';
+import { UpdateBanner } from '../pwa/UpdateBanner';
 import FindFriendPage from '../pages/find-a-friend/FindFriendPage';
 import { flushPendingResults } from '../features/points';
 import DiscoverPage from '../pages/discover/DiscoverPage';
@@ -105,6 +106,7 @@ export default function App() {
         Skip to content
       </a>
       <TopBar />
+      <UpdateBanner />
       <FindFriendTag />
       <main id="main-content" className="app-main" tabIndex={-1}>
         <Router routes={routes} notFound={notFound} />

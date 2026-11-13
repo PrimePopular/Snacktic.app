@@ -32,6 +32,7 @@ const SHOWABLE = [
   'No student with that username',
   'Gift at least 1 point',
   'That reward is not available',
+  'That reward is sold out',
   'Sign in to gift points',
   'Sign in to redeem rewards',
   'Owner only',
@@ -87,6 +88,7 @@ interface RewardRow {
   cost_points: number;
   active: boolean;
   image_path: string | null;
+  stock: number | null;
 }
 
 const rewardFromRow = (r: RewardRow): Reward => ({
@@ -96,12 +98,13 @@ const rewardFromRow = (r: RewardRow): Reward => ({
   costPoints: r.cost_points,
   active: r.active,
   imagePath: r.image_path,
+  stock: r.stock ?? null,
 });
 
 export async function listRewards(): Promise<Reward[]> {
   const { data, error } = await client()
     .from('rewards')
-    .select('id, name, description, cost_points, active, image_path')
+    .select('id, name, description, cost_points, active, image_path, stock')
     .eq('active', true)
     .order('cost_points', { ascending: true });
   if (error) throw failure(error.message);
@@ -148,7 +151,7 @@ export async function listMyRedemptions(): Promise<Redemption[]> {
 export async function adminListRewards(): Promise<Reward[]> {
   const { data, error } = await client()
     .from('rewards')
-    .select('id, name, description, cost_points, active, image_path')
+    .select('id, name, description, cost_points, active, image_path, stock')
     .order('cost_points', { ascending: true });
   if (error) throw failure(error.message);
   return ((data ?? []) as RewardRow[]).map(rewardFromRow);
@@ -156,7 +159,7 @@ export async function adminListRewards(): Promise<Reward[]> {
 
 export async function adminSaveReward(
   id: string | null,
-  input: { name: string; description: string; costPoints: number; active: boolean; imagePath: string | null },
+  input: { name: string; description: string; costPoints: number; active: boolean; imagePath: string | null; stock: number | null },
 ): Promise<void> {
   const row = {
     name: input.name.trim(),
@@ -164,6 +167,7 @@ export async function adminSaveReward(
     cost_points: input.costPoints,
     active: input.active,
     image_path: input.imagePath,
+    stock: input.stock,
   };
   const query = id ? client().from('rewards').update(row).eq('id', id) : client().from('rewards').insert(row);
   const { error } = await query;

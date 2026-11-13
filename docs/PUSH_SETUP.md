@@ -56,3 +56,39 @@ Open the live website on your phone, sign in, Profile, **Turn on notifications**
 - iPhone: only works after Snacktic is added to the Home Screen and opened from there.
 - Android: works in Chrome, installed or not.
 - Notifications only work on the live HTTPS website, not on `npm run dev`.
+
+---
+
+# Update 015: prayer reminder, games reminder, new rewards
+
+Run `supabase/015_stock_prefs_cookie_wall.sql` first. Then publish the three new functions (same tool, same project):
+```
+npx supabase functions deploy daily-prayer --no-verify-jwt
+npx supabase functions deploy daily-games --no-verify-jwt
+npx supabase functions deploy new-reward --no-verify-jwt
+```
+(The secrets you already set are shared by every function. Nothing new to set.)
+
+## Turn them on in the admin
+Admin, **Daily notifications**: switch the prayer reminder on and paste the school's prayer link (tapping the notification opens it). The games reminder is on by default. Students choose which ones they want in Profile.
+
+## Schedules (SQL Editor, contains your secret, do not save it in the project)
+Times are UTC. Nigeria is one hour ahead of UTC, so 11:00 UTC is 12:00 midday and 16:00 UTC is 17:00.
+```sql
+select cron.schedule('daily-prayer', '0 11 * * *', $$ select net.http_post(
+  url := 'https://<ref>.supabase.co/functions/v1/daily-prayer',
+  headers := '{"Content-Type":"application/json","x-push-secret":"<your random password>"}'::jsonb,
+  body := '{}'::jsonb) $$);
+
+select cron.schedule('daily-games', '0 16 * * *', $$ select net.http_post(
+  url := 'https://<ref>.supabase.co/functions/v1/daily-games',
+  headers := '{"Content-Type":"application/json","x-push-secret":"<your random password>"}'::jsonb,
+  body := '{}'::jsonb) $$);
+```
+To change a time later: `select cron.unschedule('daily-prayer');` and schedule it again.
+
+## New reward announcement
+Supabase dashboard, **Database, Webhooks, Create a new hook**:
+- Table `rewards`, Event **Insert**, Type **HTTP Request**, POST
+- URL `https://<ref>.supabase.co/functions/v1/new-reward`
+- Headers: `x-push-secret` = your random password, `Content-Type` = `application/json`

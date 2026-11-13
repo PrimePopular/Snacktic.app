@@ -121,7 +121,7 @@ self.addEventListener('push', (event) => {
       body: data.body || '',
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
-      data: { link: typeof data.link === 'string' && data.link.startsWith('/') ? data.link : '/' },
+      data: { link: typeof data.link === 'string' && (data.link.startsWith('/') || /^https:\/\//.test(data.link)) ? data.link : '/' },
     }),
   );
 });
@@ -130,6 +130,11 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const link = (event.notification.data && event.notification.data.link) || '/';
+  // A full https address (the school prayer link) opens that website; anything else is a screen inside the app.
+  if (/^https:\/\//.test(link)) {
+    event.waitUntil(self.clients.openWindow(link));
+    return;
+  }
   const target = new URL(`/#${link}`, self.location.origin).href;
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {

@@ -7,7 +7,7 @@ import type { ClassicSlot, GameDefinition, SpecialEventDefinition } from './game
 export const classicSlots: { slot: ClassicSlot; plannedName: string }[] = [
   { slot: 1, plannedName: 'Crumbly' },
   { slot: 2, plannedName: 'Crumb Quest' },
-  { slot: 3, plannedName: 'Coming soon' },
+  { slot: 3, plannedName: 'Cookie Wall Race' },
   { slot: 4, plannedName: 'Coming soon' },
 ];
 
@@ -51,6 +51,22 @@ export const classicGames: GameDefinition[] = [
       { id: 'daily-quest', label: 'Daily Quest', dailyChallenge: true },
     ],
     load: () => import('./crumb-quest'),
+  },
+  {
+    id: 'cookie-wall',
+    slot: 3,
+    title: 'Cookie Wall Race',
+    summary: 'Race the cookie monster to the far side, building walls to slow it down.',
+    instructions: 'Tap an orange dot to step forward, or tap the gap between squares to build a wall. Reach the far side first, but never seal off every path.',
+    estimatedSeconds: 240,
+    modes: [
+      { id: 'level-1', label: 'Level 1' },
+      { id: 'level-2', label: 'Level 2' },
+      { id: 'level-3', label: 'Level 3' },
+      { id: 'level-4', label: 'Level 4 (daily)', dailyChallenge: true },
+      { id: 'level-5', label: 'Level 5 (daily)', dailyChallenge: true },
+    ],
+    load: () => import('./cookie-wall'),
   },
 ];
 

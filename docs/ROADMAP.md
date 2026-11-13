@@ -50,3 +50,11 @@ account suspension, start-up animation, installable app and offline copies of pu
 - Run `supabase/014_game_challenges.sql`. All numbers are editable in the admin (Game points, Game challenges).
 - Known weakness: scores are produced by the game running on the phone. The database caps the score, the time and the daily total, but a determined cheater could still send a high but possible score.
 - Still to do: the third game (5 stages), the trivia bank (on hold), ad-based retries (maybe later, switchable).
+
+
+## Update 015
+- Rewards have a stock count (empty = unlimited). Two students can no longer buy the last one; cancelling an order puts it back.
+- Third game: Cookie Wall Race (slot 3). Levels 1 to 3 casual, levels 4 and 5 daily challenges with a paid retry. Run `supabase/015_stock_prefs_cookie_wall.sql`.
+- A lost or empty daily try now always uses up the try.
+- Notifications: students choose weather, prayer, games and new rewards. The owner switches prayer and games on in Admin, Daily notifications. Setup: docs/PUSH_SETUP.md.
+- "A new version is ready" banner and docs/UPDATING.md.

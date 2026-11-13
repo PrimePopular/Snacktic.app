@@ -1,0 +1,16 @@
+.biglogo{width:170px;height:170px;overflow:visible}
+.bl-cookie{transform-box:fill-box;transform-origin:50% 100%;animation:drop .9s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes drop{0%{transform:translateY(-130px) rotate(-200deg) scale(.4);opacity:0}100%{transform:none;opacity:1}}
+.bl-bite{transform-box:fill-box;transform-origin:center;animation:bite .35s .95s ease-out both}
+@keyframes bite{from{transform:scale(0)}to{transform:scale(1)}}
+.bl-badge{transform-box:fill-box;transform-origin:center;animation:badge .5s 1.25s cubic-bezier(.3,1.8,.5,1) both}
+@keyframes badge{from{transform:scale(0)}to{transform:scale(1)}}
+.bl-rays path{stroke-dasharray:14;stroke-dashoffset:14;animation:ray .4s 1.65s forwards}
+@keyframes ray{to{stroke-dashoffset:0}}
+.word{font-family:'Space Grotesk',sans-serif;font-size:48px;letter-spacing:-2px;margin:10px 0 0;color:var(--wm)}
+.word span{display:inline-block;opacity:0;transform:translateY(14px);animation:up .45s both}
+@keyframes up{to{opacity:1;transform:none}}
+#splash .tag{opacity:0;animation:up .5s 2.1s both;font-size:15px}
+.load{width:180px;height:8px;border-radius:6px;background:var(--bd);overflow:hidden;margin-top:24px}
+.load i{display:block;height:100%;background:var(--orange);border-radius:6px;width:0;animation:ld 3.2s .2s ease-in-out forwards}
+@keyframes ld{to{width:100%}}

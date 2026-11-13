@@ -355,9 +355,9 @@
 /*
   Crumbly: a self-contained mini game with two modes.
 
-    Classic ......... play as often as you like. Rows rise slowly at first, and there is a 5 minute limit.
+    Classic ......... play as often as you like. Rows rise slowly at first, and there is a 3 minute limit.
     Daily Challenge . ONE try per day, the same puzzle for everyone. It starts with 2 rows already on
-                      the board, the rows rise faster, and there is a 5 minute limit. Has a streak and a share button.
+                      the board, the rows rise faster, and there is a 3 minute limit. Has a streak and a share button.
 
   Usage inside your web app:
 
@@ -437,7 +437,7 @@
   // After hardCap ms the rows come every capInterval ms, so no game can last longer than hardCap.
   const MODES = {
     classic: { riseStart: 32000, riseMin: 1000, riseRamp: 0.08, hardCap: 300000, capInterval: 400, preRows: 0 },
-    daily:   { riseStart: 22000, riseMin: 1000, riseRamp: 0.07, hardCap: 300000, capInterval: 400, preRows: 2 }
+    daily:   { riseStart: 22000, riseMin: 1000, riseRamp: 0.07, hardCap: 180000, capInterval: 400, preRows: 2 }
   };
 
   // ---- Helpers ----
@@ -1581,7 +1581,6 @@
       try { window.parent.postMessage(Object.assign({ source: 'snacktic-game', game: 'crumbly' }, msg), location.origin); } catch (e) {}
     }
     var game = new Crumbly(document.getElementById('game-slot'), {
-      showHome: !embedded,
       onExit: embedded ? function () { send({ type: 'exit' }); } : undefined,
       onGameOver: function (r) {
         if (embedded) { send({ type: 'finish', mode: r.mode, score: r.score, seconds: r.seconds, maxTile: r.maxTile }); return; }

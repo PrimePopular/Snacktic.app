@@ -2,5 +2,15 @@
 .mode-chooser__card { display: grid; gap: var(--space-2); justify-items: start; }
 .mode-chooser__card h3 { margin: 0; }
 .mode-chooser__card p { margin: 0; }
-.game-frame-wrap { display: grid; gap: var(--space-3); justify-items: start; }
-.game-frame { width: 100%; height: min(78dvh, 46rem); min-height: 26rem; border: 0; border-radius: var(--radius-lg); background: var(--color-cream); }
+
+/* While a game is open the page behind it does not scroll, so a swipe always reaches the game. */
+body.game-open { overflow: hidden; overscroll-behavior: none; }
+.game-frame { touch-action: none; }
+
+/* A running game fills the whole screen, with a slim bar that keeps Leave and the Crumb Points in reach. */
+.game-screen { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; background: var(--color-charcoal); color: var(--text-on-dark); padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+.game-screen__bar { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); }
+.game-screen__leave { border: 0; border-radius: var(--radius-pill); padding: var(--space-2) var(--space-3); background: rgb(255 255 255 / 0.14); color: inherit; font-weight: 600; }
+.game-screen__title { flex: 1; text-align: center; font-family: var(--font-heading); font-weight: 700; }
+.game-screen__notice { margin: 0; padding: var(--space-1) var(--space-4); background: var(--color-pistachio-soft); color: var(--color-chocolate); text-align: center; font-weight: 700; }
+.game-screen .game-frame { flex: 1; min-height: 0; width: 100%; border: 0; background: var(--color-cream); }

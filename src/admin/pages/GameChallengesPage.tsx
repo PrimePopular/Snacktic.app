@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { adminListExtras, adminSetMilestones, adminSetRetryCost } from '../../features/points';
+import { adminListExtras, adminListItems, adminSetItemPrice, adminSetMilestones, adminSetRetryCost } from '../../features/points';
 import type { ExtraRule, Milestone } from '../../features/points';
 import { Button, Card, EmptyState, Loading, TextAreaField, TextField } from '../../shared/components';
 
@@ -63,14 +63,43 @@ function RuleCard({ rule, onSaved }: { rule: ExtraRule; onSaved: () => void }) {
   );
 }
 
+function ItemRow({ gameId, item, label, price }: { gameId: string; item: string; label: string; price: number }) {
+  const [value, setValue] = useState(String(price));
+  const [message, setMessage] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    const n = Number(value);
+    if (!Number.isInteger(n) || n < 0 || n > 10000) return setMessage('Enter a whole number from 0 to 10000.');
+    setBusy(true);
+    try {
+      await adminSetItemPrice(gameId, item, n);
+      setMessage('Saved.');
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Something went wrong.');
+    }
+    setBusy(false);
+  }
+
+  return (
+    <div className="ann__actions">
+      <TextField label={`${gameId}: ${label} (Crumb Points)`} type="number" inputMode="numeric" min={0} value={value} onChange={(e) => setValue(e.target.value)} />
+      <Button disabled={busy} onClick={() => void save()}>{busy ? 'Saving…' : 'Save'}</Button>
+      {message && <span className="text-small" role="status">{message}</span>}
+    </div>
+  );
+}
+
 /** Game challenges, owner only: retry cost for daily challenges and score milestones. Other amounts are in Game points. */
 export function GameChallengesPage() {
   const [rules, setRules] = useState<ExtraRule[] | null>(null);
+  const [items, setItems] = useState<Awaited<ReturnType<typeof adminListItems>>>([]);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       setRules(await adminListExtras());
+      setItems(await adminListItems().catch(() => []));
     } catch (err) {
       console.error('[admin] game challenges', err);
       setError(err instanceof Error ? err.message : 'Something went wrong.');
@@ -92,6 +121,14 @@ export function GameChallengesPage() {
       )}
       {!rules && !error && <Loading label="Loading" />}
       {rules && rules.length === 0 && <EmptyState title="Nothing to set yet">Games with a daily challenge or milestones will show up here.</EmptyState>}
+      {items.length > 0 && (
+        <Card className="ann__item">
+          <h2>Hint prices</h2>
+          {items.map((i) => (
+            <ItemRow key={`${i.gameId}/${i.item}`} gameId={i.gameId} item={i.item} label={i.label} price={i.price} />
+          ))}
+        </Card>
+      )}
       {rules && rules.length > 0 && (
         <ul className="ann__list">
           {rules.map((rule) => (

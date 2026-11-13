@@ -96,11 +96,12 @@ export function GameHost({ id }: { id: string }) {
   }
 
   if (result) {
+    const isDaily = Boolean(game.modes.find((m) => m.id === result.mode)?.dailyChallenge);
     return (
-      <>
-        <PageHeader title={game.title} />
+      <div className="game-overlay">
         <Card tone="warm" className="game-result">
-          <p className="text-secondary">Your score</p>
+          <h2 className="game-result__title">{game.title}</h2>
+          <p className="text-secondary">{isDaily ? 'Daily Challenge' : 'Your score'}</p>
           <p className="game-result__score">{result.score}</p>
           {outcome && <PointsMessage outcome={outcome} />}
           <div className="game-result__actions">
@@ -111,14 +112,15 @@ export function GameHost({ id }: { id: string }) {
                 setRound((r) => r + 1);
               }}
             >
-              Play again
+              {isDaily ? 'Retry' : 'Play again'}
             </Button>
             <Button variant="secondary" to="/games">
-              Back to games
+              Leave game
             </Button>
           </div>
+          {isDaily && <p className="text-secondary text-small">The first try each day is free. Retrying costs Crumb Points.</p>}
         </Card>
-      </>
+      </div>
     );
   }
 

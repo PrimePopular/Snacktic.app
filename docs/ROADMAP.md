@@ -58,3 +58,13 @@ account suspension, start-up animation, installable app and offline copies of pu
 - A lost or empty daily try now always uses up the try.
 - Notifications: students choose weather, prayer, games and new rewards. The owner switches prayer and games on in Admin, Daily notifications. Setup: docs/PUSH_SETUP.md.
 - "A new version is ready" banner and docs/UPDATING.md.
+
+## Update 016 (bug fixes, batch A and B)
+- Crumb Quest no longer has its own crumbs or the free 100. Its balance is the student's real Crumb Points, sent by the app. Hints are bought through the database (`spend_game_item`): charged once, never twice, nothing taken if it fails. Hint prices: Admin, Game challenges.
+- Game progress (levels, best scores, hint bank, settings) is saved in the database and restored before a game opens. Daily challenge state is handled by the server and is not copied.
+- A running game is full screen, with a slim bar (Leave game and the Crumb Points). The page behind it does not scroll.
+- The result of a game appears over the game. Daily challenges show Retry (not Play again).
+- Crumb Quest touch dragging: pointer capture on the letter wheel, no text selection or long-press menu, page scrolling locked while a game runs. Needs checking on a real phone.
+- Crumbly daily limit is back to the original 3 minutes. The "boxes already on the board" in the daily is the game's own design (`preRows: 2` in the original file).
+- Run `supabase/016_game_items_and_progress.sql`.
+- Next: delivery locations (GOUNI only), Find a Friend as a referral link, Support and Feedback, compact game cards, UI polish.

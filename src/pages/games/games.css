@@ -48,3 +48,8 @@
 .game-result__plus { font-family: var(--font-heading); font-size: var(--text-xl); font-weight: 700; color: #3f6b1f; }
 
 .slot-card__modes { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+
+/* The result appears over the game, so it feels part of it rather than a separate page. */
+.game-overlay { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: var(--space-4); background: rgb(36 34 32 / 0.94); overflow-y: auto; }
+.game-overlay .game-result { width: min(26rem, 100%); }
+.game-result__title { margin: 0; }

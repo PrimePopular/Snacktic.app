@@ -3,12 +3,16 @@ import type { GameProps } from '../game.types';
 import { GameFrame } from '../shared/GameFrame';
 import { ModeChooser } from '../shared/ModeChooser';
 import type { ChooserMode } from '../shared/ModeChooser';
+import type { ProgressSpec } from '../shared/gameProgress';
 
 const GAME_ID = 'crumbly';
 
+/** Best scores and settings are kept in the database too. */
+const PROGRESS: ProgressSpec = { gameId: GAME_ID, prefixes: ['crumbly'] };
+
 const MODES: ChooserMode[] = [
-  { id: 'classic', label: 'Classic', description: 'Play as often as you like. Reach big scores to unlock bonus Crumb Points.' },
-  { id: 'daily', label: 'Daily Challenge', daily: true, description: 'One new puzzle a day with a 5 minute limit. The better your score, the more points (up to 150).' },
+  { id: 'classic', label: 'Classic', description: 'Play, unlock bonuses and earn Crumb Points.' },
+  { id: 'daily', label: 'Daily Challenge', daily: true, description: 'A new puzzle every day.' },
 ];
 
 /** Crumbly (the number-merging game). The game page lives in public/games/crumbly.html and reports each finished round. */
@@ -22,6 +26,7 @@ export default function Crumbly({ onFinish, onExit }: GameProps) {
     <GameFrame
       src={`/games/crumbly.html?embed=1&mode=${session.mode}`}
       title="Crumbly"
+      progress={PROGRESS}
       onLeave={onExit}
       onMessage={(message) => {
         if (message.type === 'exit') return onExit();

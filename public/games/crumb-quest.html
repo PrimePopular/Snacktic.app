@@ -712,6 +712,11 @@ body.show-tips .game-tip, body.show-tips .footer-note { display:block; }
 .splash-cookie-logo { object-fit:contain; animation:splash-cookie-drop 1.05s cubic-bezier(.18,.9,.25,1.25) .2s both; }
 </style>
   
+<style>
+/* Snacktic: make sure a finger drag always reaches the letter wheel instead of scrolling or selecting. */
+html, body { overscroll-behavior: none; }
+.letter-wheel, .letter-wheel * { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+</style>
 </head>
 <body>
   <div class="splash" id="splash" role="presentation">
@@ -1039,6 +1044,9 @@ if (daily.completed)
     daily.attempted = true;
 safeWrite('crumbquest-daily', daily);
 function startingScore() {
+    // Inside Snacktic the balance is the student's real Crumb Points, sent by the app. No separate currency.
+    if (EMBED)
+        return 0;
     // Everyone starts with at least 100 crumbs (granted once per device).
     const saved = Number(safeRead('crumbquest-score', safeRead('snacktics-score', 0))) || 0;
     if (safeRead('crumbquest-start-bonus', false))
@@ -1129,7 +1137,8 @@ function announce(message) {
     state.toastTimer = window.setTimeout(() => ui.toast.classList.remove('show'), 2400);
 }
 function saveScore() {
-    safeWrite('crumbquest-score', state.score);
+    if (!EMBED)
+        safeWrite('crumbquest-score', state.score);
     ui.score.textContent = String(state.score).padStart(3, '0');
     ui.homeScore.textContent = String(state.score).padStart(3, '0');
     if (ui.shopCrumbs)
@@ -1154,7 +1163,8 @@ function addDailyProgress(key, amount = 1) {
     if (daily.progress[key] >= spec.goal && !daily.claimed[key]) {
         daily.claimed[key] = true;
         reward = spec.reward;
-        state.score += reward;
+        if (!EMBED)
+            state.score += reward;
         saveScore();
     }
     saveDaily();
@@ -1393,10 +1403,55 @@ function openShop() {
 function closeShop() {
     ui.shopModal.hidden = true;
 }
+// Inside Snacktic, hints are bought with real Crumb Points. The app charges once on the server and replies.
+let hintRequestOpen = false;
+window.addEventListener('message', (event) => {
+    if (!EMBED || event.origin !== location.origin || event.source !== window.parent)
+        return;
+    const data = event.data;
+    if (!data || data.source !== 'snacktic-host')
+        return;
+    if (data.type === 'balance') {
+        if (Array.isArray(data.prices))
+            data.prices.forEach((price, i) => { if (HINT_PACKS[i] && Number.isFinite(price))
+                HINT_PACKS[i].cost = price; });
+        state.score = Math.max(0, Number(data.points) || 0);
+        saveScore();
+    }
+    else if (data.type === 'hint-result') {
+        hintRequestOpen = false;
+        if (data.ok) {
+            const qty = Number(data.qty) || 0;
+            state.hintBank += qty;
+            state.score = Math.max(0, Number(data.points) || 0);
+            saveScore();
+            saveHints();
+            updateHintButton();
+            announce(`Bought ${qty} hint${qty > 1 ? 's' : ''}.`);
+            playSound('success');
+        }
+        else {
+            announce(data.error || 'Could not buy hints. You were not charged.');
+            playSound('error');
+        }
+    }
+});
 function buyHints(index) {
     const pack = HINT_PACKS[index];
     if (!pack)
         return;
+    if (EMBED) {
+        if (hintRequestOpen)
+            return;
+        if (state.score < pack.cost) {
+            announce(`You need ${pack.cost} Crumb Points for that pack.`);
+            playSound('error');
+            return;
+        }
+        hintRequestOpen = true;
+        report({ type: 'buy-hint', pack: index });
+        return;
+    }
     if (state.score < pack.cost) {
         announce(`You need ${pack.cost} crumbs for that pack.`);
         playSound('error');
@@ -1580,7 +1635,8 @@ function discoverSecret(word) {
     if (state.secretsFound.size >= 1 || state.secretsFound.has(word))
         return;
     state.secretsFound.add(word);
-    state.score += 5;
+    if (!EMBED)
+        state.score += 5;
     if (state.mode === 'hard')
         adjustTime(5);
     saveScore();
@@ -1593,7 +1649,8 @@ function discoverSecret(word) {
     playSound('success');
 }
 function addPoints(points) {
-    state.score += points;
+    if (!EMBED)
+        state.score += points;
     saveScore();
 }
 function buzz(pattern) {
@@ -2092,12 +2149,19 @@ ui.wheel.addEventListener('pointerdown', (event) => {
     if (!button || (event.pointerType === 'mouse' && event.button !== 0))
         return;
     event.preventDefault();
+    // Keep the whole drag on the wheel itself (touch screens otherwise lose it when the letters redraw).
+    try {
+        ui.wheel.setPointerCapture(event.pointerId);
+    }
+    catch (e) { }
     state.dragSelecting = true;
     state.dragPointerId = event.pointerId;
     ui.wheel.classList.add('is-dragging');
     state.current = [];
     selectDraggedLetter(Number(button.dataset.letterIndex));
 });
+ui.wheel.addEventListener('touchmove', (event) => event.preventDefault(), { passive: false });
+ui.wheel.addEventListener('contextmenu', (event) => event.preventDefault());
 document.addEventListener('pointermove', (event) => {
     if (!state.dragSelecting || event.pointerId !== state.dragPointerId)
         return;

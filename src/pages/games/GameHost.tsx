@@ -96,7 +96,7 @@ export function GameHost({ id }: { id: string }) {
   }
 
   if (result) {
-    const isDaily = Boolean(game.modes.find((m) => m.id === result.mode)?.dailyChallenge);
+    const isDaily = Boolean(game.modes?.find((m) => m.id === result.mode)?.dailyChallenge);
     return (
       <div className="game-overlay">
         <Card tone="warm" className="game-result">

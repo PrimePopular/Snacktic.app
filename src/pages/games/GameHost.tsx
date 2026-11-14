@@ -82,6 +82,8 @@ export function GameHost({ id }: { id: string }) {
   const [problem, setProblem] = useState<string | null>(null);
 
   const isDaily = Boolean(result && game?.modes?.find((m) => m.id === result.mode)?.dailyChallenge);
+  // A single-mode game leaves `mode` out, so fall back to the same 'default' the points service uses.
+  const resultMode = result?.mode ?? 'default';
 
   if (!game) {
     return (
@@ -104,7 +106,7 @@ export function GameHost({ id }: { id: string }) {
   /** Straight back into the same mode, with no picker in between. */
   function begin(attemptId?: string) {
     if (!result) return;
-    setStart({ mode: result.mode, attemptId });
+    setStart({ mode: resultMode, attemptId });
     setResult(null);
     setOutcome(null);
     setProblem(null);
@@ -132,7 +134,7 @@ export function GameHost({ id }: { id: string }) {
               </p>
             )}
             {isDaily ? (
-              <RetryPicker key={result.finishedAt} gameId={game.id} mode={result.mode} onStart={(attemptId) => begin(attemptId)} />
+              <RetryPicker key={result.finishedAt} gameId={game.id} mode={resultMode} onStart={(attemptId) => begin(attemptId)} />
             ) : (
               <Button onClick={() => begin()}>Play again</Button>
             )}

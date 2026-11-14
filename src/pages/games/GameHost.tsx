@@ -83,13 +83,15 @@ export function GameHost({ id }: { id: string }) {
   const [problem, setProblem] = useState<string | null>(null);
 
   const isDaily = Boolean(result && game?.modes?.find((m) => m.id === result.mode)?.dailyChallenge);
+  // A single-mode game leaves `mode` out, so fall back to the same 'default' the points service uses.
+  const resultMode = result?.mode ?? 'default';
 
   // For a daily challenge, find out what a retry costs so the button can say so.
   useEffect(() => {
     setRetryCost(null);
     if (!result || !isDaily || !game || auth.status !== 'signed-in') return;
     let active = true;
-    void previewAttempt(game.id, result.mode)
+    void previewAttempt(game.id, resultMode)
       .then((p) => active && setRetryCost(p.cost))
       .catch(() => undefined);
     return () => {
@@ -119,13 +121,13 @@ export function GameHost({ id }: { id: string }) {
   async function playAgain() {
     if (!result || !game) return;
     setProblem(null);
-    let next: GameProps['start'] = { mode: result.mode };
+    let next: GameProps['start'] = { mode: resultMode };
     if (isDaily) {
       if (retryCost && retryCost > 0 && !window.confirm(`Retrying costs ${retryCost} Crumb Points. Continue?`)) return;
       setBusy(true);
       try {
-        const attempt = await startAttempt(game.id, result.mode);
-        next = { mode: result.mode, attemptId: attempt.attemptId };
+        const attempt = await startAttempt(game.id, resultMode);
+        next = { mode: resultMode, attemptId: attempt.attemptId };
       } catch (error) {
         setProblem(error instanceof Error ? error.message : 'Something went wrong.');
         setBusy(false);

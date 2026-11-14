@@ -89,7 +89,7 @@ export function GameHost({ id }: { id: string }) {
     setRetryCost(null);
     if (!result || !isDaily || !game || auth.status !== 'signed-in') return;
     let active = true;
-    void previewAttempt(game.id, result.mode?)
+    void previewAttempt(game.id, result.mode)
       .then((p) => active && setRetryCost(p.cost))
       .catch(() => undefined);
     return () => {

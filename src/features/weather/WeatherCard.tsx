@@ -26,19 +26,17 @@ export function WeatherCard() {
   useEffect(() => {
     let active = true;
     void (async () => {
+      // The weather follows the student: ask the phone where it is now (the first time the browser asks permission).
+      try {
+        const place = await locateMe();
+        savePlace(place);
+        if (active) await show(place);
+        return;
+      } catch {
+        /* location was refused or is not available: use the last place, then the campus */
+      }
       const saved = getSavedPlace();
       if (saved) return active && show(saved);
-      // If the student already allowed location earlier, use it quietly. Otherwise fall back to the campus.
-      try {
-        const status = await navigator.permissions?.query({ name: 'geolocation' as PermissionName });
-        if (status?.state === 'granted') {
-          const place = await locateMe();
-          savePlace(place);
-          return active && show(place);
-        }
-      } catch {
-        /* permission lookup is not supported everywhere: carry on */
-      }
       const campus = await getCampusPlace();
       if (!active) return;
       if (campus) await show(campus);
@@ -93,15 +91,14 @@ export function WeatherCard() {
           <span className="weather-card__emoji" aria-hidden="true">{weather.emoji}</span>
           <div className="weather-card__text">
             <strong>
-              {weather.now}° in {weather.place}
+              {weather.summary} today in {weather.place}
             </strong>
             <p>
-              {weather.summary}. Today {weather.low}° to {weather.high}°.
-              {weather.rainChance >= 40 ? ` ${weather.rainChance}% chance of rain, take an umbrella.` : ''}
+              {weather.low}° to {weather.high}° (now {weather.now}°). {weather.advice.join(' ')}
             </p>
           </div>
-          <button type="button" className="link-button" onClick={() => setOpen(true)}>
-            Change
+          <button type="button" className="link-button" onClick={() => void useMyLocation()} aria-label="Update my location">
+            📍
           </button>
         </section>
       ) : (
@@ -109,9 +106,12 @@ export function WeatherCard() {
           <span className="weather-card__emoji" aria-hidden="true">🌤️</span>
           <div className="weather-card__text">
             <strong>Today's weather</strong>
-            <p>Share your location or pick a place to see the weather where you are.</p>
+            <p>Allow your location to see the weather where you are, or search for your place.</p>
           </div>
-          <Button onClick={() => setOpen(true)}>Set place</Button>
+          <Button onClick={() => void useMyLocation().then(() => undefined)}>Use my location</Button>
+          <button type="button" className="link-button" onClick={() => setOpen(true)}>
+            Search a place
+          </button>
         </section>
       )}
 

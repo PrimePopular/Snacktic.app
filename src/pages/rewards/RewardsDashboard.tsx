@@ -4,18 +4,20 @@ import { useAuth } from '../../features/authentication';
 import { validatePhone } from '../../features/authentication/validation';
 import { AdCard, useLiveAds, weaveAds } from '../../features/ads';
 import { CardArt } from '../../features/feed';
+import { listDeliveryLocations, requestDeliveryLocation } from '../../features/delivery';
+import type { DeliveryLocation } from '../../features/delivery';
 import { buyDigitalReward, getBalance, listMyDigitalPurchases, listRewards, redeemReward } from '../../features/points';
 import type { Reward } from '../../features/points';
 import { pictureUrl } from '../../services/pictures';
 import { playCoin } from '../../services/sound';
-import { Button, EmptyState, Loading, Modal, PageHeader, TextField } from '../../shared/components';
+import { Button, EmptyState, Loading, Modal, PageHeader, SelectField, TextField } from '../../shared/components';
 
 type Tab = 'physical' | 'digital';
 
 type LoadState =
   | { kind: 'loading' }
   | { kind: 'error' }
-  | { kind: 'ready'; balance: number; rewards: Reward[]; owned: Record<string, string> };
+  | { kind: 'ready'; balance: number; rewards: Reward[]; owned: Record<string, string>; places: DeliveryLocation[] };
 
 const PAGE = 12;
 
@@ -75,6 +77,10 @@ export function RewardsDashboard() {
   const [phone, setPhone] = useState('');
   const [buyError, setBuyError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [placeId, setPlaceId] = useState('');
+  const [asking, setAsking] = useState(false);
+  const [askText, setAskText] = useState('');
+  const [askMessage, setAskMessage] = useState<string | null>(null);
   const buyTitleId = useId();
   const openedTitleId = useId();
   const sentinel = useRef<HTMLDivElement>(null);
@@ -82,10 +88,10 @@ export function RewardsDashboard() {
 
   const load = useCallback(async () => {
     try {
-      const [balance, rewards, purchases] = await Promise.all([getBalance(), listRewards(), listMyDigitalPurchases().catch(() => [])]);
+      const [balance, rewards, purchases, places] = await Promise.all([getBalance(), listRewards(), listMyDigitalPurchases().catch(() => []), listDeliveryLocations().catch(() => [] as DeliveryLocation[])]);
       const owned: Record<string, string> = {};
       for (const p of purchases) if (p.rewardId) owned[p.rewardId] = p.url;
-      setState({ kind: 'ready', balance, rewards, owned });
+      setState({ kind: 'ready', balance, rewards, owned, places });
     } catch (error) {
       console.error('[rewards]', error);
       setState({ kind: 'error' });
@@ -131,6 +137,9 @@ export function RewardsDashboard() {
     setNotice(null);
     setBuyError(null);
     setPhone(profile?.phone ?? '');
+    setPlaceId(state.kind === 'ready' ? (state.places[0]?.id ?? '') : '');
+    setAsking(false);
+    setAskMessage(null);
     setBuying(reward);
   }
 
@@ -145,6 +154,11 @@ export function RewardsDashboard() {
         setBuying(null);
         setOpened(book);
         await load();
+        setBusy(false);
+        return;
+      }
+      if (!placeId) {
+        setBuyError('Delivery is not available right now. You can ask for a new place below.');
         setBusy(false);
         return;
       }
@@ -163,7 +177,7 @@ export function RewardsDashboard() {
           return;
         }
       }
-      await redeemReward(buying.id);
+      await redeemReward(buying.id, placeId);
       playCoin();
       setNotice(`Order placed for "${buying.name}"! A Snacktic agent will message you on WhatsApp to arrange delivery.`);
       setBuying(null);
@@ -172,6 +186,18 @@ export function RewardsDashboard() {
       setBuyError(error instanceof Error ? error.message : 'Something went wrong.');
     }
     setBusy(false);
+  }
+
+  async function sendAsk() {
+    setAskMessage(null);
+    try {
+      await requestDeliveryLocation(askText, '');
+      setAskMessage('Thank you! We have noted it. The team will consider adding it.');
+      setAskText('');
+      setAsking(false);
+    } catch (error) {
+      setAskMessage(error instanceof Error ? error.message : 'Something went wrong.');
+    }
   }
 
   if (state.kind === 'loading') return <Loading label="Loading your rewards" />;
@@ -187,7 +213,7 @@ export function RewardsDashboard() {
     );
   }
 
-  const { balance, owned } = state;
+  const { balance, owned, places } = state;
   const shown = weaveAds(items.slice(0, visible), ads);
 
   return (
@@ -249,12 +275,45 @@ export function RewardsDashboard() {
             </p>
             {buying.kind === 'digital' ? (
               <p className="text-secondary">You'll get the book straight away, and it stays in Profile under Activity.</p>
-            ) : profile?.phone ? (
-              <p className="text-secondary">A Snacktic agent will message you on WhatsApp ({profile.phone}) to arrange delivery in school.</p>
             ) : (
               <>
-                <p className="text-secondary">Add your WhatsApp number so a Snacktic agent can reach you to arrange delivery in school.</p>
-                <TextField label="WhatsApp number" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={25} autoComplete="tel" />
+                <p className="delivery-note">
+                  <strong>Delivery is only available at: {places.length > 0 ? places.map((p) => p.name).join(', ') : 'no places right now'}.</strong> Orders to other places can't be accepted yet.
+                </p>
+                {places.length > 1 && (
+                  <SelectField label="Deliver to" value={placeId} onChange={(e) => setPlaceId(e.target.value)}>
+                    {places.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </SelectField>
+                )}
+                {profile?.phone ? (
+                  <p className="text-secondary">A Snacktic agent will message you on WhatsApp ({profile.phone}) to arrange delivery.</p>
+                ) : (
+                  <>
+                    <p className="text-secondary">Add your WhatsApp number so a Snacktic agent can reach you to arrange delivery.</p>
+                    <TextField label="WhatsApp number" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={25} autoComplete="tel" />
+                  </>
+                )}
+                {asking ? (
+                  <div className="delivery-ask">
+                    <TextField label="Which place do you want delivery to?" value={askText} onChange={(e) => setAskText(e.target.value)} maxLength={120} />
+                    <Button variant="secondary" disabled={askText.trim().length < 2} onClick={() => void sendAsk()}>
+                      Send request
+                    </Button>
+                  </div>
+                ) : (
+                  <button type="button" className="link-button" onClick={() => setAsking(true)}>
+                    My place isn't listed
+                  </button>
+                )}
+                {askMessage && (
+                  <p className="text-small" role="status">
+                    {askMessage}
+                  </p>
+                )}
               </>
             )}
             {buyError && (

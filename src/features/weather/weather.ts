@@ -17,8 +17,11 @@ export interface Weather {
   high: number;
   low: number;
   rainChance: number;
+  /** The day as a whole, for example "Mostly sunny". */
   summary: string;
   emoji: string;
+  /** What to do about it, for example "Take an umbrella." */
+  advice: string[];
 }
 
 const PLACE_KEY = 'snacktic.place';
@@ -109,9 +112,67 @@ export async function locateMe(): Promise<Place> {
   return { name, lat, lon };
 }
 
+interface DayData {
+  code: number;
+  high: number;
+  low: number;
+  rainChance: number;
+  rainMm: number;
+  sunshine: number | null;
+  daylight: number | null;
+  uv: number;
+  daytimeCloud: number | null;
+}
+
+/**
+ * Describes the whole day (not just this moment) and says what to do about it. A day is "sunny" when the sun really shines
+ * for most of the daylight hours and the daytime sky is mostly clear; the model's single weather code is only used for rain,
+ * storms and fog.
+ */
+export function buildOutlook(day: DayData): { summary: string; emoji: string; advice: string[] } {
+  const brightness = (() => {
+    const sun = day.sunshine !== null && day.daylight ? Math.min(1, day.sunshine / day.daylight) : null;
+    const clear = day.daytimeCloud !== null ? 1 - day.daytimeCloud / 100 : null;
+    if (sun !== null && clear !== null) return (sun + clear) / 2;
+    return sun ?? clear ?? 0.5;
+  })();
+
+  let summary: string;
+  let emoji: string;
+  if (day.code >= 95) {
+    summary = 'Thunderstorms';
+    emoji = '⛈️';
+  } else if (day.rainChance >= 60 || day.rainMm >= 3 || (day.code >= 61 && day.code <= 82)) {
+    summary = 'Rainy';
+    emoji = '🌧️';
+  } else if (day.code === 45 || day.code === 48) {
+    summary = 'Foggy';
+    emoji = '🌫️';
+  } else if (brightness >= 0.7) {
+    summary = 'Sunny';
+    emoji = '☀️';
+  } else if (brightness >= 0.45) {
+    summary = 'Partly sunny';
+    emoji = '🌤️';
+  } else {
+    summary = 'Cloudy';
+    emoji = '☁️';
+  }
+
+  const advice: string[] = [];
+  if (day.rainChance >= 60) advice.push('Take an umbrella.');
+  else if (day.rainChance >= 30) advice.push(`Slight chance of rain (${day.rainChance}%), so keep an umbrella handy.`);
+  if (day.high >= 32) advice.push('It will be hot. Wear something light and drink plenty of water.');
+  else if (day.high >= 28) advice.push('Warm day. Light clothes will do.');
+  else if (day.high < 22) advice.push('Cool day. A light jacket is a good idea.');
+  if (day.uv >= 8 && brightness >= 0.45) advice.push('Strong sun: sunglasses or a cap will help.');
+  if (advice.length === 0) advice.push('A comfortable day ahead.');
+  return { summary, emoji, advice };
+}
+
 /** Today's weather for a place. Never throws: the weather is a nicety, so any problem simply means no card. */
 export async function fetchWeather(place: Place): Promise<Weather | null> {
-  const key = `snacktic.weather.${place.lat.toFixed(2)},${place.lon.toFixed(2)}`;
+  const key = `snacktic.weather2.${place.lat.toFixed(2)},${place.lon.toFixed(2)}`;
   try {
     const raw = sessionStorage.getItem(key);
     if (raw) {
@@ -124,19 +185,35 @@ export async function fetchWeather(place: Place): Promise<Weather | null> {
   try {
     const url =
       `https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}` +
-      '&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1';
+      '&current=temperature_2m' +
+      '&hourly=cloud_cover' +
+      '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,sunshine_duration,daylight_duration,uv_index_max' +
+      '&timezone=auto&forecast_days=1';
     const response = await fetch(url);
     if (!response.ok) throw new Error(`Weather service answered ${response.status}`);
     const json = await response.json();
-    const { summary, emoji } = describeWeather(Number(json.current.weather_code));
-    const weather: Weather = {
-      place: place.name,
-      now: Math.round(json.current.temperature_2m),
+    const cloud: number[] = (json.hourly?.cloud_cover ?? []).slice(7, 18).filter((n: unknown) => typeof n === 'number');
+    const day: DayData = {
+      code: Number(json.daily.weather_code[0]),
       high: Math.round(json.daily.temperature_2m_max[0]),
       low: Math.round(json.daily.temperature_2m_min[0]),
       rainChance: Math.round(json.daily.precipitation_probability_max?.[0] ?? 0),
-      summary,
-      emoji,
+      rainMm: Number(json.daily.precipitation_sum?.[0] ?? 0),
+      sunshine: typeof json.daily.sunshine_duration?.[0] === 'number' ? json.daily.sunshine_duration[0] : null,
+      daylight: typeof json.daily.daylight_duration?.[0] === 'number' ? json.daily.daylight_duration[0] : null,
+      uv: Number(json.daily.uv_index_max?.[0] ?? 0),
+      daytimeCloud: cloud.length > 0 ? cloud.reduce((a, b) => a + b, 0) / cloud.length : null,
+    };
+    const outlook = buildOutlook(day);
+    const weather: Weather = {
+      place: place.name,
+      now: Math.round(json.current.temperature_2m),
+      high: day.high,
+      low: day.low,
+      rainChance: day.rainChance,
+      summary: outlook.summary,
+      emoji: outlook.emoji,
+      advice: outlook.advice,
     };
     try {
       sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), data: weather }));

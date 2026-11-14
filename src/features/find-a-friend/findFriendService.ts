@@ -4,8 +4,7 @@
  * supabase/012_find_a_friend_and_notifications.sql. This file only asks the database to act.
  */
 import { supabase } from '../../services/database';
-import { notifyPointsChanged } from '../points';
-import type { FindFriendOverview, FoundFriend, LeaderRow, LiveFindFriend, ScanResult, StartEventInput } from './findFriend.types';
+import type { FindFriendOverview, FoundFriend, LeaderRow, LiveFindFriend, StartEventInput } from './findFriend.types';
 
 function client() {
   if (!supabase) throw new Error('The database is not connected yet.');
@@ -83,13 +82,26 @@ export async function joinEvent(): Promise<string> {
   return String(data);
 }
 
-export async function scanCode(code: string): Promise<ScanResult> {
-  const { data, error } = await client().rpc('scan_friend_code', { p_code: code });
+export type ReferralOutcome = 'rewarded' | 'no_event' | 'invalid' | 'self' | 'already_referred' | 'limit';
+
+/** Who is inviting? Works before anyone has signed in. Returns null if the code is not part of a live event. */
+export async function getReferralInfo(code: string): Promise<{ name: string } | null> {
+  const { data, error } = await client().rpc('referral_info', { p_code: code });
+  if (error) {
+    console.error('[find-a-friend] referral info', error.message);
+    return null;
+  }
+  const row = ((data ?? []) as { referrer_name: string; event_live: boolean }[])[0];
+  return row && row.event_live ? { name: row.referrer_name } : null;
+}
+
+/** After signing up or signing in: credit the person who invited this student. The database applies every rule. */
+export async function claimReferral(code: string): Promise<{ points: number; name: string | null; result: ReferralOutcome }> {
+  const { data, error } = await client().rpc('claim_referral', { p_code: code });
   if (error) throw failure(error.message);
-  const row = ((data ?? []) as { awarded_points: number; found_nickname: string }[])[0];
+  const row = ((data ?? []) as { awarded_points: number; referrer_nickname: string | null; result: ReferralOutcome }[])[0];
   if (!row) throw failure('That code could not be read');
-  if (row.awarded_points > 0) notifyPointsChanged();
-  return { points: row.awarded_points, name: row.found_nickname };
+  return { points: row.awarded_points, name: row.referrer_nickname, result: row.result };
 }
 
 export async function listMyFriends(): Promise<FoundFriend[]> {

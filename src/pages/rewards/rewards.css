@@ -70,3 +70,6 @@
 .my-activity details { border-top: 1px solid var(--border); padding: var(--space-3) 0; }
 .my-activity summary { cursor: pointer; font-weight: 700; }
 .my-activity ul { margin-top: var(--space-2); }
+
+.delivery-note { margin: 0; padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-orange-soft); }
+.delivery-ask { display: grid; gap: var(--space-2); }

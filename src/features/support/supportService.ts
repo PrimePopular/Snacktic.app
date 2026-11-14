@@ -4,6 +4,7 @@
  */
 import { removePicture } from '../../services/pictures';
 import { supabase } from '../../services/database';
+import { appVersionLabel } from '../../shared/version';
 
 export type FeedbackCategory = 'bug' | 'feature' | 'update' | 'other';
 export type FeedbackStatus = 'new' | 'investigating' | 'in_progress' | 'fixed' | 'declined';
@@ -70,7 +71,7 @@ function client() {
 /** Sends a report. Device, browser and app version are added automatically. */
 export async function submitFeedback(input: FeedbackInput): Promise<void> {
   const device = `${navigator.platform || 'unknown'} · screen ${window.screen.width}x${window.screen.height} · ${window.devicePixelRatio}x`;
-  const version = typeof __APP_BUILD__ === 'string' ? __APP_BUILD__ : 'dev';
+  const version = appVersionLabel();
   const { error } = await client().rpc('submit_feedback', {
     p_category: input.category,
     p_title: input.title,

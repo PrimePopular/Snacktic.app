@@ -34,6 +34,8 @@ const SHOWABLE = [
   'Gift at least 1 point',
   'That reward is not available',
   'That reward is sold out',
+  'Delivery is not available to that place',
+  'Only handed-over or cancelled orders can be removed',
   'This ebook is not ready yet',
   'That reward is an ebook',
   'Sign in to gift points',
@@ -122,8 +124,8 @@ export async function giftPoints(username: string, amount: number): Promise<void
   notifyPointsChanged();
 }
 
-export async function redeemReward(rewardId: string): Promise<void> {
-  const { error } = await client().rpc('redeem_reward', { p_reward: rewardId });
+export async function redeemReward(rewardId: string, locationId: string): Promise<void> {
+  const { error } = await client().rpc('redeem_reward', { p_reward: rewardId, p_location: locationId });
   if (error) throw failure(error.message);
   notifyPointsChanged();
 }
@@ -133,18 +135,19 @@ interface RedemptionRow {
   points_cost: number;
   status: RedemptionStatus;
   created_at: string;
+  reward_name: string | null;
   rewards: { name: string } | null;
 }
 
 export async function listMyRedemptions(): Promise<Redemption[]> {
   const { data, error } = await client()
     .from('redemptions')
-    .select('id, points_cost, status, created_at, rewards(name)')
+    .select('id, points_cost, status, created_at, reward_name, rewards(name)')
     .order('created_at', { ascending: false });
   if (error) throw failure(error.message);
   return ((data ?? []) as unknown as RedemptionRow[]).map((r) => ({
     id: r.id,
-    rewardName: r.rewards?.name ?? 'Reward',
+    rewardName: r.rewards?.name ?? r.reward_name ?? 'Reward',
     pointsCost: r.points_cost,
     status: r.status,
     createdAt: r.created_at,
@@ -233,6 +236,7 @@ interface AdminRedemptionRow {
   created_at: string;
   phone: string | null;
   email: string | null;
+  delivery_place: string | null;
 }
 
 export async function adminListRedemptions(): Promise<AdminRedemption[]> {
@@ -247,7 +251,14 @@ export async function adminListRedemptions(): Promise<AdminRedemption[]> {
     createdAt: r.created_at,
     phone: r.phone ?? '',
     email: r.email ?? '',
+    deliveryPlace: r.delivery_place ?? '',
   }));
+}
+
+/** Owner only: removes a handed-over or cancelled order right away. */
+export async function adminDeleteRedemption(id: string): Promise<void> {
+  const { error } = await client().rpc('owner_delete_redemption', { p_id: id });
+  if (error) throw failure(error.message);
 }
 
 export async function adminSetRedemptionStatus(id: string, status: 'fulfilled' | 'cancelled'): Promise<void> {

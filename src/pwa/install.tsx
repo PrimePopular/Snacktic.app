@@ -72,12 +72,36 @@ export function InstallCard() {
     return (
       <Card tone="warm" className="install-card">
         <h3>Get the app</h3>
-        <p className="text-secondary text-small">
-          In Safari, tap the Share button, then <strong>Add to Home Screen</strong>.
-        </p>
+        <ol className="text-secondary text-small install-steps">
+          <li>
+            Open Snacktic in <strong>Safari</strong> (not Chrome).
+          </li>
+          <li>
+            Tap the <strong>Share</strong> button (the square with an arrow, at the bottom).
+          </li>
+          <li>
+            Scroll down and tap <strong>Add to Home Screen</strong>, then <strong>Add</strong>.
+          </li>
+          <li>Open Snacktic from your home screen. Notifications on iPhone only work from there.</li>
+        </ol>
       </Card>
     );
   }
 
-  return null;
+  // No one-tap install offer from the browser (Android sometimes holds it back): show the steps instead.
+  const isAndroid = /android/i.test(navigator.userAgent);
+  return (
+    <Card tone="warm" className="install-card">
+      <h3>Get the app</h3>
+      {isAndroid ? (
+        <p className="text-secondary text-small">
+          In Chrome, tap the <strong>⋮ menu</strong> (top right), then <strong>Install app</strong> (or <strong>Add to Home screen</strong>).
+        </p>
+      ) : (
+        <p className="text-secondary text-small">
+          In Chrome or Edge, click the install icon at the right end of the address bar, or open the browser menu and choose <strong>Install Snacktic</strong>.
+        </p>
+      )}
+    </Card>
+  );
 }

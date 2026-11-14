@@ -5,6 +5,7 @@ import { Button, Card, CheckboxField, PageHeader } from '../../shared/components
 import { InstallCard } from '../../pwa/install';
 import { DetailsForm } from './DetailsForm';
 import { PushSettings } from '../../features/push';
+import { appVersionLabel } from '../../shared/version';
 import { MyActivity } from './MyActivity';
 import { SendPoints } from './SendPoints';
 import { SoundToggle } from './SoundToggle';
@@ -87,6 +88,7 @@ export function AccountProfile() {
           <Link to="/privacy" className="text-small">
             Privacy notice
           </Link>
+          <p className="text-xs text-secondary">{appVersionLabel()}</p>
         </div>
       </Card>
 

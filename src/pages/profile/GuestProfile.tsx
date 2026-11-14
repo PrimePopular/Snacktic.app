@@ -10,6 +10,7 @@ import {
   validateUsername,
 } from '../../features/authentication/validation';
 import { Button, Card, CheckboxField, Logo, PasswordField, TextField } from '../../shared/components';
+import { appVersionLabel } from '../../shared/version';
 import { InstallCard } from '../../pwa/install';
 import { SoundToggle } from './SoundToggle';
 
@@ -212,6 +213,7 @@ export function GuestProfile() {
         <Button variant="secondary" to="/support">
           Report a problem or send feedback
         </Button>
+        <p className="text-xs text-secondary">{appVersionLabel()}</p>
       </div>
     </>
   );

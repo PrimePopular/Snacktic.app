@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { navigate } from '../../core/router';
+import { POINTS_CHANGED_EVENT } from '../points';
 import { playChime } from '../../services/sound';
 import { Button, Modal } from '../../shared/components';
 import { useAuth } from '../authentication';
@@ -26,7 +27,11 @@ export function NotificationsBell() {
     try {
       const next = await listNotifications();
       const unread = next.filter((n) => !n.read).length;
-      if (known.current !== null && unread > known.current) playChime();
+      if (known.current !== null && unread > known.current) {
+        playChime();
+        // A new message may be about points (a gift or a reward), so refresh the balance too.
+        window.dispatchEvent(new Event(POINTS_CHANGED_EVENT));
+      }
       known.current = unread;
       setItems(next);
     } catch (error) {

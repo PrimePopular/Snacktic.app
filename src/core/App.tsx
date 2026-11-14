@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import AdminApp from '../admin/AdminApp';
 import { useAuth } from '../features/authentication';
-import { FindFriendTag } from '../features/find-a-friend';
+import { FindFriendTag, ReferralClaimer } from '../features/find-a-friend';
 import { UpdateBanner } from '../pwa/UpdateBanner';
 import FindFriendPage from '../pages/find-a-friend/FindFriendPage';
+import ReferralLandingPage from '../pages/find-a-friend/ReferralLandingPage';
 import SupportPage from '../pages/support/SupportPage';
 import { flushPendingResults } from '../features/points';
 import DiscoverPage from '../pages/discover/DiscoverPage';
@@ -34,6 +35,7 @@ const routes: RouteDef[] = [
   { path: '/games/events/:id', title: 'Special event', render: (p) => <SpecialEventHost id={p.id} /> },
   { path: '/find-a-friend', title: 'Find a Friend', render: () => <FindFriendPage /> },
   { path: '/support', title: 'Support', render: () => <SupportPage /> },
+  { path: '/r/:code', title: 'Invite', render: (p) => <ReferralLandingPage code={p.code} /> },
   { path: '/rewards', title: 'Rewards', render: () => <RewardsPage /> },
   { path: '/profile', title: 'Profile', render: () => <ProfilePage /> },
   { path: '/privacy', title: 'Privacy', render: () => <PrivacyPage /> },
@@ -109,6 +111,7 @@ export default function App() {
       </a>
       <TopBar />
       <UpdateBanner />
+      <ReferralClaimer />
       <FindFriendTag />
       <main id="main-content" className="app-main" tabIndex={-1}>
         <Router routes={routes} notFound={notFound} />

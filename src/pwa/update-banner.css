@@ -10,3 +10,5 @@
   color: var(--text-on-dark);
   font-size: var(--text-sm);
 }
+
+.install-steps { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-1); }

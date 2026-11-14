@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useAuth, isOwnerRole } from '../../features/authentication';
-import { adminDeleteReward, adminGetRewardFile, adminListRedemptions, adminListRewards, adminSaveReward, adminSetRedemptionStatus } from '../../features/points';
+import { adminDeleteRedemption, adminDeleteReward, adminGetRewardFile, adminListRedemptions, adminListRewards, adminSaveReward, adminSetRedemptionStatus } from '../../features/points';
 import type { AdminRedemption, Reward } from '../../features/points';
 import { pictureUrl } from '../../services/pictures';
 import { Button, Card, CheckboxField, EmptyState, Loading, SelectField, TextAreaField, TextField } from '../../shared/components';
@@ -189,6 +189,7 @@ export function RewardsAdminPage() {
                     {o.username} · {o.pointsCost} pts · {dateFormat.format(new Date(o.createdAt))}
                   </p>
                   <p className="text-small">WhatsApp {o.phone || 'not given'} · {o.email}</p>
+                  {o.deliveryPlace && <p className="text-small"><strong>Deliver to:</strong> {o.deliveryPlace}</p>}
                   {o.phone && /^\s*0/.test(o.phone) && <p className="text-xs text-secondary">The number starts with 0. WhatsApp needs the country code, so the chat button may not open.</p>}
                   <div className="ann__actions">
                     {link && (
@@ -227,6 +228,11 @@ export function RewardsAdminPage() {
                   {o.rewardName} · {o.username}
                 </span>
                 <span className="text-xs text-secondary">{o.status}</span>
+                {owner && (
+                  <Button variant="ghost" disabled={busy} onClick={() => void run(() => adminDeleteRedemption(o.id), 'Order removed.')}>
+                    Remove
+                  </Button>
+                )}
               </li>
             ))}
           </ul>

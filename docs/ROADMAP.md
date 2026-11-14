@@ -89,3 +89,14 @@ account suspension, start-up animation, installable app and offline copies of pu
 - Ended events are deleted (with their pictures) whenever an admin opens the dashboard. Find a Friend events can be deleted.
 - Run `supabase/018_ebooks_ad_retries_feedback.sql`.
 - Next: notifications whose times the owner sets, weather per student's place, delivery restricted to Godfrey Okoye University, Find a Friend as a referral link, a 3,000 student capacity review.
+
+
+## Update 022
+- Deleting a reward no longer fails when it has orders: orders keep their own copy of the reward name. The owner can also remove a handed-over order straight away (Rewards, Recent handled orders, Remove).
+- Delivery: physical rewards can only be ordered for an approved place (right now Godfrey Okoye University). The notice shows before the order, the server refuses other places, students can ask for a new place, and the owner manages places in Admin, Delivery places.
+- Find a Friend is an invite link: the QR code is a normal web address with the player's code. Anyone can scan it with their normal camera. When the person signs up or signs in, the inviter earns the points. Each person counts for one inviter (the first), nobody can invite themselves, and there is a limit per inviter (50 by default). The in-app scanner is gone.
+- Whenever someone receives points (a gift or points from the team) they get a message, and their balance on top refreshes (it also refreshes by itself every 45 seconds).
+- Weather: the card now follows the student's own location automatically and describes the whole day with advice (umbrella, light clothes, jacket), using real sunshine and cloud data. Points history now has names for game retries and hint purchases.
+- Install: every phone now shows how to install (Android menu steps when Chrome does not offer a button, and four clear steps for iPhone).
+- Run `supabase/019_delivery_referrals_orders.sql`.
+- Still to do: notifications whose time the owner sets (with the daily weather message for each student's place, using the same outlook), the Jumia-style Rewards look, Crumb Quest layout, a 3,000 student capacity review.

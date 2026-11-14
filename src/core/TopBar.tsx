@@ -26,10 +26,16 @@ export function TopBar() {
         .catch(() => undefined); // keep showing the last number if the connection drops
     };
     load();
+    // Points can change somewhere else (a gift from a friend, points from the team): check again now and then.
+    const timer = window.setInterval(() => document.visibilityState === 'visible' && load(), 45_000);
+    const onVisible = () => document.visibilityState === 'visible' && load();
+    document.addEventListener('visibilitychange', onVisible);
     window.addEventListener(POINTS_CHANGED_EVENT, load);
     window.addEventListener('online', load);
     return () => {
       active = false;
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener(POINTS_CHANGED_EVENT, load);
       window.removeEventListener('online', load);
     };

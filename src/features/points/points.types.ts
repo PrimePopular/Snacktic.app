@@ -1,6 +1,8 @@
 export type TransactionKind =
   | 'game_award'
   | 'ad_view'
+  | 'game_retry'
+  | 'game_purchase'
   | 'campaign_award'
   | 'gift_sent'
   | 'gift_received'
@@ -50,11 +52,15 @@ export interface AdminRedemption extends Redemption {
   username: string;
   phone: string;
   email: string;
+  /** Where to deliver it, as chosen when ordering. */
+  deliveryPlace: string;
 }
 
 export const kindLabels: Record<TransactionKind, string> = {
   game_award: 'Game reward',
   ad_view: 'Ad reward',
+  game_retry: 'Game retry',
+  game_purchase: 'Hint purchase',
   campaign_award: 'Campaign reward',
   gift_sent: 'Gift sent',
   gift_received: 'Gift received',

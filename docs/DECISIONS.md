@@ -25,5 +25,3 @@
 ## Games section layout
 - Four permanent classic games, each with a fixed slot (1 to 4).
 - Limited-time events such as Find a Friend are a separate "Special events" area, not part of the game list. They appear only between their start and end dates and then disappear.
-
-my name

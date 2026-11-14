@@ -17,6 +17,7 @@ function parse(text: string): Milestone[] | null {
 
 function RuleCard({ rule, onSaved }: { rule: ExtraRule; onSaved: () => void }) {
   const [cost, setCost] = useState(String(rule.retryCost));
+  const [retries, setRetries] = useState(String(rule.maxRetries));
   const [text, setText] = useState(toText(rule.milestones));
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +31,9 @@ function RuleCard({ rule, onSaved }: { rule: ExtraRule; onSaved: () => void }) {
       if (rule.isDaily) {
         const n = Number(cost);
         if (!Number.isInteger(n) || n < 0 || n > 1000) throw new Error('The retry cost must be a whole number from 0 to 1000.');
-        await adminSetRetryCost(rule.gameId, rule.mode, n);
+        const r = Number(retries);
+        if (!Number.isInteger(r) || r < 0 || r > 50) throw new Error('Retries per day must be a whole number from 0 to 50.');
+        await adminSetRetryCost(rule.gameId, rule.mode, n, r);
       }
       if (rule.isMilestones) {
         const rows = parse(text);
@@ -50,6 +53,9 @@ function RuleCard({ rule, onSaved }: { rule: ExtraRule; onSaved: () => void }) {
       <h2>{rule.label}</h2>
       {rule.isDaily && (
         <TextField label="Cost to try again (Crumb Points)" type="number" inputMode="numeric" min={0} max={1000} value={cost} onChange={(e) => setCost(e.target.value)} hint="The first try each day is free. Every try after that costs this." />
+      )}
+      {rule.isDaily && (
+        <TextField label="Most retries per day" type="number" inputMode="numeric" min={0} max={50} value={retries} onChange={(e) => setRetries(e.target.value)} hint="Counts both ad retries and paid retries. The first try each day is not a retry." />
       )}
       {rule.isMilestones && (
         <TextAreaField label="Score milestones" value={text} onChange={(e) => setText(e.target.value)} rows={5} hint="One per line: score, then points. Each milestone pays once per student, ever. Example: 5000: 10" />

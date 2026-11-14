@@ -13,6 +13,7 @@ export interface ExtraRule {
   isDaily: boolean;
   isMilestones: boolean;
   retryCost: number;
+  maxRetries: number;
   milestones: Milestone[];
 }
 
@@ -24,6 +25,7 @@ interface RuleRow {
   is_daily_challenge: boolean;
   award_type: string;
   retry_cost: number;
+  max_retries: number;
 }
 
 function client() {
@@ -33,7 +35,7 @@ function client() {
 
 export async function adminListExtras(): Promise<ExtraRule[]> {
   const [rules, milestones] = await Promise.all([
-    client().from('game_rules').select('game_id, mode, mode_label, title, is_daily_challenge, award_type, retry_cost').order('game_id'),
+    client().from('game_rules').select('game_id, mode, mode_label, title, is_daily_challenge, award_type, retry_cost, max_retries').order('game_id'),
     client().from('game_milestones').select('game_id, mode, score, points').order('score'),
   ]);
   if (rules.error) throw new Error(rules.error.message);
@@ -48,12 +50,13 @@ export async function adminListExtras(): Promise<ExtraRule[]> {
       isDaily: r.is_daily_challenge,
       isMilestones: r.award_type === 'milestones',
       retryCost: r.retry_cost,
+      maxRetries: r.max_retries ?? 5,
       milestones: rows.filter((m) => m.game_id === r.game_id && m.mode === r.mode).map((m) => ({ score: m.score, points: m.points })),
     }));
 }
 
-export async function adminSetRetryCost(gameId: string, mode: string, cost: number): Promise<void> {
-  const { error } = await client().from('game_rules').update({ retry_cost: cost }).eq('game_id', gameId).eq('mode', mode);
+export async function adminSetRetryCost(gameId: string, mode: string, cost: number, maxRetries: number): Promise<void> {
+  const { error } = await client().from('game_rules').update({ retry_cost: cost, max_retries: maxRetries }).eq('game_id', gameId).eq('mode', mode);
   if (error) throw new Error(error.message);
 }
 

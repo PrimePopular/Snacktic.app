@@ -1,6 +1,8 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useAuth } from '../../features/authentication';
 import { previewAttempt, startAttempt } from '../../features/points';
+import { Button, Card } from '../../shared/components';
+import { RetryPicker } from '../shared/RetryPicker';
 import type { GameProps } from '../game.types';
 import { GameFrame } from '../shared/GameFrame';
 import type { SendToGame } from '../shared/GameFrame';
@@ -23,6 +25,7 @@ export default function CookieWall({ start, onFinish, onExit }: GameProps) {
   const attempt = useRef<string | undefined>(start?.attemptId);
   const startedAt = useRef(Date.now());
   const done = useRef(false);
+  const [pick, setPick] = useState<{ level: number; send: SendToGame } | null>(null);
 
   const src = start
     ? `/games/cookie-wall/index.html?embed=1&auto=1&level=${firstLevel}${start.attemptId ? '&approved=1' : ''}`
@@ -46,8 +49,10 @@ export default function CookieWall({ start, onFinish, onExit }: GameProps) {
     if (!signedIn) return send({ type: 'start-denied', error: 'Sign in to play the daily challenge.' });
     try {
       const preview = await previewAttempt(GAME_ID, `level-${level}`);
-      if (preview.cost > 0 && !window.confirm(`Trying again costs ${preview.cost} Crumb Points. Continue?`)) {
-        return send({ type: 'start-denied', error: 'No problem. Come back whenever you like.' });
+      if (preview.tries > 0) {
+        // Already tried today: offer the retry choices (watch an ad, or Crumb Points) before the game starts.
+        setPick({ level, send });
+        return;
       }
       const result = await startAttempt(GAME_ID, `level-${level}`);
       attempt.current = result.attemptId;
@@ -64,7 +69,21 @@ export default function CookieWall({ start, onFinish, onExit }: GameProps) {
     else onExit();
   }
 
+  function retryStarted(attemptId: string) {
+    if (!pick) return;
+    attempt.current = attemptId;
+    startedAt.current = Date.now();
+    pick.send({ type: 'start-approved', level: pick.level });
+    setPick(null);
+  }
+
+  function retryCancelled() {
+    pick?.send({ type: 'start-denied', error: 'No problem. Come back whenever you like.' });
+    setPick(null);
+  }
+
   return (
+    <>
     <GameFrame
       src={src}
       title="Cookie Wall Race"
@@ -75,5 +94,17 @@ export default function CookieWall({ start, onFinish, onExit }: GameProps) {
         if (message.type === 'finish') finish(Number(message.level) || 1, message.won === true, Number(message.seconds) || 0);
       }}
     />
+    {pick && (
+      <div className="game-overlay game-overlay--top" role="dialog" aria-modal="true" aria-label="Try again">
+        <Card tone="warm" className="game-result">
+          <h2 className="game-result__title">Try again?</h2>
+          <RetryPicker gameId={GAME_ID} mode={`level-${pick.level}`} onStart={retryStarted} />
+          <Button variant="secondary" onClick={retryCancelled}>
+            Not now
+          </Button>
+        </Card>
+      </div>
+    )}
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { ownerOverview, ownerPayPrizes, ownerSetActive, ownerStartEvent, refreshLiveFindFriend } from '../../features/find-a-friend';
+import { ownerDeleteEvent, ownerOverview, ownerPayPrizes, ownerSetActive, ownerStartEvent, refreshLiveFindFriend } from '../../features/find-a-friend';
 import type { FindFriendOverview } from '../../features/find-a-friend';
 import { Button, Card, EmptyState, Loading, TextField } from '../../shared/components';
 
@@ -150,6 +150,20 @@ export function FindFriendAdminPage() {
                         {e.active ? 'Switch off' : 'Switch on'}
                       </Button>
                     )}
+                    <Button
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() => {
+                        if (window.confirm(`Delete "${e.name}"? Its players and scans are removed too. This cannot be undone.`)) {
+                          void run(async () => {
+                            await ownerDeleteEvent(e.id);
+                            return 'Deleted.';
+                          });
+                        }
+                      }}
+                    >
+                      Delete
+                    </Button>
                     {hasPrizes && !e.prizesPaid && (
                       <Button
                         variant="secondary"

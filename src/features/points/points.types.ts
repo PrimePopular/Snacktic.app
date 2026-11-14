@@ -24,6 +24,15 @@ export interface Reward {
   imagePath: string | null;
   /** How many are left. null means unlimited, 0 means sold out. */
   stock: number | null;
+  /** physical: delivered in school by the team. digital: an ebook, delivered at once as a link. */
+  kind: 'physical' | 'digital';
+}
+
+export interface DigitalPurchase {
+  rewardId: string | null;
+  title: string;
+  url: string;
+  createdAt: string;
 }
 
 export type RedemptionStatus = 'pending' | 'fulfilled' | 'cancelled';

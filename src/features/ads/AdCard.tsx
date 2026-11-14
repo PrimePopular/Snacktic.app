@@ -29,7 +29,7 @@ function rememberClaimed(id: string) {
  * A sponsored card, always tagged "Ad". When a signed-in student has really looked at it (more than
  * half on screen for a second) the database pays the points, once per ad. Guests simply see the ad.
  */
-export function AdCard({ ad }: { ad: Ad }) {
+export function AdCard({ ad, noReward = false }: { ad: Ad; noReward?: boolean }) {
   const { status } = useAuth();
   const ref = useRef<HTMLElement>(null);
   const [earned, setEarned] = useState(0);
@@ -38,7 +38,7 @@ export function AdCard({ ad }: { ad: Ad }) {
 
   useEffect(() => {
     const node = ref.current;
-    if (!node || !signedIn || ad.points <= 0 || alreadyClaimed(ad.id) || typeof IntersectionObserver === 'undefined') return;
+    if (noReward || !node || !signedIn || ad.points <= 0 || alreadyClaimed(ad.id) || typeof IntersectionObserver === 'undefined') return;
     let timer: number | undefined;
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -59,7 +59,7 @@ export function AdCard({ ad }: { ad: Ad }) {
       window.clearTimeout(timer);
       observer.disconnect();
     };
-  }, [ad.id, ad.points, signedIn]);
+  }, [ad.id, ad.points, signedIn, noReward]);
 
   return (
     <article className="ad-card" ref={ref}>
@@ -83,7 +83,7 @@ export function AdCard({ ad }: { ad: Ad }) {
             +{earned} Crumb {earned === 1 ? 'Point' : 'Points'}
           </p>
         )}
-        {earned === 0 && !signedIn && ad.points > 0 && <p className="text-xs text-secondary">Sign in to earn Crumb Points from ads.</p>}
+        {earned === 0 && !signedIn && !noReward && ad.points > 0 && <p className="text-xs text-secondary">Sign in to earn Crumb Points from ads.</p>}
       </div>
     </article>
   );

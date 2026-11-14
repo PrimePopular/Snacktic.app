@@ -169,3 +169,9 @@ export async function ownerPayPrizes(id: string): Promise<number> {
   if (error) throw failure(error.message);
   return Number(data ?? 0);
 }
+
+/** Owner only: deletes an event, with its players and scans. */
+export async function ownerDeleteEvent(id: string): Promise<void> {
+  const { error } = await client().rpc('owner_delete_find_friend', { p_campaign: id });
+  if (error) throw failure(error.message);
+}

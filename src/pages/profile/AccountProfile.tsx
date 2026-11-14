@@ -5,6 +5,7 @@ import { Button, Card, CheckboxField, PageHeader } from '../../shared/components
 import { InstallCard } from '../../pwa/install';
 import { DetailsForm } from './DetailsForm';
 import { PushSettings } from '../../features/push';
+import { MyActivity } from './MyActivity';
 import { SendPoints } from './SendPoints';
 import { SoundToggle } from './SoundToggle';
 
@@ -63,6 +64,7 @@ export function AccountProfile() {
       )}
 
       <SendPoints />
+      <MyActivity />
       <DetailsForm />
 
       <InstallCard />
@@ -78,6 +80,9 @@ export function AccountProfile() {
         <div className="account-links">
           <Button variant="secondary" to="/reset-password">
             Change password
+          </Button>
+          <Button variant="secondary" to="/support">
+            Support & Feedback
           </Button>
           <Link to="/privacy" className="text-small">
             Privacy notice

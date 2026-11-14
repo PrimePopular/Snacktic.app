@@ -1,0 +1,6 @@
+.support-tabs { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-2); }
+.support-tab { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); background: var(--bg-surface); color: var(--color-chocolate); font-weight: 700; }
+.support-tab--on { background: var(--color-orange); border-color: var(--color-orange); }
+.support-form { display: grid; gap: var(--space-3); }
+.support-contact { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.support-file { display: grid; gap: var(--space-1); }

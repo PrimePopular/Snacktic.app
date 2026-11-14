@@ -79,3 +79,13 @@ account suspension, start-up animation, installable app and offline copies of pu
 - Weather uses each student's own place (phone location or a searched place), campus only as the fallback.
 - Rewards have a Delete button. Auto cleanup of finished orders and old data (Admin, Storage cleanup). Run `supabase/017_cleanup_and_classic_rules.sql`.
 - Next: scheduled notifications with times set in the admin and weather per student's place, delivery locations, Find a Friend as a referral link, Support and Feedback, a 3,000-student capacity review.
+
+## Update 018 (ebooks, ad retries, Support)
+- Ebooks: Admin, Rewards: choose "An ebook or digital item" and paste a link to the book (for example Google Drive, sharing set to anyone with the link). Students buy with Crumb Points and get the link at once; it stays in Profile, My activity, My ebooks. Links are kept where students cannot read them before buying. No file is stored in Supabase, so it uses no storage.
+- Rewards is a market: tabs for Items and Ebooks (swipe sideways to change), compact cards, the list grows as you scroll, ads between the cards. Activity, orders and ebooks moved to Profile and open on tap.
+- Ads also appear in Discover (events, places, shops).
+- Retrying a daily challenge: watch an ad for 15 seconds (free) or pay Crumb Points. At most 5 retries a day (owner can change it per game in Admin, Game challenges). No ads available: Crumb Points only.
+- Support and Feedback: Profile (and Guest profile) to /support: report a bug, request a feature or an update, email or WhatsApp. Reports go to Admin, Feedback with a status. The owner gets a message in the bell for each one. Contacts are editable in Admin, Feedback.
+- Ended events are deleted (with their pictures) whenever an admin opens the dashboard. Find a Friend events can be deleted.
+- Run `supabase/018_ebooks_ad_retries_feedback.sql`.
+- Next: notifications whose times the owner sets, weather per student's place, delivery restricted to Godfrey Okoye University, Find a Friend as a referral link, a 3,000 student capacity review.

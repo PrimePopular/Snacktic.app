@@ -5,6 +5,7 @@ import { EventCard, listCategories, listUpcomingEvents } from '../../features/ev
 import type { EventCategory, EventItem } from '../../features/events';
 import { listLivePlaces, PlaceCard } from '../../features/places';
 import type { Place } from '../../features/places';
+import { AdCard, useLiveAds, weaveAds } from '../../features/ads';
 import { isSaved, recordInterest } from '../../features/recommendations';
 import { listLiveShops, ShopCard } from '../../features/shops';
 import type { Shop } from '../../features/shops';
@@ -146,6 +147,7 @@ export default function DiscoverPage() {
   const [section, setSection] = useState<Section>('events');
   const [events, setEvents] = useState<LoadState<{ items: EventItem[]; categories: EventCategory[] }>>({ kind: 'loading' });
   const [places, setPlaces] = useState<LoadState<{ items: Place[]; categories: EventCategory[] }>>({ kind: 'loading' });
+  const ads = useLiveAds();
   const [shops, setShops] = useState<LoadState<Shop[]>>({ kind: 'loading' });
   const [here, setHere] = useState<{ latitude: number; longitude: number } | null>(null);
   const [hereMessage, setHereMessage] = useState('');
@@ -286,11 +288,17 @@ export default function DiscoverPage() {
                     />
                     {shown.length === 0 && <p className="events-none text-secondary">Nothing matches. Try a different search or filter.</p>}
                     <ul className="event-grid">
-                      {shown.map((event) => (
-                        <li key={event.id}>
-                          <EventCard event={event} category={categories.find((c) => c.id === event.categoryId)} />
-                        </li>
-                      ))}
+                      {weaveAds(shown, ads).map((slot) =>
+                        slot.kind === 'ad' ? (
+                          <li key={slot.key}>
+                            <AdCard ad={slot.ad} />
+                          </li>
+                        ) : (
+                          <li key={slot.item.id}>
+                            <EventCard event={slot.item} category={categories.find((c) => c.id === slot.item.categoryId)} />
+                          </li>
+                        ),
+                      )}
                     </ul>
                   </>
                 );
@@ -327,11 +335,17 @@ export default function DiscoverPage() {
                     />
                     {shown.length === 0 && <p className="events-none text-secondary">Nothing matches. Try a different search or filter.</p>}
                     <ul className="event-grid">
-                      {shown.map((place) => (
-                        <li key={place.id}>
-                          <PlaceCard place={place} category={categories.find((c) => c.id === place.categoryId)} />
-                        </li>
-                      ))}
+                      {weaveAds(shown, ads).map((slot) =>
+                        slot.kind === 'ad' ? (
+                          <li key={slot.key}>
+                            <AdCard ad={slot.ad} />
+                          </li>
+                        ) : (
+                          <li key={slot.item.id}>
+                            <PlaceCard place={slot.item} category={categories.find((c) => c.id === slot.item.categoryId)} />
+                          </li>
+                        ),
+                      )}
                     </ul>
                   </>
                 );
@@ -375,11 +389,17 @@ export default function DiscoverPage() {
                     {hereMessage && <p className="text-secondary text-small" role="status">{hereMessage}</p>}
                     {withDistance.length === 0 && <p className="events-none text-secondary">Nothing matches your search.</p>}
                     <ul className="event-grid">
-                      {withDistance.map(({ shop, metres }) => (
-                        <li key={shop.id}>
-                          <ShopCard shop={shop} distance={metres === null ? undefined : distanceLabel(metres)} />
-                        </li>
-                      ))}
+                      {weaveAds(withDistance, ads).map((slot) =>
+                        slot.kind === 'ad' ? (
+                          <li key={slot.key}>
+                            <AdCard ad={slot.ad} />
+                          </li>
+                        ) : (
+                          <li key={slot.item.shop.id}>
+                            <ShopCard shop={slot.item.shop} distance={slot.item.metres === null ? undefined : distanceLabel(slot.item.metres)} />
+                          </li>
+                        ),
+                      )}
                     </ul>
                   </>
                 );

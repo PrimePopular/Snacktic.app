@@ -1,8 +1,9 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import type { ComponentType, LazyExoticComponent } from 'react';
 import { navigate } from '../../core/router';
 import { useAuth } from '../../features/authentication';
-import { previewAttempt, startAttempt, submitGameResult } from '../../features/points';
+import { RetryPicker } from '../../games/shared/RetryPicker';
+import { submitGameResult } from '../../features/points';
 import type { AwardOutcome } from '../../features/points';
 import type { GameDefinition, GameProps, GameResult } from '../../games/game.types';
 import { findGame } from '../../games/registry';
@@ -78,26 +79,9 @@ export function GameHost({ id }: { id: string }) {
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [round, setRound] = useState(0);
   const [start, setStart] = useState<GameProps['start']>(undefined);
-  const [retryCost, setRetryCost] = useState<number | null>(null);
-  const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
 
   const isDaily = Boolean(result && game?.modes?.find((m) => m.id === result.mode)?.dailyChallenge);
-  // A single-mode game leaves `mode` out, so fall back to the same 'default' the points service uses.
-  const resultMode = result?.mode ?? 'default';
-
-  // For a daily challenge, find out what a retry costs so the button can say so.
-  useEffect(() => {
-    setRetryCost(null);
-    if (!result || !isDaily || !game || auth.status !== 'signed-in') return;
-    let active = true;
-    void previewAttempt(game.id, resultMode)
-      .then((p) => active && setRetryCost(p.cost))
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [result, isDaily, game, auth.status]);
 
   if (!game) {
     return (
@@ -117,27 +101,13 @@ export function GameHost({ id }: { id: string }) {
     });
   }
 
-  /** Straight back into the same mode, with no picker in between. A daily retry starts a new try (and charges) first. */
-  async function playAgain() {
-    if (!result || !game) return;
-    setProblem(null);
-    let next: GameProps['start'] = { mode: resultMode };
-    if (isDaily) {
-      if (retryCost && retryCost > 0 && !window.confirm(`Retrying costs ${retryCost} Crumb Points. Continue?`)) return;
-      setBusy(true);
-      try {
-        const attempt = await startAttempt(game.id, resultMode);
-        next = { mode: resultMode, attemptId: attempt.attemptId };
-      } catch (error) {
-        setProblem(error instanceof Error ? error.message : 'Something went wrong.');
-        setBusy(false);
-        return;
-      }
-      setBusy(false);
-    }
-    setStart(next);
+  /** Straight back into the same mode, with no picker in between. */
+  function begin(attemptId?: string) {
+    if (!result) return;
+    setStart({ mode: result.mode, attemptId });
     setResult(null);
     setOutcome(null);
+    setProblem(null);
     setRound((r) => r + 1);
   }
 
@@ -161,10 +131,12 @@ export function GameHost({ id }: { id: string }) {
                 {problem}
               </p>
             )}
+            {isDaily ? (
+              <RetryPicker key={result.finishedAt} gameId={game.id} mode={result.mode} onStart={(attemptId) => begin(attemptId)} />
+            ) : (
+              <Button onClick={() => begin()}>Play again</Button>
+            )}
             <div className="game-result__actions">
-              <Button disabled={busy} onClick={() => void playAgain()}>
-                {isDaily ? (retryCost && retryCost > 0 ? `Retry (${retryCost} Crumb Points)` : 'Retry') : 'Play again'}
-              </Button>
               <Button variant="secondary" to="/games">
                 Leave game
               </Button>

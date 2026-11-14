@@ -76,6 +76,9 @@ const SHOWABLE = [
   'Start the challenge first',
   'Not enough Crumb Points to try again',
   'That game has no daily challenge right now',
+  'No retries left today',
+  'No ads are available right now',
+  'Watch the whole ad first',
 ];
 
 async function attempt(p: Pending): Promise<Attempt> {
@@ -168,22 +171,45 @@ function friendly(message: string): Error {
   return new Error(known ?? 'Something went wrong. Please try again.');
 }
 
-/** What the next try at a daily challenge would cost. Changes nothing. */
-export async function previewAttempt(gameId: string, mode: string): Promise<{ daily: boolean; cost: number; tries: number }> {
+export interface AttemptPreview {
+  daily: boolean;
+  /** What the next try costs in Crumb Points (0 for the first try of the day). */
+  cost: number;
+  /** Tries started today. */
+  tries: number;
+  /** Retries still allowed today (the owner sets the limit, default 5). */
+  retriesLeft: number;
+  /** Whether an ad can be shown to retry for free. */
+  adsAvailable: boolean;
+}
+
+/** What the next try at a daily challenge would cost, and how many retries are left. Changes nothing. */
+export async function previewAttempt(gameId: string, mode: string): Promise<AttemptPreview> {
   if (!supabase) throw new Error('The database is not connected yet.');
   const { data, error } = await supabase.rpc('preview_game_attempt', { p_game_id: gameId, p_mode: mode });
   if (error) throw friendly(error.message);
-  const row = ((data ?? []) as { is_daily: boolean; cost: number; tries_today: number }[])[0];
-  return { daily: Boolean(row?.is_daily), cost: row?.cost ?? 0, tries: row?.tries_today ?? 0 };
+  const row = ((data ?? []) as { is_daily: boolean; cost: number; tries_today: number; retries_left: number; ads_available: boolean }[])[0];
+  return { daily: Boolean(row?.is_daily), cost: row?.cost ?? 0, tries: row?.tries_today ?? 0, retriesLeft: row?.retries_left ?? 0, adsAvailable: Boolean(row?.ads_available) };
+}
+
+/** Step 1 of retrying by watching an ad: the server picks the ad. Show it for 15 seconds, then pass gateId to startAttempt. */
+export async function beginAdRetry(gameId: string, mode: string): Promise<{ gateId: string; adId: string }> {
+  if (!supabase) throw new Error('The database is not connected yet.');
+  const { data, error } = await supabase.rpc('begin_ad_retry', { p_game_id: gameId, p_mode: mode });
+  if (error) throw friendly(error.message);
+  const row = ((data ?? []) as { gate_id: string; ad_id: string }[])[0];
+  if (!row) throw new Error('Something went wrong. Please try again.');
+  return { gateId: row.gate_id, adId: row.ad_id };
 }
 
 /**
- * Starts a try at a daily challenge. The first try each day is free; later tries cost Crumb Points,
- * taken here. Pass the returned attemptId as GameResult.attemptId when the round ends.
+ * Starts a try at a daily challenge. The first try each day is free. A retry costs Crumb Points (taken here), or is free
+ * after watching an ad (pass the gateId). At most a few retries a day. Pass the returned attemptId as
+ * GameResult.attemptId when the round ends.
  */
-export async function startAttempt(gameId: string, mode: string): Promise<{ attemptId: string; cost: number }> {
+export async function startAttempt(gameId: string, mode: string, gateId?: string): Promise<{ attemptId: string; cost: number }> {
   if (!supabase) throw new Error('The database is not connected yet.');
-  const { data, error } = await supabase.rpc('start_game_attempt', { p_game_id: gameId, p_mode: mode });
+  const { data, error } = await supabase.rpc('start_game_attempt', { p_game_id: gameId, p_mode: mode, p_gate: gateId ?? null });
   if (error) throw friendly(error.message);
   const row = ((data ?? []) as { attempt_id: string; cost: number }[])[0];
   if (!row) throw new Error('Something went wrong. Please try again.');

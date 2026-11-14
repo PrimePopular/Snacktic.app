@@ -209,6 +209,9 @@ export function GuestProfile() {
       <div className="guest-settings">
         <InstallCard />
         <SoundToggle />
+        <Button variant="secondary" to="/support">
+          Report a problem or send feedback
+        </Button>
       </div>
     </>
   );

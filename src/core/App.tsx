@@ -4,6 +4,7 @@ import { useAuth } from '../features/authentication';
 import { FindFriendTag } from '../features/find-a-friend';
 import { UpdateBanner } from '../pwa/UpdateBanner';
 import FindFriendPage from '../pages/find-a-friend/FindFriendPage';
+import SupportPage from '../pages/support/SupportPage';
 import { flushPendingResults } from '../features/points';
 import DiscoverPage from '../pages/discover/DiscoverPage';
 import { GameHost } from '../pages/games/GameHost';
@@ -32,6 +33,7 @@ const routes: RouteDef[] = [
   { path: '/games/:id', title: 'Games', render: (p) => <GameHost id={p.id} /> },
   { path: '/games/events/:id', title: 'Special event', render: (p) => <SpecialEventHost id={p.id} /> },
   { path: '/find-a-friend', title: 'Find a Friend', render: () => <FindFriendPage /> },
+  { path: '/support', title: 'Support', render: () => <SupportPage /> },
   { path: '/rewards', title: 'Rewards', render: () => <RewardsPage /> },
   { path: '/profile', title: 'Profile', render: () => <ProfilePage /> },
   { path: '/privacy', title: 'Privacy', render: () => <PrivacyPage /> },

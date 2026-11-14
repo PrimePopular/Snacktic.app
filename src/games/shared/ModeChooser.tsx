@@ -3,6 +3,7 @@ import { useAuth } from '../../features/authentication';
 import { previewAttempt, startAttempt } from '../../features/points';
 import { playTap } from '../../services/sound';
 import { Button, Card } from '../../shared/components';
+import { RetryPicker } from './RetryPicker';
 import './games-embed.css';
 
 export interface ChooserMode {
@@ -69,6 +70,8 @@ export function ModeChooser({ gameId, modes, onStart }: ModeChooserProps) {
             <p className="text-secondary">{mode.description}</p>
             {mode.daily && !signedIn ? (
               <Button to="/profile">Sign in to play</Button>
+            ) : mode.daily && preview && preview.tries > 0 ? (
+              <RetryPicker gameId={gameId} mode={mode.id} onStart={(attemptId) => onStart(mode.id, attemptId)} />
             ) : (
               <Button disabled={busy !== null} onClick={() => void start(mode)}>
                 {busy === mode.id

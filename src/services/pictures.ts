@@ -25,6 +25,15 @@ export async function uploadPicture(file: File): Promise<string> {
   return path;
 }
 
+/** Uploads a screenshot for a bug report. Shrunk first. Anyone may send one (see supabase/018). Returns the path to store. */
+export async function uploadFeedbackShot(file: File): Promise<string> {
+  const { blob, extension } = await resizeImage(file);
+  const path = `feedback/${crypto.randomUUID()}.${extension}`;
+  const { error } = await client().storage.from(BUCKET).upload(path, blob, { contentType: blob.type, cacheControl: '31536000' });
+  if (error) throw new Error(error.message);
+  return path;
+}
+
 /** Best effort: a leftover file is harmless, so failures are only logged. */
 export async function removePicture(path: string): Promise<void> {
   try {

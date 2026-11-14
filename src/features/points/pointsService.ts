@@ -6,7 +6,7 @@
  */
 import { supabase } from '../../services/database';
 import { removePicture } from '../../services/pictures';
-import type { AdminRedemption, PointsTransaction, Redemption, RedemptionStatus, Reward, TransactionKind } from './points.types';
+import type { AdminRedemption, DigitalPurchase, PointsTransaction, Redemption, RedemptionStatus, Reward, TransactionKind } from './points.types';
 
 function client() {
   if (!supabase) throw new Error('The database is not connected yet.');
@@ -34,6 +34,8 @@ const SHOWABLE = [
   'Gift at least 1 point',
   'That reward is not available',
   'That reward is sold out',
+  'This ebook is not ready yet',
+  'That reward is an ebook',
   'Sign in to gift points',
   'Sign in to redeem rewards',
   'Owner only',
@@ -90,6 +92,7 @@ interface RewardRow {
   active: boolean;
   image_path: string | null;
   stock: number | null;
+  kind: 'physical' | 'digital';
 }
 
 const rewardFromRow = (r: RewardRow): Reward => ({
@@ -100,12 +103,13 @@ const rewardFromRow = (r: RewardRow): Reward => ({
   active: r.active,
   imagePath: r.image_path,
   stock: r.stock ?? null,
+  kind: r.kind ?? 'physical',
 });
 
 export async function listRewards(): Promise<Reward[]> {
   const { data, error } = await client()
     .from('rewards')
-    .select('id, name, description, cost_points, active, image_path, stock')
+    .select('id, name, description, cost_points, active, image_path, stock, kind')
     .eq('active', true)
     .order('cost_points', { ascending: true });
   if (error) throw failure(error.message);
@@ -152,7 +156,7 @@ export async function listMyRedemptions(): Promise<Redemption[]> {
 export async function adminListRewards(): Promise<Reward[]> {
   const { data, error } = await client()
     .from('rewards')
-    .select('id, name, description, cost_points, active, image_path, stock')
+    .select('id, name, description, cost_points, active, image_path, stock, kind')
     .order('cost_points', { ascending: true });
   if (error) throw failure(error.message);
   return ((data ?? []) as RewardRow[]).map(rewardFromRow);
@@ -160,7 +164,18 @@ export async function adminListRewards(): Promise<Reward[]> {
 
 export async function adminSaveReward(
   id: string | null,
-  input: { name: string; description: string; costPoints: number; active: boolean; imagePath: string | null; stock: number | null },
+  input: {
+    name: string;
+    description: string;
+    costPoints: number;
+    active: boolean;
+    imagePath: string | null;
+    stock: number | null;
+    /** Leave out to keep the current type. */
+    kind?: 'physical' | 'digital';
+    /** For an ebook: the link to the book. Leave out to keep the current link; an empty text removes it. */
+    fileUrl?: string;
+  },
 ): Promise<void> {
   const row = {
     name: input.name.trim(),
@@ -169,10 +184,44 @@ export async function adminSaveReward(
     active: input.active,
     image_path: input.imagePath,
     stock: input.stock,
+    ...(input.kind ? { kind: input.kind } : {}),
   };
-  const query = id ? client().from('rewards').update(row).eq('id', id) : client().from('rewards').insert(row);
-  const { error } = await query;
+  let rewardId = id;
+  if (id) {
+    const { error } = await client().from('rewards').update(row).eq('id', id);
+    if (error) throw failure(error.message);
+  } else {
+    const { data, error } = await client().from('rewards').insert(row).select('id').single();
+    if (error) throw failure(error.message);
+    rewardId = (data as { id: string }).id;
+  }
+  if (rewardId && input.fileUrl !== undefined) {
+    const { error } = await client().rpc('owner_set_reward_file', { p_reward: rewardId, p_url: input.fileUrl });
+    if (error) throw failure(error.message);
+  }
+}
+
+/** The link of an ebook (owner only; students cannot read it before buying). */
+export async function adminGetRewardFile(rewardId: string): Promise<string> {
+  const { data, error } = await client().from('reward_files').select('url').eq('reward_id', rewardId).maybeSingle();
   if (error) throw failure(error.message);
+  return data ? (data as { url: string }).url : '';
+}
+
+/** Buys an ebook with Crumb Points. Returns the link to open it. Buying the same book twice just shows it again. */
+export async function buyDigitalReward(rewardId: string): Promise<{ title: string; url: string }> {
+  const { data, error } = await client().rpc('buy_digital_reward', { p_reward: rewardId });
+  if (error) throw failure(error.message);
+  const row = ((data ?? []) as { book_title: string; book_url: string }[])[0];
+  if (!row) throw failure('Something went wrong');
+  notifyPointsChanged();
+  return { title: row.book_title, url: row.book_url };
+}
+
+export async function listMyDigitalPurchases(): Promise<DigitalPurchase[]> {
+  const { data, error } = await client().from('digital_purchases').select('reward_id, title, url, created_at').order('created_at', { ascending: false });
+  if (error) throw failure(error.message);
+  return ((data ?? []) as { reward_id: string | null; title: string; url: string; created_at: string }[]).map((r) => ({ rewardId: r.reward_id, title: r.title, url: r.url, createdAt: r.created_at }));
 }
 
 interface AdminRedemptionRow {

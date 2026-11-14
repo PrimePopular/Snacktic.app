@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { getCleanupSettings, runCleanupNow, saveCleanupSettings } from '../../features/cleanup';
+import { purgeEndedEvents } from '../../features/events';
 import type { CleanupResult } from '../../features/cleanup';
 import { Button, Loading, TextField } from '../../shared/components';
 
@@ -51,7 +52,8 @@ export function StorageCleanupPage() {
     setBusy(true);
     try {
       const r: CleanupResult = await runCleanupNow();
-      setMessage(`Done. Removed ${r.orders} finished orders, ${r.notifications} old messages, ${r.game_plays} old game records and ${r.game_attempts} old tries.`);
+      const events = await purgeEndedEvents();
+      setMessage(`Done. Removed ${r.orders} finished orders, ${r.notifications} old messages, ${r.game_plays} old game records, ${r.game_attempts} old tries and ${events} ended events.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
     }
@@ -64,7 +66,7 @@ export function StorageCleanupPage() {
     <section aria-labelledby="sc-heading" className="ann">
       <h1 id="sc-heading">Storage cleanup</h1>
       <p className="text-secondary">
-        Finished data removes itself every night so your free database lasts. Crumb Points history is never removed, so nobody loses points. Pictures are removed when you delete the item they belong to.
+        Finished data removes itself so your free database lasts. Ended events are removed, with their pictures, whenever an admin opens the dashboard. Crumb Points history is never removed, so nobody loses points. Pictures are removed when you delete the item they belong to.
       </p>
       <form className="ann__form" onSubmit={(e) => void save(e)} noValidate>
         <TextField label="Remove handed-over or cancelled orders after (days)" type="number" inputMode="numeric" min={1} value={orders} onChange={(e) => setOrders(e.target.value)} hint="Pending orders are never removed." />

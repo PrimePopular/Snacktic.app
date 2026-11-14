@@ -148,6 +148,30 @@ export async function deleteEvent(event: EventItem): Promise<void> {
   if (event.imagePath) await removePicture(event.imagePath);
 }
 
+/**
+ * Removes events that ended more than graceDays ago, together with their pictures, so the free storage lasts.
+ * Students never see ended events anyway. Returns how many were removed. Never throws.
+ */
+export async function purgeEndedEvents(graceDays = 1): Promise<number> {
+  try {
+    const cutoff = new Date(Date.now() - graceDays * 86_400_000).toISOString();
+    const { data, error } = await client().from('events').select('id, image_path').lt('expires_at', cutoff).limit(100);
+    if (error) throw new Error(error.message);
+    const rows = (data ?? []) as { id: string; image_path: string | null }[];
+    let removed = 0;
+    for (const row of rows) {
+      const { error: deleteError } = await client().from('events').delete().eq('id', row.id);
+      if (deleteError) continue;
+      removed += 1;
+      if (row.image_path) await removePicture(row.image_path);
+    }
+    return removed;
+  } catch (error) {
+    console.error('[events] purge', error);
+    return 0;
+  }
+}
+
 /* Pictures are shared with announcements: see services/pictures.ts. */
 export const uploadEventImage = uploadPicture;
 export const removeEventImage = removePicture;

@@ -1,42 +1,91 @@
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import type { TouchEvent } from 'react';
 import { useAuth } from '../../features/authentication';
 import { validatePhone } from '../../features/authentication/validation';
+import { AdCard, useLiveAds, weaveAds } from '../../features/ads';
 import { CardArt } from '../../features/feed';
-import { getBalance, kindLabels, listHistory, listMyRedemptions, listRewards, redeemReward } from '../../features/points';
-import type { PointsTransaction, Redemption, Reward } from '../../features/points';
+import { buyDigitalReward, getBalance, listMyDigitalPurchases, listRewards, redeemReward } from '../../features/points';
+import type { Reward } from '../../features/points';
 import { pictureUrl } from '../../services/pictures';
 import { playCoin } from '../../services/sound';
 import { Button, EmptyState, Loading, Modal, PageHeader, TextField } from '../../shared/components';
 
+type Tab = 'physical' | 'digital';
+
 type LoadState =
   | { kind: 'loading' }
   | { kind: 'error' }
-  | { kind: 'ready'; balance: number; history: PointsTransaction[]; rewards: Reward[]; redemptions: Redemption[] };
+  | { kind: 'ready'; balance: number; rewards: Reward[]; owned: Record<string, string> };
 
-const dateFormat = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+const PAGE = 12;
 
-const statusLabel: Record<Redemption['status'], string> = {
-  pending: 'Waiting for the team to contact you',
-  fulfilled: 'Handed over',
-  cancelled: 'Cancelled and refunded',
-};
+interface CardProps {
+  reward: Reward;
+  balance: number;
+  ownedUrl: string | undefined;
+  suspended: boolean;
+  onGet: (reward: Reward) => void;
+}
 
-/** The signed-in Rewards screen: your points, the reward shop, your orders and your activity. */
+/** One item in the market. Compact, so many fit on a screen. */
+function RewardCard({ reward, balance, ownedUrl, suspended, onGet }: CardProps) {
+  const missing = reward.costPoints - balance;
+  const soldOut = reward.stock === 0;
+  return (
+    <article className="reward-card">
+      <div className="reward-card__media feed-card__media--tint0">
+        {reward.imagePath ? <img src={pictureUrl(reward.imagePath)} alt="" loading="lazy" decoding="async" /> : <CardArt />}
+        <span className="reward-card__cost">{reward.costPoints.toLocaleString()} pts</span>
+        {reward.kind === 'digital' && <span className="reward-card__tag">Ebook</span>}
+      </div>
+      <div className="reward-card__body">
+        <h3>{reward.name}</h3>
+        {reward.description && <p className="text-secondary text-small reward-card__desc">{reward.description}</p>}
+        {reward.stock !== null && reward.stock > 0 && reward.stock <= 5 && (
+          <p className="text-small">
+            <strong>Only {reward.stock} left</strong>
+          </p>
+        )}
+        {ownedUrl ? (
+          <Button onClick={() => window.open(ownedUrl, '_blank', 'noopener')}>Open</Button>
+        ) : (
+          <Button disabled={soldOut || missing > 0 || suspended} onClick={() => onGet(reward)}>
+            {soldOut ? 'Sold out' : missing > 0 ? `Need ${missing.toLocaleString()} more` : reward.kind === 'digital' ? 'Get ebook' : 'Get this'}
+          </Button>
+        )}
+      </div>
+    </article>
+  );
+}
+
+/**
+ * The signed-in Rewards screen: your points and the market. Physical items and ebooks have a tab each (swipe sideways to
+ * change), the list loads as you scroll, and ads appear between the cards. Your activity and orders are in Profile.
+ */
 export function RewardsDashboard() {
   const auth = useAuth();
   const profile = auth.profile;
+  const ads = useLiveAds();
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
+  const [tab, setTab] = useState<Tab>('physical');
+  const [visible, setVisible] = useState(PAGE);
   const [notice, setNotice] = useState<string | null>(null);
   const [buying, setBuying] = useState<Reward | null>(null);
+  const [opened, setOpened] = useState<{ title: string; url: string } | null>(null);
   const [phone, setPhone] = useState('');
   const [buyError, setBuyError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const buyTitleId = useId();
+  const openedTitleId = useId();
+  const sentinel = useRef<HTMLDivElement>(null);
+  const touch = useRef<{ x: number; y: number } | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const [balance, history, rewards, redemptions] = await Promise.all([getBalance(), listHistory(), listRewards(), listMyRedemptions()]);
-      setState({ kind: 'ready', balance, history, rewards, redemptions });
+      const [balance, rewards, purchases] = await Promise.all([getBalance(), listRewards(), listMyDigitalPurchases().catch(() => [])]);
+      const owned: Record<string, string> = {};
+      for (const p of purchases) if (p.rewardId) owned[p.rewardId] = p.url;
+      setState({ kind: 'ready', balance, rewards, owned });
     } catch (error) {
       console.error('[rewards]', error);
       setState({ kind: 'error' });
@@ -46,6 +95,37 @@ export function RewardsDashboard() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const items = state.kind === 'ready' ? state.rewards.filter((r) => r.kind === tab) : [];
+
+  // Load more as the student scrolls to the end of the list.
+  useEffect(() => {
+    const node = sentinel.current;
+    if (!node || typeof IntersectionObserver === 'undefined' || visible >= items.length) return;
+    const observer = new IntersectionObserver((entries) => entries[0]?.isIntersecting && setVisible((v) => v + PAGE), { rootMargin: '300px' });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [visible, items.length, tab]);
+
+  function switchTab(next: Tab) {
+    setTab(next);
+    setVisible(PAGE);
+  }
+
+  function onTouchStart(event: TouchEvent) {
+    const t = event.touches[0];
+    touch.current = t ? { x: t.clientX, y: t.clientY } : null;
+  }
+
+  function onTouchEnd(event: TouchEvent) {
+    const start = touch.current;
+    const end = event.changedTouches[0];
+    touch.current = null;
+    if (!start || !end) return;
+    const dx = end.clientX - start.x;
+    const dy = end.clientY - start.y;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) switchTab(dx < 0 ? 'digital' : 'physical');
+  }
 
   function startBuying(reward: Reward) {
     setNotice(null);
@@ -57,14 +137,25 @@ export function RewardsDashboard() {
   async function confirmBuying() {
     if (!buying) return;
     setBuyError(null);
-    const needsPhone = !profile?.phone;
-    if (needsPhone) {
-      const problem = validatePhone(phone, true);
-      if (problem) return setBuyError(problem);
-    }
     setBusy(true);
     try {
+      if (buying.kind === 'digital') {
+        const book = await buyDigitalReward(buying.id);
+        playCoin();
+        setBuying(null);
+        setOpened(book);
+        await load();
+        setBusy(false);
+        return;
+      }
+      const needsPhone = !profile?.phone;
       if (needsPhone) {
+        const problem = validatePhone(phone, true);
+        if (problem) {
+          setBuyError(problem);
+          setBusy(false);
+          return;
+        }
         const saved = await auth.updateDetails({ phone: phone.trim() });
         if (!saved.ok) {
           setBuyError(saved.message);
@@ -96,16 +187,16 @@ export function RewardsDashboard() {
     );
   }
 
-  const { balance, history, rewards, redemptions } = state;
+  const { balance, owned } = state;
+  const shown = weaveAds(items.slice(0, visible), ads);
 
   return (
     <>
-      <section className="balance-hero" aria-label="Your Crumb Points">
+      <section className="balance-hero balance-hero--compact" aria-label="Your Crumb Points">
         <p className="balance-hero__label">Your Crumb Points</p>
         <p className="balance-hero__number" aria-live="polite">
           {balance.toLocaleString()}
         </p>
-        <p className="balance-hero__hint">Earn points from games and events, then spend them on rewards below.</p>
       </section>
 
       {profile?.suspended && (
@@ -119,37 +210,35 @@ export function RewardsDashboard() {
         </p>
       )}
 
-      <section className="rewards-section" aria-labelledby="shop-heading">
-        <h2 id="shop-heading">Claim a reward</h2>
-        {rewards.length === 0 ? (
-          <EmptyState title="No rewards yet">New rewards are added by the Snacktic team. Check back soon.</EmptyState>
+      <div className="market-tabs" role="tablist" aria-label="Market sections">
+        <button type="button" role="tab" aria-selected={tab === 'physical'} className={`market-tab ${tab === 'physical' ? 'market-tab--on' : ''}`} onClick={() => switchTab('physical')}>
+          Items
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'digital'} className={`market-tab ${tab === 'digital' ? 'market-tab--on' : ''}`} onClick={() => switchTab('digital')}>
+          Ebooks
+        </button>
+      </div>
+
+      <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} className="market-swipe">
+        {items.length === 0 ? (
+          <EmptyState title={tab === 'digital' ? 'No ebooks yet' : 'No items yet'}>New things are added by the Snacktic team. Check back soon.</EmptyState>
         ) : (
           <ul className="reward-grid">
-            {rewards.map((reward) => {
-              const missing = reward.costPoints - balance;
-              const soldOut = reward.stock === 0;
-              return (
-                <li key={reward.id}>
-                  <article className="reward-card">
-                    <div className="reward-card__media feed-card__media--tint0">
-                      {reward.imagePath ? <img src={pictureUrl(reward.imagePath)} alt="" loading="lazy" decoding="async" /> : <CardArt />}
-                      <span className="reward-card__cost">{reward.costPoints.toLocaleString()} pts</span>
-                    </div>
-                    <div className="reward-card__body">
-                      <h3>{reward.name}</h3>
-                      {reward.description && <p className="text-secondary text-small">{reward.description}</p>}
-                      {reward.stock !== null && reward.stock > 0 && reward.stock <= 5 && <p className="text-small"><strong>Only {reward.stock} left</strong></p>}
-                      <Button disabled={soldOut || missing > 0 || Boolean(profile?.suspended)} onClick={() => startBuying(reward)}>
-                        {soldOut ? 'Sold out' : missing > 0 ? `Need ${missing.toLocaleString()} more` : 'Get this'}
-                      </Button>
-                    </div>
-                  </article>
+            {shown.map((slot) =>
+              slot.kind === 'ad' ? (
+                <li key={slot.key} className="reward-grid__ad">
+                  <AdCard ad={slot.ad} />
                 </li>
-              );
-            })}
+              ) : (
+                <li key={slot.item.id}>
+                  <RewardCard reward={slot.item} balance={balance} ownedUrl={owned[slot.item.id]} suspended={Boolean(profile?.suspended)} onGet={startBuying} />
+                </li>
+              ),
+            )}
           </ul>
         )}
-      </section>
+        {visible < items.length && <div ref={sentinel} className="market-more" aria-hidden="true" />}
+      </div>
 
       <Modal open={buying !== null} onClose={() => setBuying(null)} labelledBy={buyTitleId}>
         {buying && (
@@ -158,7 +247,9 @@ export function RewardsDashboard() {
             <p>
               This costs <strong>{buying.costPoints.toLocaleString()} points</strong>. You'll have {(balance - buying.costPoints).toLocaleString()} left.
             </p>
-            {profile?.phone ? (
+            {buying.kind === 'digital' ? (
+              <p className="text-secondary">You'll get the book straight away, and it stays in Profile under Activity.</p>
+            ) : profile?.phone ? (
               <p className="text-secondary">A Snacktic agent will message you on WhatsApp ({profile.phone}) to arrange delivery in school.</p>
             ) : (
               <>
@@ -183,49 +274,19 @@ export function RewardsDashboard() {
         )}
       </Modal>
 
-      {redemptions.length > 0 && (
-        <section className="rewards-section" aria-labelledby="mine-heading">
-          <h2 id="mine-heading">Your orders</h2>
-          <ul className="activity-list">
-            {redemptions.map((r) => (
-              <li key={r.id} className="activity-row">
-                <div>
-                  <p className="activity-row__title">{r.rewardName}</p>
-                  <p className="text-xs text-secondary">
-                    {statusLabel[r.status]} · {dateFormat.format(new Date(r.createdAt))}
-                  </p>
-                </div>
-                <span className="activity-row__amount activity-row__amount--out">-{r.pointsCost}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <section className="rewards-section" aria-labelledby="activity-heading">
-        <h2 id="activity-heading">Activity</h2>
-        {history.length === 0 ? (
-          <p className="text-secondary">No activity yet. Your points will show up here.</p>
-        ) : (
-          <ul className="activity-list">
-            {history.map((t) => (
-              <li key={t.id} className="activity-row">
-                <div>
-                  <p className="activity-row__title">{kindLabels[t.kind]}</p>
-                  <p className="text-xs text-secondary">
-                    {t.note ? `${t.note} · ` : ''}
-                    {dateFormat.format(new Date(t.createdAt))}
-                  </p>
-                </div>
-                <span className={`activity-row__amount ${t.amount > 0 ? 'activity-row__amount--in' : 'activity-row__amount--out'}`}>
-                  {t.amount > 0 ? '+' : ''}
-                  {t.amount}
-                </span>
-              </li>
-            ))}
-          </ul>
+      <Modal open={opened !== null} onClose={() => setOpened(null)} labelledBy={openedTitleId}>
+        {opened && (
+          <div className="buy-sheet">
+            <h2 id={openedTitleId}>It's yours!</h2>
+            <p>{opened.title}</p>
+            <Button onClick={() => window.open(opened.url, '_blank', 'noopener')}>Open the book</Button>
+            <p className="text-secondary text-small">You can open it again any time from Profile, under Activity.</p>
+            <Button variant="secondary" onClick={() => setOpened(null)}>
+              Close
+            </Button>
+          </div>
         )}
-      </section>
+      </Modal>
     </>
   );
 }

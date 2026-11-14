@@ -10,6 +10,8 @@ import { CampusPage } from './pages/CampusPage';
 import { CategoriesPage } from './pages/CategoriesPage';
 import { DailyNotificationsPage } from './pages/DailyNotificationsPage';
 import { EventsPage } from './pages/EventsPage';
+import { purgeEndedEvents } from '../features/events';
+import { FeedbackPage } from './pages/FeedbackPage';
 import { FindFriendAdminPage } from './pages/FindFriendAdminPage';
 import { GameChallengesPage } from './pages/GameChallengesPage';
 import { GamesAdminPage } from './pages/GamesAdminPage';
@@ -31,7 +33,7 @@ import './admin.css';
  * table and owner/admin checks inside the functions. The checks below only decide what to
  * display. Never trust them for security.
  */
-type Tab = 'students' | 'team' | 'announcements' | 'events' | 'places' | 'shops' | 'ads' | 'findfriend' | 'share' | 'campus' | 'gamechallenges' | 'dailynotes' | 'cleanup' | 'categories' | 'rewards' | 'points' | 'games';
+type Tab = 'students' | 'team' | 'announcements' | 'events' | 'places' | 'shops' | 'ads' | 'findfriend' | 'share' | 'campus' | 'gamechallenges' | 'dailynotes' | 'cleanup' | 'feedback' | 'categories' | 'rewards' | 'points' | 'games';
 
 function Shell({ role, children }: { role?: Role; children: ReactNode }) {
   return (
@@ -59,6 +61,7 @@ const sections: Section[] = [
   { id: 'events', label: 'Events', group: 'Content' },
   { id: 'places', label: 'Places', group: 'Content' },
   { id: 'shops', label: 'Shops', group: 'Content' },
+  { id: 'feedback', label: 'Feedback', group: 'Content' },
   { id: 'categories', label: 'Categories', group: 'Content' },
   { id: 'rewards', label: 'Rewards and orders', group: 'Content' },
   { id: 'students', label: 'Students', group: 'Owner only' },
@@ -80,6 +83,10 @@ function Dashboard({ role }: { role: Role }) {
   const [tab, setTab] = useState<Tab>(owner ? 'students' : 'announcements');
   const [menuOpen, setMenuOpen] = useState(false);
   const menuTitleId = useId();
+  // Events that ended are removed (with their pictures) whenever an admin opens the dashboard.
+  useEffect(() => {
+    void purgeEndedEvents();
+  }, []);
   const current = available.find((s) => s.id === tab) ?? available[0];
 
   return (
@@ -131,6 +138,7 @@ function Dashboard({ role }: { role: Role }) {
       {tab === 'events' && <EventsPage />}
       {tab === 'places' && <PlacesPage />}
       {tab === 'shops' && <ShopsPage />}
+      {tab === 'feedback' && <FeedbackPage />}
       {tab === 'ads' && owner && <AdsPage />}
       {tab === 'findfriend' && owner && <FindFriendAdminPage />}
       {tab === 'share' && owner && <ShareLinkPage />}

@@ -1,7 +1,8 @@
 /* Home page styles. Owned by the Home developer. Use tokens from styles/variables.css. */
 
 .home-section { margin-bottom: var(--space-3); }
-.home-feed { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-5); max-width: 34rem; }
+.home-feed { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-5); max-width: 34rem; }
+.home-feed > li { min-width: 0; }
 .home-more { margin-top: var(--space-5); font-weight: 700; }
 
 /* Important announcement: floats over the top of the screen like a phone notification */

@@ -5,6 +5,7 @@ import { adminDeleteRedemption, adminDeleteReward, adminGetRewardFile, adminList
 import type { AdminRedemption, Reward } from '../../features/points';
 import { pictureUrl } from '../../services/pictures';
 import { Button, Card, CheckboxField, EmptyState, Loading, SelectField, TextAreaField, TextField } from '../../shared/components';
+import { whatsappLink } from '../../shared/phone';
 import { PictureField } from '../components/PictureField';
 import { usePictureEditor } from '../usePictureEditor';
 
@@ -25,12 +26,6 @@ interface RewardForm {
 
 const emptyReward: RewardForm = { name: '', description: '', cost: '', stock: '', kind: 'physical', fileUrl: '', active: true };
 const dateFormat = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
-
-/** A WhatsApp chat link from a phone number. WhatsApp needs the country code (for example 234 for Nigeria). */
-function whatsappLink(phone: string): string | null {
-  const digits = phone.replace(/\D/g, '').replace(/^00/, '');
-  return digits.length >= 7 ? `https://wa.me/${digits}` : null;
-}
 
 /** Reward items (with pictures) and the orders students place. Owner and helper admins. */
 export function RewardsAdminPage() {
@@ -190,7 +185,6 @@ export function RewardsAdminPage() {
                   </p>
                   <p className="text-small">WhatsApp {o.phone || 'not given'} · {o.email}</p>
                   {o.deliveryPlace && <p className="text-small"><strong>Deliver to:</strong> {o.deliveryPlace}</p>}
-                  {o.phone && /^\s*0/.test(o.phone) && <p className="text-xs text-secondary">The number starts with 0. WhatsApp needs the country code, so the chat button may not open.</p>}
                   <div className="ann__actions">
                     {link && (
                       <a className="btn btn--primary" href={link} target="_blank" rel="noopener noreferrer">

@@ -33,7 +33,7 @@ export function DetailsForm() {
       <h3>Your details</h3>
       <form className="gift-form" onSubmit={handleSubmit} noValidate>
         <TextField label="Nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} error={errors.nickname} autoCapitalize="none" maxLength={20} hint="Friends use this to send you points." />
-        <TextField label="WhatsApp number" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} error={errors.phone} maxLength={25} hint="Needed to order a reward, so the team can reach you. Only the Snacktic team can see it." />
+        <TextField label="WhatsApp number" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} error={errors.phone} maxLength={25} hint="Needed to order a reward, so the team can reach you. Start with 0 or +234. Only the Snacktic team can see it." />
         {message && (
           <p className={message.kind === 'ok' ? 'form-notice' : 'form-error'} role={message.kind === 'ok' ? 'status' : 'alert'}>
             {message.text}

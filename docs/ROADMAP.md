@@ -100,3 +100,6 @@ account suspension, start-up animation, installable app and offline copies of pu
 - Install: every phone now shows how to install (Android menu steps when Chrome does not offer a button, and four clear steps for iPhone).
 - Run `supabase/019_delivery_referrals_orders.sql`.
 - Still to do: notifications whose time the owner sets (with the daily weather message for each student's place, using the same outlook), the Jumia-style Rewards look, Crumb Quest layout, a 3,000 student capacity review.
+
+## Update 023
+- WhatsApp numbers get the Nigeria country code (+234) by default. A number typed as 0903 300 0131, 9033000131 or +234 903 300 0131 all become +2349033000131 when saved, and the WhatsApp button in Rewards orders works for every number (old numbers that start with 0 too). A number typed with another country's + code is kept as it is.

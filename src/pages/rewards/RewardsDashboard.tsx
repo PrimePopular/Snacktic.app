@@ -294,7 +294,7 @@ export function RewardsDashboard() {
                 ) : (
                   <>
                     <p className="text-secondary">Add your WhatsApp number so a Snacktic agent can reach you to arrange delivery.</p>
-                    <TextField label="WhatsApp number" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={25} autoComplete="tel" />
+                    <TextField label="WhatsApp number" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={25} autoComplete="tel" hint="Start with 0 or +234. We add the Nigeria code (+234) for you." />
                   </>
                 )}
                 {asking ? (

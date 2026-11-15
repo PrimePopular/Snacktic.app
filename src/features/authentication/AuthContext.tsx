@@ -1,3 +1,4 @@
+import { normalizePhone } from '../../shared/phone';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { User } from '@supabase/supabase-js';
@@ -104,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: {
             username: input.username.trim(),
             full_name: input.fullName.trim(),
-            phone: input.phone.trim(),
+            phone: input.phone.trim() === '' ? '' : normalizePhone(input.phone),
             marketing_opt_in: input.marketingOptIn,
           },
         },
@@ -185,14 +186,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const client = supabase;
       if (!client || !user) return { ok: false, message: 'Sign in first.' };
       try {
-        const { error } = await client.from('profiles').update(patch).eq('id', user.id);
+        const clean = patch.phone !== undefined && patch.phone.trim() !== '' ? { ...patch, phone: normalizePhone(patch.phone) } : patch;
+        const { error } = await client.from('profiles').update(clean).eq('id', user.id);
         if (error) {
           if (error.code === '23505' || error.message.includes('duplicate')) {
             return { ok: false, message: 'That nickname is taken. Try another one.' };
           }
           return fail(error.message);
         }
-        setProfile((current) => (current ? { ...current, ...patch } : current));
+        setProfile((current) => (current ? { ...current, ...clean } : current));
         return { ok: true };
       } catch (error) {
         console.error('[auth]', error);

@@ -145,7 +145,7 @@ export function GuestProfile() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             error={errors.phone}
-            hint="Only used to contact you about rewards you order. You can add it later."
+            hint="Only used to contact you about rewards you order. Start with 0 or +234. You can add it later."
             autoComplete="tel"
             maxLength={25}
           />

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from 'react';
 import type { ComponentType, LazyExoticComponent } from 'react';
 import { navigate } from '../../core/router';
+import { AdSlot } from '../../features/ads';
 import { useAuth } from '../../features/authentication';
 import { RetryPicker } from '../../games/shared/RetryPicker';
 import { submitGameResult } from '../../features/points';
@@ -128,6 +129,7 @@ export function GameHost({ id }: { id: string }) {
             <p className="text-secondary">{isDaily ? 'Daily Challenge' : 'Your score'}</p>
             <p className="game-result__score">{result.score}</p>
             {outcome && <PointsMessage outcome={outcome} />}
+            <AdSlot />
             {problem && (
               <p className="form-error" role="alert">
                 {problem}

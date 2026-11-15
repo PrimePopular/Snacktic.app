@@ -3,6 +3,7 @@ import { useAuth } from '../../features/authentication';
 import { previewAttempt, startAttempt } from '../../features/points';
 import { playTap } from '../../services/sound';
 import { Button, Card } from '../../shared/components';
+import { AdSlot } from '../../features/ads';
 import { RetryPicker } from './RetryPicker';
 import './games-embed.css';
 
@@ -91,6 +92,7 @@ export function ModeChooser({ gameId, modes, onStart }: ModeChooserProps) {
           {error}
         </p>
       )}
+      <AdSlot />
     </div>
   );
 }

@@ -6,3 +6,4 @@ export type { Nudge } from './NudgeCard';
 export { weaveAds } from './weave';
 export type { Woven } from './weave';
 export { useLiveAds } from './useLiveAds';
+export { AdSlot } from './AdSlot';

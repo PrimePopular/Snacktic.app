@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button, CheckboxField } from '../../shared/components';
-import { disablePush, enablePush, getPushStatus, setPushPref } from './pushService';
+import { disablePush, enablePush, getPushStatus, setPushPref, updatePushLocation } from './pushService';
 import type { PushPref, PushStatus } from './pushService';
 
 const CHOICES: { kind: PushPref; label: string }[] = [
@@ -8,6 +8,7 @@ const CHOICES: { kind: PushPref; label: string }[] = [
   { kind: 'prayer', label: 'Prayer time reminder' },
   { kind: 'games', label: 'Daily games reminder' },
   { kind: 'products', label: 'New rewards in the shop' },
+  { kind: 'general', label: 'Announcements from Snacktic' },
 ];
 
 /** The notification switches in Profile. Hidden until the notification keys have been added. */
@@ -51,7 +52,16 @@ export function PushSettings() {
       {status.state === 'off' && (
         <>
           <p className="text-secondary text-small">Get a message on your phone when something happens, even when Snacktic is closed.</p>
-          <Button disabled={busy} onClick={() => void run(enablePush)}>
+          <Button
+            disabled={busy}
+            onClick={() =>
+              void run(async () => {
+                await enablePush();
+                // So the morning weather is for where this student is.
+                void import('../weather').then(({ locateMe }) => locateMe()).then(updatePushLocation).catch(() => undefined);
+              })
+            }
+          >
             {busy ? 'Turning on…' : 'Turn on notifications'}
           </Button>
         </>

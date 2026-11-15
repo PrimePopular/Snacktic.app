@@ -117,3 +117,34 @@ export async function claimAdPoints(adId: string): Promise<number> {
     return 0;
   }
 }
+
+const seenThisSession = new Set<string>();
+
+/** Counts a view (once per ad per visit) or a tap. Anyone can be counted, signed in or not. Never throws. */
+export function trackAdEvent(adId: string, kind: 'view' | 'click'): void {
+  if (!supabase) return;
+  if (kind === 'view') {
+    if (seenThisSession.has(adId)) return;
+    seenThisSession.add(adId);
+  }
+  void Promise.resolve(supabase.rpc('track_ad_event', { p_ad: adId, p_kind: kind })).catch((error: unknown) => console.error('[ads] track', error));
+}
+
+export interface AdReport {
+  views: number;
+  clicks: number;
+  views7d: number;
+  clicks7d: number;
+  signedInViewers: number;
+}
+
+/** Owner only: views and taps for every ad. */
+export async function ownerAdReport(): Promise<Record<string, AdReport>> {
+  const { data, error } = await client().rpc('owner_ad_report');
+  if (error) throw new Error(error.message);
+  const result: Record<string, AdReport> = {};
+  for (const r of (data ?? []) as { ad_id: string; views: number | string; clicks: number | string; views_7d: number | string; clicks_7d: number | string; signed_in_viewers: number | string }[]) {
+    result[r.ad_id] = { views: Number(r.views), clicks: Number(r.clicks), views7d: Number(r.views_7d), clicks7d: Number(r.clicks_7d), signedInViewers: Number(r.signed_in_viewers) };
+  }
+  return result;
+}

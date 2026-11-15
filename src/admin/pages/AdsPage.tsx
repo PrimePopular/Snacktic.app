@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { createAd, deleteAd, listAllAds, ownerAdViewers, setAdPublished, updateAd } from '../../features/ads';
-import type { Ad } from '../../features/ads';
+import { createAd, deleteAd, listAllAds, ownerAdReport, setAdPublished, updateAd } from '../../features/ads';
+import type { Ad, AdReport } from '../../features/ads';
 import { pictureUrl } from '../../services/pictures';
 import { Button, Card, CheckboxField, EmptyState, Loading, TextAreaField, TextField } from '../../shared/components';
 import { safeLink } from '../../shared/url';
@@ -11,7 +11,7 @@ import { usePictureEditor } from '../usePictureEditor';
 type LoadState =
   | { kind: 'loading' }
   | { kind: 'error'; message: string }
-  | { kind: 'ready'; ads: Ad[]; viewers: Record<string, number> };
+  | { kind: 'ready'; ads: Ad[]; report: Record<string, AdReport> };
 
 interface FormState {
   advertiser: string;
@@ -53,8 +53,8 @@ export function AdsPage() {
     setState({ kind: 'loading' });
     try {
       const ads = await listAllAds();
-      const viewers = await ownerAdViewers().catch(() => ({}) as Record<string, number>);
-      setState({ kind: 'ready', ads, viewers });
+      const report = await ownerAdReport().catch(() => ({}) as Record<string, AdReport>);
+      setState({ kind: 'ready', ads, report });
     } catch (error) {
       console.error('[admin] ads', error);
       setState({ kind: 'error', message: error instanceof Error ? error.message : 'Something went wrong.' });
@@ -208,7 +208,16 @@ export function AdsPage() {
                     <span className="badge">{item.points} {item.points === 1 ? 'point' : 'points'}</span>
                     {!item.published && <span className="badge badge--minor">Hidden</span>}
                     {finished && <span className="badge badge--minor">Finished</span>}
-                    <span className="text-secondary text-small">{state.viewers[item.id] ?? 0} students saw it</span>
+                    {(() => {
+                      const r = state.report[item.id];
+                      if (!r) return <span className="text-secondary text-small">No numbers yet</span>;
+                      const rate = r.views > 0 ? ((r.clicks / r.views) * 100).toFixed(1) : '0';
+                      return (
+                        <span className="text-secondary text-small">
+                          {r.views} views · {r.clicks} taps ({rate}%) · last 7 days: {r.views7d} views, {r.clicks7d} taps · {r.signedInViewers} signed-in students
+                        </span>
+                      );
+                    })()}
                   </div>
                   {item.imagePath && <img className="picture-thumb" src={pictureUrl(item.imagePath)} alt="" loading="lazy" />}
                   <h2>{item.title}</h2>

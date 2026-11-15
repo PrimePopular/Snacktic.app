@@ -181,6 +181,8 @@ export interface AttemptPreview {
   retriesLeft: number;
   /** Whether an ad can be shown to retry for free. */
   adsAvailable: boolean;
+  /** The owner can retry freely, to test the games. */
+  ownerFree: boolean;
 }
 
 /** What the next try at a daily challenge would cost, and how many retries are left. Changes nothing. */
@@ -188,8 +190,8 @@ export async function previewAttempt(gameId: string, mode: string): Promise<Atte
   if (!supabase) throw new Error('The database is not connected yet.');
   const { data, error } = await supabase.rpc('preview_game_attempt', { p_game_id: gameId, p_mode: mode });
   if (error) throw friendly(error.message);
-  const row = ((data ?? []) as { is_daily: boolean; cost: number; tries_today: number; retries_left: number; ads_available: boolean }[])[0];
-  return { daily: Boolean(row?.is_daily), cost: row?.cost ?? 0, tries: row?.tries_today ?? 0, retriesLeft: row?.retries_left ?? 0, adsAvailable: Boolean(row?.ads_available) };
+  const row = ((data ?? []) as { is_daily: boolean; cost: number; tries_today: number; retries_left: number; ads_available: boolean; owner_free: boolean }[])[0];
+  return { daily: Boolean(row?.is_daily), cost: row?.cost ?? 0, tries: row?.tries_today ?? 0, retriesLeft: row?.retries_left ?? 0, adsAvailable: Boolean(row?.ads_available), ownerFree: Boolean(row?.owner_free) };
 }
 
 /** Step 1 of retrying by watching an ad: the server picks the ad. Show it for 15 seconds, then pass gateId to startAttempt. */

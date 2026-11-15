@@ -103,15 +103,19 @@ export function RewardsDashboard() {
   }, [load]);
 
   const items = state.kind === 'ready' ? state.rewards.filter((r) => r.kind === tab) : [];
+  // With enough items, the newest few sit in a sideways rail at the top (like a shop front) and the rest follow below.
+  const useRail = items.length > 8;
+  const rail = useRail ? items.slice(0, 6) : [];
+  const rest = useRail ? items.slice(6) : items;
 
   // Load more as the student scrolls to the end of the list.
   useEffect(() => {
     const node = sentinel.current;
-    if (!node || typeof IntersectionObserver === 'undefined' || visible >= items.length) return;
+    if (!node || typeof IntersectionObserver === 'undefined' || visible >= rest.length) return;
     const observer = new IntersectionObserver((entries) => entries[0]?.isIntersecting && setVisible((v) => v + PAGE), { rootMargin: '300px' });
     observer.observe(node);
     return () => observer.disconnect();
-  }, [visible, items.length, tab]);
+  }, [visible, rest.length, tab]);
 
   function switchTab(next: Tab) {
     setTab(next);
@@ -119,6 +123,11 @@ export function RewardsDashboard() {
   }
 
   function onTouchStart(event: TouchEvent) {
+    // Scrolling the "Just added" rail sideways must not switch the tab.
+    if ((event.target as HTMLElement).closest?.('.market-rail')) {
+      touch.current = null;
+      return;
+    }
     const t = event.touches[0];
     touch.current = t ? { x: t.clientX, y: t.clientY } : null;
   }
@@ -214,7 +223,7 @@ export function RewardsDashboard() {
   }
 
   const { balance, owned, places } = state;
-  const shown = weaveAds(items.slice(0, visible), ads);
+  const shown = weaveAds(rest.slice(0, visible), ads);
 
   return (
     <>
@@ -249,6 +258,22 @@ export function RewardsDashboard() {
         {items.length === 0 ? (
           <EmptyState title={tab === 'digital' ? 'No ebooks yet' : 'No items yet'}>New things are added by the Snacktic team. Check back soon.</EmptyState>
         ) : (
+          <>
+            {rail.length > 0 && (
+              <section aria-labelledby="rail-heading">
+                <h2 id="rail-heading" className="market-heading">
+                  Just added
+                </h2>
+                <ul className="market-rail">
+                  {rail.map((reward) => (
+                    <li key={reward.id}>
+                      <RewardCard reward={reward} balance={balance} ownedUrl={owned[reward.id]} suspended={Boolean(profile?.suspended)} onGet={startBuying} />
+                    </li>
+                  ))}
+                </ul>
+                <h2 className="market-heading">More to get</h2>
+              </section>
+            )}
           <ul className="reward-grid">
             {shown.map((slot) =>
               slot.kind === 'ad' ? (
@@ -262,8 +287,9 @@ export function RewardsDashboard() {
               ),
             )}
           </ul>
+          </>
         )}
-        {visible < items.length && <div ref={sentinel} className="market-more" aria-hidden="true" />}
+        {visible < rest.length && <div ref={sentinel} className="market-more" aria-hidden="true" />}
       </div>
 
       <Modal open={buying !== null} onClose={() => setBuying(null)} labelledBy={buyTitleId}>

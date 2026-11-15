@@ -15,7 +15,7 @@ export type PushState =
   | 'off'
   | 'on';
 
-export type PushPref = 'weather' | 'prayer' | 'games' | 'products';
+export type PushPref = 'weather' | 'prayer' | 'games' | 'products' | 'general';
 export type PushPrefs = Record<PushPref, boolean>;
 
 export interface PushStatus {
@@ -23,7 +23,7 @@ export interface PushStatus {
   prefs: PushPrefs;
 }
 
-const ALL_ON: PushPrefs = { weather: true, prayer: true, games: true, products: true };
+const ALL_ON: PushPrefs = { weather: true, prayer: true, games: true, products: true, general: true };
 
 function isIos(): boolean {
   return /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -62,7 +62,7 @@ export async function getPushStatus(): Promise<PushStatus> {
     if (!registration) return off('unsupported'); // not registered, for example while developing on this computer
     const subscription = await registration.pushManager.getSubscription();
     if (!subscription) return off('off');
-    const { data } = await client().from('push_subscriptions').select('weather, prayer, games, products').eq('endpoint', subscription.endpoint).maybeSingle();
+    const { data } = await client().from('push_subscriptions').select('weather, prayer, games, products, general').eq('endpoint', subscription.endpoint).maybeSingle();
     return { state: 'on', prefs: data ? (data as PushPrefs) : { ...ALL_ON } };
   } catch (error) {
     console.error('[push] status', error);
@@ -106,4 +106,22 @@ export async function setPushPref(kind: PushPref, on: boolean): Promise<void> {
   if (!subscription) return;
   const { error } = await client().rpc('set_push_pref', { p_endpoint: subscription.endpoint, p_kind: kind, p_on: on });
   if (error) throw new Error('Could not change that setting. Please try again.');
+}
+
+/**
+ * Tells the server roughly where this phone is (rounded to about 10 km), so the morning weather message is for the
+ * student's own place. Only done when notifications are on, and only when the place has changed. Never throws.
+ */
+export async function updatePushLocation(place: { name: string; lat: number; lon: number }): Promise<void> {
+  try {
+    if (!supabase || !('serviceWorker' in navigator)) return;
+    const subscription = await currentSubscription();
+    if (!subscription) return;
+    const key = `${place.lat.toFixed(1)},${place.lon.toFixed(1)}`;
+    if (localStorage.getItem('snacktic.pushPlace') === key) return;
+    const { error } = await supabase.rpc('set_push_location', { p_endpoint: subscription.endpoint, p_lat: place.lat, p_lon: place.lon, p_name: place.name });
+    if (!error) localStorage.setItem('snacktic.pushPlace', key);
+  } catch (error) {
+    console.error('[push] location', error);
+  }
 }

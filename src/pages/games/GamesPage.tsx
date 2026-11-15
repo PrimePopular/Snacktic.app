@@ -1,4 +1,5 @@
 import { useLiveFindFriend } from '../../features/find-a-friend';
+import { AdCard, useLiveAds, weaveAds } from '../../features/ads';
 import { classicGames, classicSlots, isEventActive, specialEvents } from '../../games/registry';
 import { Button, Card, PageHeader } from '../../shared/components';
 import './games.css';
@@ -16,37 +17,34 @@ function formatDate(iso: string): string {
 export default function GamesPage() {
   const activeEvents = specialEvents.filter((event) => isEventActive(event));
   const findFriend = useLiveFindFriend();
+  const ads = useLiveAds();
 
   return (
     <>
-      <PageHeader tone="pistachio" title="Games" description="Four games that are always here, plus limited-time events." />
+      <PageHeader tone="pistachio" title="Games" description="Pick a game and play." />
 
       <section className="games-section" aria-labelledby="classic-heading">
         <h2 id="classic-heading">Classic games</h2>
         <ul className="slot-grid">
-          {classicSlots.map(({ slot, plannedName }) => {
+          {weaveAds(classicSlots, ads).map((entry) => {
+            if (entry.kind === 'ad') {
+              return (
+                <li key={entry.key}>
+                  <AdCard ad={entry.ad} />
+                </li>
+              );
+            }
+            const { slot, plannedName } = entry.item;
             const game = classicGames.find((g) => g.slot === slot);
             return (
               <li key={slot}>
                 {game ? (
-                  <Card as="article" className="slot-card">
+                  <Card as="article" className="slot-card slot-card--compact">
                     <h3>{game.title}</h3>
-                    <p className="text-secondary text-small">{game.summary}</p>
-                    <p className="text-xs text-secondary">About {game.estimatedSeconds} seconds</p>
-                    {game.modes && game.modes.length > 0 && (
-                      <p className="slot-card__modes">
-                        {game.modes.map((m) => (
-                          <span key={m.id} className={`badge ${m.dailyChallenge ? '' : 'badge--minor'} badge--small`}>
-                            {m.dailyChallenge ? `${m.label} · daily` : m.label}
-                          </span>
-                        ))}
-                      </p>
-                    )}
                     <Button to={`/games/${game.id}`}>Play</Button>
                   </Card>
                 ) : (
-                  <div className="slot-card slot-card--empty">
-                    <p className="text-xs text-secondary">Game {slot}</p>
+                  <div className="slot-card slot-card--empty slot-card--compact">
                     <h3>{plannedName}</h3>
                     <p className="text-secondary text-small">Coming soon</p>
                   </div>

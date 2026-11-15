@@ -103,3 +103,12 @@ account suspension, start-up animation, installable app and offline copies of pu
 
 ## Update 023
 - WhatsApp numbers get the Nigeria country code (+234) by default. A number typed as 0903 300 0131, 9033000131 or +234 903 300 0131 all become +2349033000131 when saved, and the WhatsApp button in Rewards orders works for every number (old numbers that start with 0 too). A number typed with another country's + code is kept as it is.
+
+## Update 024
+- Notifications: the owner sets what is sent and exactly when (Admin, Daily notifications): weather, prayer (with the school link), games reminder and custom messages, each with time, repeat (daily, weekdays, weekends), start and end dates and how long it stays valid. One function (`supabase/functions/push`) does everything; setup is in docs/PUSH_SETUP.md and needs no command line. Run `supabase/020_scheduled_notifications.sql`.
+- Weather notification is written for each student's own place (about 10 km), with advice, using the same rules as the card in the app. Students who have not shared a place get the campus weather.
+- Retrying a daily challenge is by watching an ad. With no ad available students are told so. The owner can retry freely (to test). Retry limit per day is still editable.
+- Ads: metrics (views, taps, last 7 days) per ad in Admin, Ads; ads also appear between game cards, in the game chooser and on the game result pop-up.
+- Game cards are compact (name and Play).
+- Rewards has a "Just added" rail and bolder prices.
+- docs/CAPACITY.md reviews the 3,000 student question.

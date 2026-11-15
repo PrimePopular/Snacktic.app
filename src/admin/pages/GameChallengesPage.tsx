@@ -52,10 +52,10 @@ function RuleCard({ rule, onSaved }: { rule: ExtraRule; onSaved: () => void }) {
     <Card as="article" className="ann__item">
       <h2>{rule.label}</h2>
       {rule.isDaily && (
-        <TextField label="Cost to try again (Crumb Points)" type="number" inputMode="numeric" min={0} max={1000} value={cost} onChange={(e) => setCost(e.target.value)} hint="The first try each day is free. Every try after that costs this." />
+        <TextField label="Cost to try again (Crumb Points)" type="number" inputMode="numeric" min={0} max={1000} value={cost} onChange={(e) => setCost(e.target.value)} hint="Not used now: retries are by watching an ad. Kept in case you switch to paid retries later." />
       )}
       {rule.isDaily && (
-        <TextField label="Most retries per day" type="number" inputMode="numeric" min={0} max={50} value={retries} onChange={(e) => setRetries(e.target.value)} hint="Counts both ad retries and paid retries. The first try each day is not a retry." />
+        <TextField label="Most retries per day (by ad)" type="number" inputMode="numeric" min={0} max={50} value={retries} onChange={(e) => setRetries(e.target.value)} hint="Counts both ad retries and paid retries. The first try each day is not a retry." />
       )}
       {rule.isMilestones && (
         <TextAreaField label="Score milestones" value={text} onChange={(e) => setText(e.target.value)} rows={5} hint="One per line: score, then points. Each milestone pays once per student, ever. Example: 5000: 10" />

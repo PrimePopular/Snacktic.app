@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../authentication';
 import { pictureUrl } from '../../services/pictures';
 import { linkLabel, safeLink } from '../../shared/url';
-import { claimAdPoints } from './adsService';
+import { claimAdPoints, trackAdEvent } from './adsService';
 import type { Ad } from './ads.types';
 import './ads.css';
 
@@ -35,6 +35,29 @@ export function AdCard({ ad, noReward = false }: { ad: Ad; noReward?: boolean })
   const [earned, setEarned] = useState(0);
   const link = safeLink(ad.link);
   const signedIn = status === 'signed-in';
+
+  // Count the view when the ad has really been on screen (more than half, for a second). Guests count too.
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || typeof IntersectionObserver === 'undefined') return;
+    let timer: number | undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        window.clearTimeout(timer);
+        if (!entry?.isIntersecting) return;
+        timer = window.setTimeout(() => {
+          trackAdEvent(ad.id, 'view');
+          observer.disconnect();
+        }, 1000);
+      },
+      { threshold: 0.5 },
+    );
+    observer.observe(node);
+    return () => {
+      window.clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [ad.id]);
 
   useEffect(() => {
     const node = ref.current;
@@ -74,7 +97,7 @@ export function AdCard({ ad, noReward = false }: { ad: Ad; noReward?: boolean })
         <h2>{ad.title}</h2>
         {ad.body && <p className="text-secondary">{ad.body}</p>}
         {link && (
-          <a className="btn btn--secondary" href={link} target="_blank" rel="noopener noreferrer sponsored">
+          <a className="btn btn--secondary" href={link} target="_blank" rel="noopener noreferrer sponsored" onClick={() => trackAdEvent(ad.id, 'click')}>
             {linkLabel(link) === 'Open link' ? 'Learn more' : linkLabel(link)}
           </a>
         )}

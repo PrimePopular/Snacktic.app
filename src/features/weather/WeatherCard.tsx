@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useState } from 'react';
 import { Button, Modal, TextField } from '../../shared/components';
+import { updatePushLocation } from '../push';
 import { fetchWeather, getCampusPlace, getSavedPlace, locateMe, savePlace, searchPlaces } from './weather';
 import type { Place, Weather } from './weather';
 import './weather.css';
@@ -30,6 +31,7 @@ export function WeatherCard() {
       try {
         const place = await locateMe();
         savePlace(place);
+        void updatePushLocation(place);
         if (active) await show(place);
         return;
       } catch {

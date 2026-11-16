@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import AdminApp from '../admin/AdminApp';
 import { useAuth } from '../features/authentication';
 import { FindFriendTag, ReferralClaimer } from '../features/find-a-friend';
+import { PushPrompt } from '../features/push';
 import { UpdateBanner } from '../pwa/UpdateBanner';
 import FindFriendPage from '../pages/find-a-friend/FindFriendPage';
 import ReferralLandingPage from '../pages/find-a-friend/ReferralLandingPage';
@@ -112,6 +113,7 @@ export default function App() {
       <TopBar />
       <UpdateBanner />
       <ReferralClaimer />
+      <PushPrompt />
       <FindFriendTag />
       <main id="main-content" className="app-main" tabIndex={-1}>
         <Router routes={routes} notFound={notFound} />

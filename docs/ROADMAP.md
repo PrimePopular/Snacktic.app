@@ -112,3 +112,6 @@ account suspension, start-up animation, installable app and offline copies of pu
 - Game cards are compact (name and Play).
 - Rewards has a "Just added" rail and bolder prices.
 - docs/CAPACITY.md reviews the 3,000 student question.
+
+## Update 025
+- Notifications are on by default: every kind starts switched on for everyone, and right after signing in a friendly card asks once to allow them on the phone (one tap). "Not now" asks again after a week. A phone only allows notifications after the student says yes once, so this cannot be skipped entirely.

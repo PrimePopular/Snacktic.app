@@ -19,6 +19,7 @@ type LoadState =
 export function StudentsPage() {
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
   const [query, setQuery] = useState('');
+  const [limit, setLimit] = useState(50);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -157,7 +158,7 @@ export function StudentsPage() {
         </p>
       ) : (
         <ul className="student-list">
-          {filtered.map((row) => (
+          {filtered.slice(0, limit).map((row) => (
             <li key={row.id} className="student-card">
               <p className="student-card__name">
                 {row.username}
@@ -192,6 +193,11 @@ export function StudentsPage() {
             </li>
           ))}
         </ul>
+      )}
+      {filtered.length > limit && (
+        <Button variant="secondary" onClick={() => setLimit((n) => n + 50)}>
+          Show 50 more ({filtered.length - limit} left)
+        </Button>
       )}
     </section>
   );

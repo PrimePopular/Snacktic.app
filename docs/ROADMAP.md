@@ -115,3 +115,9 @@ account suspension, start-up animation, installable app and offline copies of pu
 
 ## Update 025
 - Notifications are on by default: every kind starts switched on for everyone, and right after signing in a friendly card asks once to allow them on the phone (one tap). "Not now" asks again after a week. A phone only allows notifications after the student says yes once, so this cannot be skipped entirely.
+
+## Update 026 (launch preparation)
+- Merged your fixes to feed.css and home.css (cards can no longer stretch the page sideways).
+- Privacy notice rewritten to be true for everything the app now does (ads, location, notifications, invites, feedback, delivery, how long things are kept). It previously said "we do not show ads".
+- Admin Students list shows 50 at a time (fast with 3,000 students).
+- `supabase/check_migrations.sql` shows which database files have been run. `docs/LAUNCH_CHECKLIST.md` lists everything left to do before launch.

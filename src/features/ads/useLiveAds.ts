@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { listLiveAds } from './adsService';
+import { orderAds } from './weave';
 import type { Ad } from './ads.types';
 
 let cache: { at: number; ads: Ad[] } | null = null;
@@ -26,4 +27,10 @@ export function useLiveAds(): Ad[] {
   }, []);
 
   return ads;
+}
+
+/** The live ads in rotation order for one section ("home", "discover", "games", "rewards"). */
+export function useRotatedAds(section: string): Ad[] {
+  const ads = useLiveAds();
+  return useMemo(() => orderAds(ads, section), [ads, section]);
 }

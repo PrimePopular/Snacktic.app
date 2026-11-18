@@ -1,12 +1,67 @@
-.ff-rules, .ff-code, .ff-scan { display: grid; gap: var(--space-3); margin-bottom: var(--space-4); }
-.ff-rules h2, .ff-code h2, .ff-scan h2 { margin: 0; }
-.ff-rules ol { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-2); }
+/* Find a Friend: a big, playful activity, not a plain card. */
+.ff-hero {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: var(--space-4);
+  padding: var(--space-6) var(--space-5);
+  border-radius: 32px;
+  background: radial-gradient(circle at 88% 12%, rgb(255 255 255 / 0.35) 0 16%, transparent 17%), radial-gradient(circle at 6% 100%, rgb(255 255 255 / 0.25) 0 22%, transparent 23%), linear-gradient(135deg, var(--color-rose), var(--color-orange));
+  color: var(--color-chocolate);
+  box-shadow: var(--shadow-lg);
+}
+.ff-hero--quiet { background: var(--color-cream-deep); box-shadow: var(--shadow-sm); }
+.ff-hero__kicker { margin: 0 0 var(--space-1); font-size: var(--text-xs); font-weight: 800; letter-spacing: 0.12em; }
+.ff-hero h1 { margin: 0; font-size: 2.25rem; line-height: 1.02; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.ff-hero__lead { margin: var(--space-2) 0 var(--space-4); font-size: var(--text-md); font-weight: 500; }
+.ff-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.ff-chip { padding: 6px var(--space-3); border-radius: var(--radius-pill); background: rgb(255 248 239 / 0.9); font-size: var(--text-sm); font-weight: 600; }
+
+.ff-steps { list-style: none; margin: 0 0 var(--space-4); padding: 0; display: grid; gap: var(--space-2); }
+.ff-steps li { display: flex; gap: var(--space-3); align-items: center; padding: var(--space-3) var(--space-4); border-radius: 22px; background: var(--bg-surface); border: 1px solid var(--border); }
+.ff-steps__icon { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: 16px; background: var(--color-orange-soft); font-size: 1.5rem; }
+.ff-steps p { margin: 0; font-size: var(--text-sm); color: var(--text-secondary); }
+
 .ff-join { margin: var(--space-4) 0; }
-.ff-typed { display: grid; gap: var(--space-2); }
+
+/* The QR pass: a ticket */
+.ff-pass {
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+  justify-items: center;
+  margin: var(--space-4) 0;
+  padding: var(--space-5);
+  border-radius: 32px;
+  background: var(--color-chocolate);
+  color: var(--color-cream);
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+.ff-pass::before, .ff-pass::after { content: ''; position: absolute; top: 5.5rem; width: 26px; height: 26px; border-radius: 50%; background: var(--bg-page, var(--color-cream)); }
+.ff-pass::before { left: -13px; }
+.ff-pass::after { right: -13px; }
+.ff-pass__label { margin: 0; font-size: var(--text-xs); font-weight: 800; letter-spacing: 0.16em; color: var(--color-orange); }
+.ff-pass__name { margin: 0; font-family: var(--font-heading); font-size: var(--text-xl); font-weight: 800; overflow-wrap: anywhere; }
+.ff-pass__qr { padding: var(--space-3); border-radius: 24px; background: #fff; border: 4px dashed var(--color-orange); }
+.ff-pass__stats { display: flex; gap: var(--space-5); font-size: var(--text-sm); }
+.ff-pass__stats strong { display: block; font-family: var(--font-heading); font-size: var(--text-xl); color: var(--color-orange); }
+
+.ff-scan { display: grid; gap: var(--space-3); margin-bottom: var(--space-4); }
+.ff-scan h2 { margin: 0; }
 .ff-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .ff-list li { padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); background: var(--color-pistachio-soft); font-weight: 600; }
+
+/* Podium for the top three */
+.ff-podium { list-style: none; margin: var(--space-3) 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); align-items: end; gap: var(--space-2); }
+.ff-podium__step { display: grid; justify-items: center; gap: 2px; padding: var(--space-3) var(--space-2); border-radius: 20px 20px 8px 8px; background: var(--color-orange-soft); text-align: center; min-width: 0; }
+.ff-podium__step--1 { min-height: 9.5rem; background: var(--color-orange); }
+.ff-podium__step--2 { min-height: 7.5rem; }
+.ff-podium__step--3 { min-height: 6.5rem; background: var(--color-pistachio-soft); }
+.ff-podium__medal { font-size: 1.75rem; }
+.ff-podium__name { font-weight: 700; font-size: var(--text-sm); overflow-wrap: anywhere; }
+.ff-podium__count { font-family: var(--font-heading); font-size: var(--text-lg); font-weight: 800; }
 .ff-board { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); max-width: 28rem; }
 .ff-board li { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-4); border-radius: var(--radius-md); background: var(--bg-surface); border: 1px solid var(--border); }
 .ff-board__place { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: var(--color-orange); font-weight: 700; }
-.ff-board__name { flex: 1; font-weight: 600; }
+.ff-board__name { flex: 1; font-weight: 600; overflow-wrap: anywhere; }
 .ff-board__count { font-family: var(--font-heading); font-weight: 700; }

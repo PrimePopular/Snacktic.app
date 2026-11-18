@@ -13,9 +13,11 @@ interface FormState {
   second: string;
   third: string;
   endDate: string;
+  daily: string;
+  lifetime: string;
 }
 
-const emptyForm: FormState = { name: 'Find a Friend', points: '5', first: '0', second: '0', third: '0', endDate: '' };
+const emptyForm: FormState = { name: 'Find a Friend', points: '5', first: '0', second: '0', third: '0', endDate: '', daily: '20', lifetime: '100' };
 const dateFormat = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 
 function whole(value: string, max: number): number | null {
@@ -69,13 +71,16 @@ export function FindFriendAdminPage() {
     const third = whole(form.third, 1000);
     if (points === null) return setError('Points per find must be a whole number from 0 to 100.');
     if (first === null || second === null || third === null) return setError('Prizes must be whole numbers from 0 to 1000.');
+    const daily = whole(form.daily, 1000);
+    const lifetime = whole(form.lifetime, 100000);
+    if (daily === null || daily < 1 || lifetime === null || lifetime < 1) return setError('The invite limits must be whole numbers of 1 or more.');
     if (!form.endDate) return setError('Choose the last day of the event.');
     const endsAt = new Date(`${form.endDate}T23:59:59`);
     if (endsAt.getTime() <= Date.now()) return setError('The last day must be today or later.');
     const hasLive = state.kind === 'ready' && state.events.some((e) => e.live);
     if (hasLive && !window.confirm('An event is live right now. Starting a new one switches it off. Continue?')) return;
     void run(async () => {
-      await ownerStartEvent({ name: form.name, pointsPerScan: points, prizeFirst: first, prizeSecond: second, prizeThird: third, endsAt: endsAt.toISOString() });
+      await ownerStartEvent({ name: form.name, pointsPerScan: points, prizeFirst: first, prizeSecond: second, prizeThird: third, endsAt: endsAt.toISOString(), dailyLimit: daily, lifetimeLimit: lifetime });
       return 'The event is live. Students will see the tag now.';
     });
   }
@@ -103,6 +108,8 @@ export function FindFriendAdminPage() {
             <TextField label="Second place" type="number" inputMode="numeric" min={0} max={1000} value={form.second} onChange={(e) => setForm({ ...form, second: e.target.value })} />
             <TextField label="Third place" type="number" inputMode="numeric" min={0} max={1000} value={form.third} onChange={(e) => setForm({ ...form, third: e.target.value })} hint="You pay these yourself with the Pay prizes button when the event is over." />
           </fieldset>
+          <TextField label="Most friends one person can invite per day" type="number" inputMode="numeric" min={1} value={form.daily} onChange={(e) => setForm({ ...form, daily: e.target.value })} hint="Stops anyone farming points with fake accounts." />
+          <TextField label="Most friends one person can invite in total" type="number" inputMode="numeric" min={1} value={form.lifetime} onChange={(e) => setForm({ ...form, lifetime: e.target.value })} hint="Counts across every Find a Friend event, ever. A person can only ever be invited once." />
           <TextField label="Last day" type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} hint="The event stops at the end of this day." />
           <div className="ann__actions">
             <Button type="submit" disabled={busy}>{busy ? 'Starting…' : 'Start now'}</Button>

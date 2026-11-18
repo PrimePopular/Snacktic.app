@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AdCard, listLiveAds, NudgeCard, nudges } from '../../features/ads';
+import { AdCard, listLiveAds, NudgeCard, nudges, orderAds } from '../../features/ads';
 import type { Ad, Nudge } from '../../features/ads';
 import { listLiveAnnouncements } from '../../features/announcements';
 import { WeatherCard } from '../../features/weather';
@@ -70,13 +70,8 @@ type FeedSlot =
  * either. Ads and nudges take turns through their lists.
  */
 function weave(entries: FeedEntry[], allAds: Ad[]): FeedSlot[] {
-  // A fresh random order each time the feed loads, so ads come round in a different order and a
-  // student with only a few ads will see the same one again now and then. Points are paid once per ad.
-  const ads = [...allAds];
-  for (let i = ads.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [ads[i], ads[j]] = [ads[j], ads[i]];
-  }
+  // The ad this phone has seen least recently comes first, so Home, Discover, Games and Rewards each start with a different one.
+  const ads = orderAds(allAds, 'home');
   const slots: FeedSlot[] = [];
   let adIndex = 0;
   let nudgeIndex = 0;

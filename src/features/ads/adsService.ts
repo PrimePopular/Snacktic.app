@@ -148,3 +148,13 @@ export async function ownerAdReport(): Promise<Record<string, AdReport>> {
   }
   return result;
 }
+
+/** Starts the engagement clock for a signed-in student who opened an ad. The server pays only if the claim comes about 3 seconds later. */
+export async function beginAdOpen(adId: string): Promise<void> {
+  try {
+    const { error } = await client().rpc('begin_ad_open', { p_ad: adId });
+    if (error) throw new Error(error.message);
+  } catch (error) {
+    console.error('[ads] open', error);
+  }
+}

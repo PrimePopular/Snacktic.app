@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AdCard, listLiveAds } from '../../features/ads';
+import { AdFull, listLiveAds } from '../../features/ads';
 import type { Ad } from '../../features/ads';
 import { beginAdRetry } from '../../features/points';
 import { Button, Card } from '../../shared/components';
@@ -64,7 +64,7 @@ export function AdGate({ gameId, mode, onReady, onCancel }: AdGateProps) {
           <p className="text-secondary">Finding an ad…</p>
         ) : (
           <>
-            <AdCard ad={ad} noReward />
+            <AdFull ad={ad} trackLink />
             <p className="text-secondary text-small">{left > 0 ? `Your retry unlocks in ${left} second${left === 1 ? '' : 's'}.` : 'Thanks for watching!'}</p>
           </>
         )}

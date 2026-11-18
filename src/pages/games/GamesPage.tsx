@@ -1,5 +1,6 @@
 import { useLiveFindFriend } from '../../features/find-a-friend';
-import { AdCard, useLiveAds, weaveAds } from '../../features/ads';
+import { AdCard, useRotatedAds, weaveAds } from '../../features/ads';
+import { CrossEvent } from '../../features/events';
 import { classicGames, classicSlots, isEventActive, specialEvents } from '../../games/registry';
 import { Button, Card, PageHeader } from '../../shared/components';
 import './games.css';
@@ -17,7 +18,7 @@ function formatDate(iso: string): string {
 export default function GamesPage() {
   const activeEvents = specialEvents.filter((event) => isEventActive(event));
   const findFriend = useLiveFindFriend();
-  const ads = useLiveAds();
+  const ads = useRotatedAds('games');
 
   return (
     <>
@@ -54,6 +55,8 @@ export default function GamesPage() {
           })}
         </ul>
       </section>
+
+      <CrossEvent />
 
       <section className="games-section" aria-labelledby="events-heading">
         <h2 id="events-heading">Special events</h2>

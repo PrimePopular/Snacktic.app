@@ -10,4 +10,5 @@ select
   exists (select 1 from public.app_settings where key = 'cleanup_orders_days')                         as "017 cleanup",
   to_regclass('public.feedback') is not null                                                           as "018 ebooks, retries, feedback",
   to_regclass('public.delivery_locations') is not null                                                 as "019 delivery and invites",
-  to_regclass('public.scheduled_notifications') is not null                                            as "020 notifications schedule";
+  to_regclass('public.scheduled_notifications') is not null                                            as "020 notifications schedule",
+  to_regclass('public.ad_opens') is not null                                                           as "021 ad engagement and invite limits";

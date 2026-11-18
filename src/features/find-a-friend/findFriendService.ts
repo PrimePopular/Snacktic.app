@@ -166,6 +166,8 @@ export async function ownerStartEvent(input: StartEventInput): Promise<void> {
     p_second: input.prizeSecond,
     p_third: input.prizeThird,
     p_ends_at: input.endsAt,
+    p_daily: input.dailyLimit,
+    p_lifetime: input.lifetimeLimit,
   });
   if (error) throw failure(error.message);
 }

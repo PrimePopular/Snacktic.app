@@ -1,18 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '../../shared/components';
 
-/** What every Snacktic code starts with, so other QR codes are ignored. */
-export const CODE_PREFIX = 'snacktic-ff:';
+/** Finds an invite code in what a QR code says: the invite link (…/#/r/<code>) or just the code. Null if it is something else. */
+export function codeFromQr(text: string): string | null {
+  const link = /#\/r\/([a-z0-9]{8,32})/i.exec(text);
+  if (link) return link[1].toLowerCase();
+  const plain = text.trim().toLowerCase();
+  return /^[a-z0-9]{12,32}$/.test(plain) ? plain : null;
+}
 
 interface QrScannerProps {
-  /** Called once with the friend's code (without the prefix). */
+  /** Called once with the friend's invite code. */
   onCode: (code: string) => void;
   onClose: () => void;
 }
 
 /**
- * Opens the back camera and looks for a Snacktic code. Nothing is recorded or uploaded: each video
- * frame is checked on the phone and thrown away. The small decoding library loads only when this opens.
+ * Opens the back camera and looks for a Snacktic invite QR code. Nothing is recorded or uploaded: each video frame is
+ * checked on the phone and thrown away. The small decoding library loads only when this opens.
  */
 export function QrScanner({ onCode, onClose }: QrScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -50,9 +55,10 @@ export function QrScanner({ onCode, onClose }: QrScannerProps) {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const image = context.getImageData(0, 0, canvas.width, canvas.height);
             const result = jsQR(image.data, image.width, image.height, { inversionAttempts: 'dontInvert' });
-            if (result && result.data.startsWith(CODE_PREFIX)) {
+            const code = result ? codeFromQr(result.data) : null;
+            if (code) {
               stopped = true;
-              onCodeRef.current(result.data.slice(CODE_PREFIX.length));
+              onCodeRef.current(code);
               return;
             }
           }
@@ -61,7 +67,7 @@ export function QrScanner({ onCode, onClose }: QrScannerProps) {
         tick();
       } catch (err) {
         console.error('[find-a-friend] camera', err);
-        if (!stopped) setError('We could not open the camera. Allow camera access in your browser, or type the code instead.');
+        if (!stopped) setError('We could not open the camera. Allow camera access in your browser and try again.');
       }
     }
 
@@ -85,7 +91,7 @@ export function QrScanner({ onCode, onClose }: QrScannerProps) {
           <div className="scanner__frame" aria-hidden="true" />
         </div>
       )}
-      <p className="text-secondary text-small">Point the camera at your friend's Snacktic code.</p>
+      <p className="text-secondary text-small">Point the camera at your friend's Snacktic QR code.</p>
       <Button variant="secondary" onClick={onClose}>
         Cancel
       </Button>

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { TouchEvent } from 'react';
 import { useAuth } from '../../features/authentication';
 import { validatePhone } from '../../features/authentication/validation';
-import { AdCard, useLiveAds, weaveAds } from '../../features/ads';
+import { AdCard, useRotatedAds, weaveAds } from '../../features/ads';
+import { CrossEvent } from '../../features/events';
 import { CardArt } from '../../features/feed';
 import { listDeliveryLocations, requestDeliveryLocation } from '../../features/delivery';
 import type { DeliveryLocation } from '../../features/delivery';
@@ -67,7 +68,7 @@ function RewardCard({ reward, balance, ownedUrl, suspended, onGet }: CardProps) 
 export function RewardsDashboard() {
   const auth = useAuth();
   const profile = auth.profile;
-  const ads = useLiveAds();
+  const ads = useRotatedAds('rewards');
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
   const [tab, setTab] = useState<Tab>('physical');
   const [visible, setVisible] = useState(PAGE);
@@ -291,6 +292,8 @@ export function RewardsDashboard() {
         )}
         {visible < rest.length && <div ref={sentinel} className="market-more" aria-hidden="true" />}
       </div>
+
+      <CrossEvent chance={0.4} />
 
       <Modal open={buying !== null} onClose={() => setBuying(null)} labelledBy={buyTitleId}>
         {buying && (

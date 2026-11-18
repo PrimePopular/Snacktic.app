@@ -49,4 +49,7 @@ export interface StartEventInput {
   prizeSecond: number;
   prizeThird: number;
   endsAt: string;
+  /** Most people one player can invite per day, and ever. */
+  dailyLimit: number;
+  lifetimeLimit: number;
 }

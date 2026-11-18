@@ -5,7 +5,7 @@ import { EventCard, listCategories, listUpcomingEvents } from '../../features/ev
 import type { EventCategory, EventItem } from '../../features/events';
 import { listLivePlaces, PlaceCard } from '../../features/places';
 import type { Place } from '../../features/places';
-import { AdCard, useLiveAds, weaveAds } from '../../features/ads';
+import { AdCard, useRotatedAds, weaveAds } from '../../features/ads';
 import { isSaved, recordInterest } from '../../features/recommendations';
 import { listLiveShops, ShopCard } from '../../features/shops';
 import type { Shop } from '../../features/shops';
@@ -147,7 +147,7 @@ export default function DiscoverPage() {
   const [section, setSection] = useState<Section>('events');
   const [events, setEvents] = useState<LoadState<{ items: EventItem[]; categories: EventCategory[] }>>({ kind: 'loading' });
   const [places, setPlaces] = useState<LoadState<{ items: Place[]; categories: EventCategory[] }>>({ kind: 'loading' });
-  const ads = useLiveAds();
+  const ads = useRotatedAds('discover');
   const [shops, setShops] = useState<LoadState<Shop[]>>({ kind: 'loading' });
   const [here, setHere] = useState<{ latitude: number; longitude: number } | null>(null);
   const [hereMessage, setHereMessage] = useState('');

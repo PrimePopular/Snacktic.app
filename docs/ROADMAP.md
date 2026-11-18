@@ -121,3 +121,22 @@ account suspension, start-up animation, installable app and offline copies of pu
 - Privacy notice rewritten to be true for everything the app now does (ads, location, notifications, invites, feedback, delivery, how long things are kept). It previously said "we do not show ads".
 - Admin Students list shows 50 at a time (fast with 3,000 students).
 - `supabase/check_migrations.sql` shows which database files have been run. `docs/LAUNCH_CHECKLIST.md` lists everything left to do before launch.
+
+## Update 027
+- Ads: cards have a fixed size like event cards (a long message no longer stretches the feed). Tapping opens the full ad in its own view (picture, full text, link); closing returns to the same place in the feed. Opening an ad counts as a click.
+- Ad reward: only after the ad has been open for about 3 seconds, once per student per ad, checked on the server (`begin_ad_open` and `claim_ad_points`). The amount is never shown before. Closing early earns nothing.
+- Ad rotation: Home, Discover, Games and Rewards each start with a different ad (the one this phone has seen least recently), so every active ad gets its turn and none disappears.
+- Find a Friend: new look (hero, steps, QR pass ticket, podium) and the in-app scanner is back (scan a friend's pass: they earn the points). A person can only ever be invited once, even across events. Daily and lifetime invite limits are set when starting an event.
+- Events now show up once in a while in Games and Rewards, with a clear EVENT label.
+- Run `supabase/021_ad_engagement_and_invite_limits.sql`.
+
+## Planned later (from your 16 Nov proposal)
+- Ad analytics dashboard for advertisers (impressions, unique reach, unique clicks, CTR, engagement over time). Basic views, taps and the last 7 days already exist in Admin, Ads.
+- Announcements separate from News, with an expiry time (24 hours by default).
+- News from outside sources: first check which APIs allow it, their limits and content rules.
+- Billboards: a social-style feed the admin publishes to (text, images, video, links, featured posts, kept at least 30 days).
+- Places to Visit: own tag and pin icon, never expires.
+- Paid ad placement levels (standard, featured, premium), always labelled as ads.
+- Crumb Points history per student in the admin.
+- Store: coupons, gift cards, vouchers, discount percentages, and a Digital Library.
+- Cookie War: speed-based rewards and playful defeat messages (you said this is already handled).

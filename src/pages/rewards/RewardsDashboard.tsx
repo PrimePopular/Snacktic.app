@@ -4,68 +4,30 @@ import { useAuth } from '../../features/authentication';
 import { validatePhone } from '../../features/authentication/validation';
 import { AdCard, useRotatedAds, weaveAds } from '../../features/ads';
 import { CrossEvent } from '../../features/events';
-import { CardArt } from '../../features/feed';
+import { getBonusStatus, isOfferLive, NO_BONUS, priceOf, forgetBonusStatus } from '../../features/bonus';
+import type { BonusStatus } from '../../features/bonus';
 import { listDeliveryLocations, requestDeliveryLocation } from '../../features/delivery';
 import type { DeliveryLocation } from '../../features/delivery';
 import { buyDigitalReward, getBalance, listMyDigitalPurchases, listRewards, redeemReward } from '../../features/points';
 import type { Reward } from '../../features/points';
-import { pictureUrl } from '../../services/pictures';
 import { playCoin } from '../../services/sound';
 import { Button, EmptyState, Loading, Modal, PageHeader, SelectField, TextField } from '../../shared/components';
+import { RewardCard } from './RewardCard';
 
 type Tab = 'physical' | 'digital';
 
 type LoadState =
   | { kind: 'loading' }
   | { kind: 'error' }
-  | { kind: 'ready'; balance: number; rewards: Reward[]; owned: Record<string, string>; places: DeliveryLocation[] };
+  | { kind: 'ready'; balance: number; rewards: Reward[]; owned: Record<string, string>; places: DeliveryLocation[]; bonus: BonusStatus };
 
 const PAGE = 12;
 
-interface CardProps {
-  reward: Reward;
-  balance: number;
-  ownedUrl: string | undefined;
-  suspended: boolean;
-  onGet: (reward: Reward) => void;
-}
-
-/** One item in the market. Compact, so many fit on a screen. */
-function RewardCard({ reward, balance, ownedUrl, suspended, onGet }: CardProps) {
-  const missing = reward.costPoints - balance;
-  const soldOut = reward.stock === 0;
-  return (
-    <article className="reward-card">
-      <div className="reward-card__media feed-card__media--tint0">
-        {reward.imagePath ? <img src={pictureUrl(reward.imagePath)} alt="" loading="lazy" decoding="async" /> : <CardArt />}
-        <span className="reward-card__cost">{reward.costPoints.toLocaleString()} pts</span>
-        {reward.kind === 'digital' && <span className="reward-card__tag">Ebook</span>}
-      </div>
-      <div className="reward-card__body">
-        <h3>{reward.name}</h3>
-        {reward.description && <p className="text-secondary text-small reward-card__desc">{reward.description}</p>}
-        {reward.stock !== null && reward.stock > 0 && reward.stock <= 5 && (
-          <p className="text-small">
-            <strong>Only {reward.stock} left</strong>
-          </p>
-        )}
-        {ownedUrl ? (
-          <Button onClick={() => window.open(ownedUrl, '_blank', 'noopener')}>Open</Button>
-        ) : (
-          <Button disabled={soldOut || missing > 0 || suspended} onClick={() => onGet(reward)}>
-            {soldOut ? 'Sold out' : missing > 0 ? `Need ${missing.toLocaleString()} more` : reward.kind === 'digital' ? 'Get ebook' : 'Get this'}
-          </Button>
-        )}
-      </div>
-    </article>
-  );
-}
-
 /**
- * The signed-in Rewards screen: your points and the market. Physical items and ebooks have a tab each (swipe sideways to
+ * The signed-in Rewards screen: your points and the market. Physical items and digital rewards have a tab each (swipe sideways to
  * change), the list loads as you scroll, and ads appear between the cards. Your activity and orders are in Profile.
  */
-export function RewardsDashboard() {
+export function RewardsDashboard({ focusId }: { focusId?: string }) {
   const auth = useAuth();
   const profile = auth.profile;
   const ads = useRotatedAds('rewards');
@@ -89,10 +51,11 @@ export function RewardsDashboard() {
 
   const load = useCallback(async () => {
     try {
-      const [balance, rewards, purchases, places] = await Promise.all([getBalance(), listRewards(), listMyDigitalPurchases().catch(() => []), listDeliveryLocations().catch(() => [] as DeliveryLocation[])]);
+      forgetBonusStatus();
+      const [balance, rewards, purchases, places, bonus] = await Promise.all([getBalance(), listRewards(), listMyDigitalPurchases().catch(() => []), listDeliveryLocations().catch(() => [] as DeliveryLocation[]), getBonusStatus(true)]);
       const owned: Record<string, string> = {};
       for (const p of purchases) if (p.rewardId) owned[p.rewardId] = p.url;
-      setState({ kind: 'ready', balance, rewards, owned, places });
+      setState({ kind: 'ready', balance, rewards, owned, places, bonus });
     } catch (error) {
       console.error('[rewards]', error);
       setState({ kind: 'error' });
@@ -103,7 +66,33 @@ export function RewardsDashboard() {
     void load();
   }, [load]);
 
-  const items = state.kind === 'ready' ? state.rewards.filter((r) => r.kind === tab) : [];
+  const bonusInfo = state.kind === 'ready' ? state.bonus : NO_BONUS;
+  const [focused, setFocused] = useState(false);
+  useEffect(() => {
+    if (!focusId || focused || state.kind !== 'ready') return;
+    setFocused(true);
+    const reward = state.rewards.find((r) => r.id === focusId);
+    if (!reward) {
+      setNotice('That reward is no longer available.');
+      return;
+    }
+    if (state.owned[reward.id]) return;
+    const price = priceOf(reward);
+    if (reward.stock === 0 || state.balance < price || (reward.isBonus && (!state.bonus.eligible || state.bonus.claimed.includes(reward.id) || !isOfferLive(reward)))) {
+      setNotice(reward.isBonus && !state.bonus.eligible ? 'That offer is for new members.' : state.balance < price ? `You need ${(price - state.balance).toLocaleString()} more points for ${reward.name}.` : 'That reward is not available right now.');
+      return;
+    }
+    setTab(reward.kind);
+    startBuying(reward);
+  }, [focusId, focused, state]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const items =
+    state.kind === 'ready'
+      ? state.rewards
+          .filter((r) => r.kind === tab && (!r.isBonus || isOfferLive(r)))
+          // New members see their special offers first.
+          .sort((a, b) => (bonusInfo.eligible ? Number(b.isBonus) - Number(a.isBonus) : 0))
+      : [];
   // With enough items, the newest few sit in a sideways rail at the top (like a shop front) and the rest follow below.
   const useRail = items.length > 8;
   const rail = useRail ? items.slice(0, 6) : [];
@@ -223,7 +212,7 @@ export function RewardsDashboard() {
     );
   }
 
-  const { balance, owned, places } = state;
+  const { balance, owned, places, bonus } = state;
   const shown = weaveAds(rest.slice(0, visible), ads);
 
   return (
@@ -251,13 +240,13 @@ export function RewardsDashboard() {
           Items
         </button>
         <button type="button" role="tab" aria-selected={tab === 'digital'} className={`market-tab ${tab === 'digital' ? 'market-tab--on' : ''}`} onClick={() => switchTab('digital')}>
-          Ebooks
+          Digital
         </button>
       </div>
 
       <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} className="market-swipe">
         {items.length === 0 ? (
-          <EmptyState title={tab === 'digital' ? 'No ebooks yet' : 'No items yet'}>New things are added by the Snacktic team. Check back soon.</EmptyState>
+          <EmptyState title={tab === 'digital' ? 'No digital rewards yet' : 'No items yet'}>New things are added by the Snacktic team. Check back soon.</EmptyState>
         ) : (
           <>
             {rail.length > 0 && (
@@ -268,7 +257,7 @@ export function RewardsDashboard() {
                 <ul className="market-rail">
                   {rail.map((reward) => (
                     <li key={reward.id}>
-                      <RewardCard reward={reward} balance={balance} ownedUrl={owned[reward.id]} suspended={Boolean(profile?.suspended)} onGet={startBuying} />
+                      <RewardCard reward={reward} balance={balance} ownedUrl={owned[reward.id]} suspended={Boolean(profile?.suspended)} eligible={bonus.eligible} claimed={bonus.claimed.includes(reward.id)} onGet={startBuying} />
                     </li>
                   ))}
                 </ul>
@@ -283,7 +272,7 @@ export function RewardsDashboard() {
                 </li>
               ) : (
                 <li key={slot.item.id}>
-                  <RewardCard reward={slot.item} balance={balance} ownedUrl={owned[slot.item.id]} suspended={Boolean(profile?.suspended)} onGet={startBuying} />
+                  <RewardCard reward={slot.item} balance={balance} ownedUrl={owned[slot.item.id]} suspended={Boolean(profile?.suspended)} eligible={bonus.eligible} claimed={bonus.claimed.includes(slot.item.id)} onGet={startBuying} />
                 </li>
               ),
             )}
@@ -300,10 +289,11 @@ export function RewardsDashboard() {
           <div className="buy-sheet">
             <h2 id={buyTitleId}>Get {buying.name}?</h2>
             <p>
-              This costs <strong>{buying.costPoints.toLocaleString()} points</strong>. You'll have {(balance - buying.costPoints).toLocaleString()} left.
+              This costs <strong>{priceOf(buying).toLocaleString()} points</strong>
+              {buying.isBonus && <> (instead of {buying.costPoints.toLocaleString()})</>}. You'll have {(balance - priceOf(buying)).toLocaleString()} left.
             </p>
             {buying.kind === 'digital' ? (
-              <p className="text-secondary">You'll get the book straight away, and it stays in Profile under Activity.</p>
+              <p className="text-secondary">You'll get it straight away, and it stays in Profile under Activity.</p>
             ) : (
               <>
                 <p className="delivery-note">
@@ -352,7 +342,7 @@ export function RewardsDashboard() {
             )}
             <div className="buy-sheet__actions">
               <Button disabled={busy} onClick={() => void confirmBuying()}>
-                {busy ? 'One moment…' : `Yes, spend ${buying.costPoints.toLocaleString()} points`}
+                {busy ? 'One moment…' : `Yes, spend ${priceOf(buying).toLocaleString()} points`}
               </Button>
               <Button variant="secondary" disabled={busy} onClick={() => setBuying(null)}>
                 Not now
@@ -367,7 +357,7 @@ export function RewardsDashboard() {
           <div className="buy-sheet">
             <h2 id={openedTitleId}>It's yours!</h2>
             <p>{opened.title}</p>
-            <Button onClick={() => window.open(opened.url, '_blank', 'noopener')}>Open the book</Button>
+            <Button onClick={() => window.open(opened.url, '_blank', 'noopener')}>Open it</Button>
             <p className="text-secondary text-small">You can open it again any time from Profile, under Activity.</p>
             <Button variant="secondary" onClick={() => setOpened(null)}>
               Close

@@ -10,7 +10,7 @@
  *  - Pictures from storage are kept (up to a limit) so they load fast and use less data.
  *  - Changing VERSION below discards all saved files on the next visit.
  */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL = `snacktic-shell-${VERSION}`;
 const RUNTIME = `snacktic-runtime-${VERSION}`;
 const IMAGES = `snacktic-images-${VERSION}`;

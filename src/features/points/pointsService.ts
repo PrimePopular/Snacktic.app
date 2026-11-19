@@ -37,7 +37,14 @@ const SHOWABLE = [
   'Delivery is not available to that place',
   'Only handed-over or cancelled orders can be removed',
   'This ebook is not ready yet',
+  'This item is not ready yet',
   'That reward is an ebook',
+  'That reward is digital',
+  'This offer is for new members only',
+  'That offer has ended',
+  'That offer is not ready yet',
+  'You have already claimed this offer',
+  'Bonus offers are paused right now',
   'Sign in to gift points',
   'Sign in to redeem rewards',
   'Owner only',
@@ -95,7 +102,14 @@ interface RewardRow {
   image_path: string | null;
   stock: number | null;
   kind: 'physical' | 'digital';
+  is_bonus?: boolean;
+  bonus_cost?: number | null;
+  bonus_ends_at?: string | null;
+  bonus_limit_per_user?: number;
 }
+
+const BASE_COLUMNS = 'id, name, description, cost_points, active, image_path, stock, kind';
+const BONUS_COLUMNS = `${BASE_COLUMNS}, is_bonus, bonus_cost, bonus_ends_at, bonus_limit_per_user`;
 
 const rewardFromRow = (r: RewardRow): Reward => ({
   id: r.id,
@@ -106,16 +120,22 @@ const rewardFromRow = (r: RewardRow): Reward => ({
   imagePath: r.image_path,
   stock: r.stock ?? null,
   kind: r.kind ?? 'physical',
+  isBonus: r.is_bonus ?? false,
+  bonusCost: r.bonus_cost ?? null,
+  bonusEndsAt: r.bonus_ends_at ?? null,
+  bonusLimitPerUser: r.bonus_limit_per_user ?? 1,
 });
 
+/**
+ * Public: works without signing in. If the Bonus Rewards update (supabase/022) has not been run yet, the new columns do not
+ * exist, so it quietly falls back to the plain list and the Rewards Store keeps working.
+ */
 export async function listRewards(): Promise<Reward[]> {
-  const { data, error } = await client()
-    .from('rewards')
-    .select('id, name, description, cost_points, active, image_path, stock, kind')
-    .eq('active', true)
-    .order('cost_points', { ascending: true });
+  const run = (columns: string) => client().from('rewards').select(columns).eq('active', true).order('cost_points', { ascending: true });
+  let { data, error } = await run(BONUS_COLUMNS);
+  if (error) ({ data, error } = await run(BASE_COLUMNS));
   if (error) throw failure(error.message);
-  return ((data ?? []) as RewardRow[]).map(rewardFromRow);
+  return ((data ?? []) as unknown as RewardRow[]).map(rewardFromRow);
 }
 
 export async function giftPoints(username: string, amount: number): Promise<void> {
@@ -157,12 +177,11 @@ export async function listMyRedemptions(): Promise<Redemption[]> {
 /* ---------------------------------- Owner ---------------------------------- */
 
 export async function adminListRewards(): Promise<Reward[]> {
-  const { data, error } = await client()
-    .from('rewards')
-    .select('id, name, description, cost_points, active, image_path, stock, kind')
-    .order('cost_points', { ascending: true });
+  const run = (columns: string) => client().from('rewards').select(columns).order('cost_points', { ascending: true });
+  let { data, error } = await run(BONUS_COLUMNS);
+  if (error) ({ data, error } = await run(BASE_COLUMNS));
   if (error) throw failure(error.message);
-  return ((data ?? []) as RewardRow[]).map(rewardFromRow);
+  return ((data ?? []) as unknown as RewardRow[]).map(rewardFromRow);
 }
 
 export async function adminSaveReward(
@@ -178,6 +197,8 @@ export async function adminSaveReward(
     kind?: 'physical' | 'digital';
     /** For an ebook: the link to the book. Leave out to keep the current link; an empty text removes it. */
     fileUrl?: string;
+    /** Bonus Reward settings. Leave out to keep them as they are. */
+    bonus?: { isBonus: boolean; bonusCost: number | null; bonusEndsAt: string | null; bonusLimitPerUser: number };
   },
 ): Promise<void> {
   const row = {
@@ -188,6 +209,7 @@ export async function adminSaveReward(
     image_path: input.imagePath,
     stock: input.stock,
     ...(input.kind ? { kind: input.kind } : {}),
+    ...(input.bonus ? { is_bonus: input.bonus.isBonus, bonus_cost: input.bonus.bonusCost, bonus_ends_at: input.bonus.bonusEndsAt, bonus_limit_per_user: input.bonus.bonusLimitPerUser } : {}),
   };
   let rewardId = id;
   if (id) {

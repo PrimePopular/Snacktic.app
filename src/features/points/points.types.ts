@@ -26,8 +26,13 @@ export interface Reward {
   imagePath: string | null;
   /** How many are left. null means unlimited, 0 means sold out. */
   stock: number | null;
-  /** physical: delivered in school by the team. digital: an ebook, delivered at once as a link. */
+  /** physical: delivered in school by the team. digital: an ebook or other digital item, delivered at once as a link. */
   kind: 'physical' | 'digital';
+  /** A Bonus Reward: a special offer for new members. costPoints is then the normal price and bonusCost the special one. */
+  isBonus: boolean;
+  bonusCost: number | null;
+  bonusEndsAt: string | null;
+  bonusLimitPerUser: number;
 }
 
 export interface DigitalPurchase {

@@ -140,3 +140,11 @@ account suspension, start-up animation, installable app and offline copies of pu
 - Crumb Points history per student in the admin.
 - Store: coupons, gift cards, vouchers, discount percentages, and a Digital Library.
 - Cookie War: speed-based rewards and playful defeat messages (you said this is already handled).
+
+## Update 028
+- **Crumb Quest fix:** the phone layout now fits one screen with nothing bleeding off the sides (word board shrinks to fit, wheel sizes from the screen height), and swiping letters works reliably on touch screens inside the app.
+- **Onboarding tour:** 7 short skippable slides, shown once to first-time visitors, reopened from Profile or Support ("Take the Snacktic tour").
+- **Public Rewards browsing:** visitors who are not signed in can see every reward (picture, description, type, price, offers). Getting one asks them to sign in or register.
+- **Bonus Rewards (new):** special low-price items for new members. Run `supabase/022_bonus_rewards.sql`. The database enforces who can claim (account younger than the eligibility days), the end time, the quantity and the per-person limit. Admin: Rewards page, "Bonus Rewards: rules and numbers" (on/off, days, how often, where, views/clicks/claims) and a "Bonus Reward" switch on each item.
+- **"Ebooks" is now "Digital"** everywhere students and admins see it.
+- Service worker cache bumped to v2, so every phone drops old saved files on its next visit.

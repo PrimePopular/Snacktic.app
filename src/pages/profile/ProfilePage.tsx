@@ -1,4 +1,5 @@
 import { useAuth } from '../../features/authentication';
+import { openOnboarding } from '../../features/onboarding';
 import { Button, EmptyState, Loading, PageHeader } from '../../shared/components';
 import { AccountProfile } from './AccountProfile';
 import { GuestProfile } from './GuestProfile';
@@ -37,5 +38,14 @@ export default function ProfilePage() {
     );
   }
 
-  return auth.status === 'signed-in' ? <AccountProfile /> : <GuestProfile />;
+  return (
+    <>
+      {auth.status === 'signed-in' ? <AccountProfile /> : <GuestProfile />}
+      <p className="help-tour">
+        <Button variant="secondary" onClick={openOnboarding}>
+          Take the Snacktic tour
+        </Button>
+      </p>
+    </>
+  );
 }

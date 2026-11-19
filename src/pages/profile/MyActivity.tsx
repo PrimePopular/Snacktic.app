@@ -12,7 +12,7 @@ const statusLabel: Record<Redemption['status'], string> = {
   cancelled: 'Cancelled and refunded',
 };
 
-/** Points activity, orders and ebooks. Each part opens on tap and loads only then, so Profile stays short and quick. */
+/** Points activity, orders and digital rewards. Each part opens on tap and loads only then, so Profile stays short and quick. */
 export function MyActivity() {
   const [history, setHistory] = useState<PointsTransaction[] | null>(null);
   const [orders, setOrders] = useState<Redemption[] | null>(null);
@@ -88,11 +88,11 @@ export function MyActivity() {
       </details>
 
       <details onToggle={(e) => opened(e) && books === null && void listMyDigitalPurchases().then(setBooks).catch(fail)}>
-        <summary>My ebooks</summary>
+        <summary>My digital rewards</summary>
         {books === null ? (
           <p className="text-secondary">Loading…</p>
         ) : books.length === 0 ? (
-          <p className="text-secondary">No ebooks yet. Get one in Rewards, under Ebooks.</p>
+          <p className="text-secondary">No digital rewards yet. Get one in Rewards, under Digital.</p>
         ) : (
           <ul className="activity-list">
             {books.map((b) => (

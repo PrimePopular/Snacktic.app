@@ -710,6 +710,81 @@ body.show-tips .game-tip, body.show-tips .footer-note { display:block; }
 /* The cookie cutout is a transparent PNG; never add a second tile behind it. */
 .splash-cookie-logo, .home-mascot { background:transparent !important; border:0 !important; border-radius:0 !important; }
 .splash-cookie-logo { object-fit:contain; animation:splash-cookie-drop 1.05s cubic-bezier(.18,.9,.25,1.25) .2s both; }
+/* ===== touch safety: fingers, touch-screen laptops and embedded pages ===== */
+html, body { touch-action: manipulation; }
+.letter-wheel, .letter-wheel * { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-user-drag: none; }
+.letter-button { -webkit-tap-highlight-color: transparent; }
+
+/* ===== phone fit: the whole game fits one screen, nothing to scroll ===== */
+@media (max-width: 760px) {
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  body { height: 100vh; height: 100dvh; min-height: 0; padding: 0; }
+  .page-shell { display: flex; flex-direction: column; height: 100%; min-height: 0; width: 100%; box-sizing: border-box; padding: 0 12px env(safe-area-inset-bottom); }
+  .home-screen[hidden], .game-screen[hidden] { display: none !important; }
+  .topbar { flex: 0 0 auto; min-height: 0; height: 44px; padding: 0 2px; }
+  .brand-name { font-size: 19px; }
+  .brand > svg, .brand > img { height: 30px; width: auto; }
+  .daily-label, .sound-copy { display: none; }
+  .home-nav, .sound-toggle { height: 34px; min-height: 0; padding: 0 12px; font-size: 12px; }
+  main { flex: 1 1 auto; min-height: 0; width: 100%; display: flex; flex-direction: column; }
+
+  /* home */
+  .home-screen { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 6px 0 10px; }
+  .home-hero { padding: 14px 16px 16px; }
+  .home-hero h1 { font-size: clamp(24px, 7vw, 32px); margin-bottom: 4px; }
+  .home-hero .intro { font-size: 13px; margin-bottom: 0; }
+  .home-mascot { width: clamp(84px, 24vw, 118px); margin: 0 0 -8px; }
+  .mode-grid { margin-top: 12px; gap: 8px; }
+  .mode-card { min-height: 62px; padding: 10px 14px; }
+  .mode-icon { width: 40px; height: 40px; flex-basis: 40px; }
+  .day-streak { margin: 6px 0 0; }
+
+  /* game */
+  .game-screen { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 5px; padding: 2px 0 8px; }
+  .game-intro { flex: 0 0 auto; padding: 0; gap: 10px; }
+  .game-intro .eyebrow, .game-intro .intro, .hard-rule, .board-card .card-heading, .play-card .card-kicker, .play-card h2, .play-card::after { display: none; }
+  body .game-tip, body .footer-note, body.show-tips .game-tip, body.show-tips .footer-note { display: none; }
+  .game-intro h1 { font-size: 20px; margin: 0; line-height: 1.1; }
+  .game-intro .intro { margin: 2px 0 0; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100vw - 100px); }
+  .level-stamp { width: 38px; height: 38px; flex: 0 0 38px; box-shadow: none; }
+  .level-stamp strong { font-size: 15px; }
+  .stamp-top, .stamp-bottom { font-size: 7px; }
+  .stats-bar { flex: 0 0 auto; min-height: 0; padding: 4px 10px; border-radius: 12px; }
+  .stat-label { font-size: 9px; }
+  .game-layout { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; margin: 0; }
+  .board-card { flex: 1 1 0; min-height: 0; padding: 8px 10px; overflow: hidden; }
+  .word-groups { flex: 1 1 0; min-height: 0; overflow: hidden; justify-content: center; gap: calc(7px * var(--fit, 1)); padding: 0; }
+  .word-group { gap: calc(6px * var(--fit, 1)); }
+  .group-length { width: calc(20px * var(--fit, 1)); height: calc(20px * var(--fit, 1)); flex-basis: calc(20px * var(--fit, 1)); font-size: calc(9px * var(--fit, 1)); }
+  .word-row { min-height: calc(25px * var(--fit, 1)); gap: 2px; }
+  .word-cell { width: calc(18px * var(--fit, 1)); height: calc(22px * var(--fit, 1)); font-size: calc(13px * var(--fit, 1)); }
+  .word-group[data-length="5"] .word-cell { width: calc(20px * var(--fit, 1)); }
+  .secret-reveal { margin: 0 0 4px; padding: 5px 8px; }
+  .board-footer { padding-top: 4px; }
+  .hint-button { padding-block: 5px; }
+  .play-card { flex: 0 0 auto; min-height: 0; padding: 8px 12px 10px; }
+  .play-heading { position: absolute; top: 8px; right: 10px; z-index: 3; margin: 0; }
+  .answer-box { min-height: 36px; height: 36px; margin: 0 40px 4px 0; }
+  .letter-wheel.cq-wheel { --ws: clamp(140px, 27dvh, 290px); --btn: clamp(40px, calc(var(--ws) * .21), 56px); width: min(var(--ws), 100%); }
+  .letter-wheel.cq-wheel[data-count="7"], .letter-wheel.cq-wheel[data-count="8"] { --btn: clamp(34px, calc(var(--ws) * .17), 46px); }
+  .wheel-actions { margin-top: 4px; justify-content: center; }
+  .submit-button { min-height: 40px; padding-block: 8px; }
+  .how-to-card, .fail-card { max-height: 92dvh; overflow-y: auto; }
+}
+
+/* very short phones (for example 320 x 568): squeeze a little more */
+@media (max-width: 760px) and (max-height: 600px) {
+  .topbar { height: 40px; }
+  .letter-wheel.cq-wheel { --ws: 132px; }
+  .answer-box { min-height: 32px; height: 32px; }
+  .board-card { padding: 4px 8px; }
+  .board-footer { padding-top: 2px; }
+  .hint-button { padding-block: 3px; font-size: 11px; }
+  .stats-bar { padding: 3px 8px; }
+  .play-card { padding: 6px 10px 8px; }
+  .game-screen { gap: 4px; padding-bottom: 6px; }
+}
+
 </style>
   
 <style>
@@ -1509,7 +1584,34 @@ function renderBoard() {
         ui.groups.append(group);
     });
     updateStats();
+    fitBoard();
 }
+// On phones the word board has a fixed amount of room: shrink the word slots just enough that every
+// word fits without scrolling. On larger screens nothing is scaled.
+function fitBoard() {
+    const box = ui.groups;
+    if (!box)
+        return;
+    box.style.setProperty('--fit', '1');
+    if (!window.matchMedia('(max-width: 760px)').matches)
+        return;
+    let scale = 1;
+    while (scale > 0.35 && box.scrollHeight > box.clientHeight + 1) {
+        scale = Math.round((scale - 0.05) * 100) / 100;
+        box.style.setProperty('--fit', String(scale));
+    }
+}
+let fitQueued = false;
+function queueFit() {
+    if (fitQueued)
+        return;
+    fitQueued = true;
+    requestAnimationFrame(() => { fitQueued = false; fitBoard(); });
+}
+window.addEventListener('resize', queueFit);
+window.addEventListener('orientationchange', queueFit);
+if ('ResizeObserver' in window)
+    new ResizeObserver(queueFit).observe(ui.groups);
 function wheelPositions(count) {
     // Centres as percentages of a square box, so the shapes stay perfectly round on any screen.
     const radius = count === 5 ? 39 : count <= 4 ? 34 : 38;
@@ -2151,51 +2253,130 @@ ui.shopList.addEventListener('click', (event) => {
     if (button && !button.disabled)
         buyHints(Number(button.dataset.pack));
 });
+// ---- Choosing letters: swipe, or tap one by one ----
+// This block only depends on `.letter-button` elements carrying a data-letter-index, so editing the
+// levels, words, text or styling elsewhere cannot break it. It also sets touch-action on the letters from
+// JavaScript, so removing the CSS rule by accident does not break touch either.
+//
+// Mouse, pen and finger all go through pointer events. Touch events run alongside them for fingers:
+// calling preventDefault on touchstart/touchmove stops a host page (for example a website that embeds this
+// game in an iframe) from grabbing the finger for scrolling and cancelling the swipe after one letter.
+let dragTouchId = null;
+let dragMoved = false;
+// Finds the letter nearest to a finger or cursor. Measuring the distance to each letter, instead of relying
+// on the exact element under the point, lets thick fingers and slightly-off swipes still land on a letter.
+function letterAt(x, y, generous) {
+    let best = null;
+    let bestDistance = Infinity;
+    ui.wheel.querySelectorAll('.letter-button').forEach((button) => {
+        const box = button.getBoundingClientRect();
+        const reach = (box.width / 2) * (generous ? 0.95 : 0.75);
+        const distance = Math.hypot(x - (box.left + box.width / 2), y - (box.top + box.height / 2));
+        if (distance <= reach && distance < bestDistance) {
+            best = button;
+            bestDistance = distance;
+        }
+    });
+    return best;
+}
+function beginDrag(button, pointerId) {
+    const index = Number(button.dataset.letterIndex);
+    state.dragSelecting = true;
+    state.dragPointerId = pointerId;
+    dragMoved = false;
+    ui.wheel.classList.add('is-dragging');
+    if (state.current.length && state.current[state.current.length - 1] === index) {
+        undoLetter(); // tapping the last chosen letter again takes it back
+    }
+    else {
+        selectDraggedLetter(index);
+    }
+}
+function dragOver(x, y, generous) {
+    const button = letterAt(x, y, generous);
+    if (!button)
+        return;
+    const before = state.current.join(',');
+    selectDraggedLetter(Number(button.dataset.letterIndex));
+    if (state.current.join(',') !== before)
+        dragMoved = true;
+}
+function endDrag(submit) {
+    if (!state.dragSelecting)
+        return;
+    const swiped = dragMoved;
+    state.dragSelecting = false;
+    state.dragPointerId = null;
+    dragTouchId = null;
+    dragMoved = false;
+    ui.wheel.classList.remove('is-dragging');
+    if (!submit)
+        clearAnswer();
+    else if (swiped) {
+        if (state.current.length >= 2)
+            submitWord();
+        else
+            clearAnswer();
+    }
+    // Otherwise it was a tap: keep the letter so the next one can be tapped, then press Find word.
+}
+ui.wheel.style.touchAction = 'none';
+ui.wheel.addEventListener('contextmenu', (event) => event.preventDefault());
 ui.wheel.addEventListener('pointerdown', (event) => {
-    const button = event.target?.closest('.letter-button');
-    if (!button || (event.pointerType === 'mouse' && event.button !== 0))
+    if (event.pointerType === 'mouse' && event.button !== 0)
+        return;
+    const touch = event.pointerType === 'touch';
+    const button = letterAt(event.clientX, event.clientY, touch) ?? event.target?.closest('.letter-button');
+    if (!button)
         return;
     event.preventDefault();
-    // Keep the whole drag on the wheel itself (touch screens otherwise lose it when the letters redraw).
-    try {
-        ui.wheel.setPointerCapture(event.pointerId);
-    }
-    catch (e) { }
-    state.dragSelecting = true;
-    state.dragPointerId = event.pointerId;
-    ui.wheel.classList.add('is-dragging');
-    state.current = [];
-    selectDraggedLetter(Number(button.dataset.letterIndex));
+    beginDrag(button, event.pointerId);
 });
-ui.wheel.addEventListener('touchmove', (event) => event.preventDefault(), { passive: false });
-ui.wheel.addEventListener('contextmenu', (event) => event.preventDefault());
 document.addEventListener('pointermove', (event) => {
     if (!state.dragSelecting || event.pointerId !== state.dragPointerId)
         return;
     event.preventDefault();
-    const button = document.elementFromPoint(event.clientX, event.clientY)?.closest('.letter-button');
-    if (button && ui.wheel.contains(button))
-        selectDraggedLetter(Number(button.dataset.letterIndex));
+    dragOver(event.clientX, event.clientY, event.pointerType === 'touch');
 }, { passive: false });
 document.addEventListener('pointerup', (event) => {
     if (!state.dragSelecting || event.pointerId !== state.dragPointerId)
         return;
-    state.dragSelecting = false;
-    state.dragPointerId = null;
-    ui.wheel.classList.remove('is-dragging');
-    if (state.current.length >= 2)
-        submitWord();
-    else
-        clearAnswer();
+    endDrag(true);
 });
-document.addEventListener('pointercancel', () => {
-    if (!state.dragSelecting)
+document.addEventListener('pointercancel', (event) => {
+    // A finger swipe is also followed by the touch events below, which keep going if the browser cancels the pointer.
+    if (event.pointerType === 'touch' && dragTouchId !== null)
         return;
-    state.dragSelecting = false;
-    state.dragPointerId = null;
-    ui.wheel.classList.remove('is-dragging');
-    clearAnswer();
+    endDrag(false);
 });
+ui.wheel.addEventListener('touchstart', (event) => {
+    const point = event.changedTouches[0];
+    const button = letterAt(point.clientX, point.clientY, true) ?? event.target?.closest('.letter-button');
+    if (!button)
+        return;
+    if (event.cancelable)
+        event.preventDefault();
+    dragTouchId = point.identifier;
+    if (!state.dragSelecting)
+        beginDrag(button, null);
+}, { passive: false });
+document.addEventListener('touchmove', (event) => {
+    if (!state.dragSelecting || dragTouchId === null)
+        return;
+    const touch = Array.from(event.changedTouches).find((t) => t.identifier === dragTouchId);
+    if (!touch)
+        return;
+    if (event.cancelable)
+        event.preventDefault();
+    dragOver(touch.clientX, touch.clientY, true);
+}, { passive: false });
+const finishTouch = (submit) => (event) => {
+    if (dragTouchId === null || !Array.from(event.changedTouches).some((t) => t.identifier === dragTouchId))
+        return;
+    endDrag(submit);
+};
+document.addEventListener('touchend', finishTouch(true));
+document.addEventListener('touchcancel', finishTouch(false));
 $('#next-level').addEventListener('click', startNextRound);
 $('#fail-home').addEventListener('click', goHome);
 document.addEventListener('keydown', (event) => {

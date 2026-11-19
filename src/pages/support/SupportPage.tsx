@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useAuth } from '../../features/authentication';
+import { openOnboarding } from '../../features/onboarding';
 import { categoryLabels, getSupportContacts, submitFeedback } from '../../features/support';
 import type { FeedbackCategory, SupportContacts } from '../../features/support';
 import { uploadFeedbackShot } from '../../services/pictures';
@@ -53,6 +54,11 @@ export default function SupportPage() {
   return (
     <>
       <PageHeader title="Support & Feedback" description="Found a problem or have an idea? Tell us." />
+      <p>
+        <Button variant="secondary" onClick={openOnboarding}>
+          New here? Take the Snacktic tour
+        </Button>
+      </p>
 
       {contacts && (
         <Card className="support-contact-card">

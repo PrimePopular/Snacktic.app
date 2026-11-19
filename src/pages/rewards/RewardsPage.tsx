@@ -1,10 +1,10 @@
-import { Link } from '../../core/router';
 import { useAuth } from '../../features/authentication';
 import { Button, EmptyState, Loading, PageHeader } from '../../shared/components';
+import { PublicRewards } from './PublicRewards';
 import { RewardsDashboard } from './RewardsDashboard';
 import './rewards.css';
 
-export default function RewardsPage() {
+export default function RewardsPage({ focusId }: { focusId?: string }) {
   const auth = useAuth();
 
   if (auth.status === 'loading') return <Loading label="Loading your rewards" />;
@@ -31,16 +31,7 @@ export default function RewardsPage() {
     );
   }
 
-  if (auth.status === 'signed-out') {
-    return (
-      <>
-        <PageHeader title="Rewards" description="Earn Crumb Points, redeem them and send treats to friends." />
-        <EmptyState title="Sign in to collect Crumb Points" action={<Button to="/profile">Create account or sign in</Button>}>
-          Guests can look around and play, but points are saved to accounts. <Link to="/privacy">How we use your details</Link>.
-        </EmptyState>
-      </>
-    );
-  }
+  if (auth.status === 'signed-out') return <PublicRewards focusId={focusId} />;
 
-  return <RewardsDashboard />;
+  return <RewardsDashboard focusId={focusId} />;
 }

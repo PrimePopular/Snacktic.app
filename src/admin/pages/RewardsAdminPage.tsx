@@ -7,6 +7,7 @@ import { pictureUrl } from '../../services/pictures';
 import { Button, Card, CheckboxField, EmptyState, Loading, SelectField, TextAreaField, TextField } from '../../shared/components';
 import { whatsappLink } from '../../shared/phone';
 import { PictureField } from '../components/PictureField';
+import { BonusPanel } from './BonusPanel';
 import { usePictureEditor } from '../usePictureEditor';
 
 type LoadState =
@@ -22,9 +23,21 @@ interface RewardForm {
   kind: 'physical' | 'digital';
   fileUrl: string;
   active: boolean;
+  isBonus: boolean;
+  bonusCost: string;
+  bonusEnds: string;
+  bonusLimit: string;
 }
 
-const emptyReward: RewardForm = { name: '', description: '', cost: '', stock: '', kind: 'physical', fileUrl: '', active: true };
+const emptyReward: RewardForm = { name: '', description: '', cost: '', stock: '', kind: 'physical', fileUrl: '', active: true, isBonus: false, bonusCost: '', bonusEnds: '', bonusLimit: '1' };
+
+/** An ISO time as the text a datetime-local box wants (in the admin's own time zone). */
+function toLocalInput(iso: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 const dateFormat = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 
 /** Reward items (with pictures) and the orders students place. Owner and helper admins. */
@@ -75,7 +88,7 @@ export function RewardsAdminPage() {
       setForm(emptyReward);
       picture.reset(null);
     } else {
-      setForm({ name: target.name, description: target.description, cost: String(target.costPoints), stock: target.stock === null ? '' : String(target.stock), kind: target.kind, fileUrl: '', active: target.active });
+      setForm({ name: target.name, description: target.description, cost: String(target.costPoints), stock: target.stock === null ? '' : String(target.stock), kind: target.kind, fileUrl: '', active: target.active, isBonus: target.isBonus, bonusCost: target.bonusCost === null ? '' : String(target.bonusCost), bonusEnds: toLocalInput(target.bonusEndsAt), bonusLimit: String(target.bonusLimitPerUser) });
       if (target.kind === 'digital') void adminGetRewardFile(target.id).then((url) => setForm((f) => ({ ...f, fileUrl: url }))).catch(() => undefined);
       picture.reset(target.imagePath);
     }
@@ -89,11 +102,26 @@ export function RewardsAdminPage() {
     if (!Number.isInteger(cost) || cost < 1) return setFormError('The cost must be a whole number of points, at least 1.');
     const stock = form.stock.trim() === '' ? null : Number(form.stock);
     if (stock !== null && (!Number.isInteger(stock) || stock < 0)) return setFormError('How many are in stock must be a whole number, or empty for unlimited.');
-    if (form.kind === 'digital' && form.active && !/^https?:\/\//i.test(form.fileUrl.trim())) return setFormError('An ebook needs a link to the book, starting with https://');
+    if (form.kind === 'digital' && form.active && !/^https?:\/\//i.test(form.fileUrl.trim())) return setFormError('A digital item needs a link to the file, starting with https://');
+    let bonusCost: number | null = null;
+    let bonusLimit = 1;
+    let bonusEndsAt: string | null = null;
+    if (form.isBonus) {
+      bonusCost = Number(form.bonusCost);
+      bonusLimit = Number(form.bonusLimit || '1');
+      if (!Number.isInteger(bonusCost) || bonusCost < 0) return setFormError('The bonus price must be a whole number of points (0 or more).');
+      if (bonusCost >= cost) return setFormError('The bonus price must be lower than the normal price, so it is a real offer.');
+      if (!Number.isInteger(bonusLimit) || bonusLimit < 1) return setFormError('How many each person can claim must be at least 1.');
+      if (form.bonusEnds) {
+        const when = new Date(form.bonusEnds);
+        if (Number.isNaN(when.getTime())) return setFormError('The end time is not a valid date.');
+        bonusEndsAt = when.toISOString();
+      }
+    }
     setFormError(null);
     const id = editing && editing !== 'new' ? editing.id : null;
     const ok = await run(async () => {
-      await adminSaveReward(id, { name: form.name, description: form.description, costPoints: cost, active: form.active, imagePath: picture.imagePath, stock, kind: form.kind, fileUrl: form.kind === 'digital' ? form.fileUrl.trim() : '' });
+      await adminSaveReward(id, { name: form.name, description: form.description, costPoints: cost, active: form.active, imagePath: picture.imagePath, stock, kind: form.kind, fileUrl: form.kind === 'digital' ? form.fileUrl.trim() : '', bonus: { isBonus: form.isBonus, bonusCost, bonusEndsAt, bonusLimitPerUser: bonusLimit } });
       await picture.commit();
     }, id ? 'Reward updated.' : 'Reward added.');
     if (ok) setEditing(null);
@@ -118,15 +146,26 @@ export function RewardsAdminPage() {
         <form className="ann__form" onSubmit={save} noValidate>
           <TextField label="Item name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={120} />
           <TextAreaField label="Short description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} hint="Optional. One or two lines about the item." />
-          <TextField label="Price in points" type="number" inputMode="numeric" min={1} value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
+          <TextField label={form.isBonus ? 'Normal price in points (shown crossed out)' : 'Price in points'} type="number" inputMode="numeric" min={1} value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
           <SelectField label="What is it?" value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value as 'physical' | 'digital' })}>
             <option value="physical">A physical item (handed over in school)</option>
-            <option value="digital">An ebook or digital item (delivered at once)</option>
+            <option value="digital">A digital item such as an ebook (delivered at once)</option>
           </SelectField>
           {form.kind === 'digital' && (
-            <TextField label="Link to the book" type="url" inputMode="url" autoCapitalize="none" value={form.fileUrl} onChange={(e) => setForm({ ...form, fileUrl: e.target.value })} hint="Paste a link to the PDF, for example from Google Drive (sharing: anyone with the link). Students only get it after buying." />
+            <TextField label="Link to the file" type="url" inputMode="url" autoCapitalize="none" value={form.fileUrl} onChange={(e) => setForm({ ...form, fileUrl: e.target.value })} hint="Paste a link to the PDF, for example from Google Drive (sharing: anyone with the link). Students only get it after buying." />
           )}
           <TextField label="How many are in stock" type="number" inputMode="numeric" min={0} value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} hint="Leave empty for unlimited. When it reaches 0 the item shows as sold out. Cancelling an order puts one back." />
+          <CheckboxField checked={form.isBonus} onChange={(e) => setForm({ ...form, isBonus: e.target.checked })}>
+            Bonus Reward: a special low price for new members
+          </CheckboxField>
+          {form.isBonus && (
+            <>
+              <TextField label="Bonus price in points" type="number" inputMode="numeric" min={0} value={form.bonusCost} onChange={(e) => setForm({ ...form, bonusCost: e.target.value })} hint="What a new member pays. Must be lower than the normal price." />
+              <TextField label="Offer ends (optional)" type="datetime-local" value={form.bonusEnds} onChange={(e) => setForm({ ...form, bonusEnds: e.target.value })} hint="Leave empty to keep it going until you switch it off or it sells out." />
+              <TextField label="How many each person can claim" type="number" inputMode="numeric" min={1} value={form.bonusLimit} onChange={(e) => setForm({ ...form, bonusLimit: e.target.value })} />
+              <p className="text-secondary text-small">Use "How many are in stock" above for a limited quantity. Who counts as a new member is set in the Bonus settings on the Rewards page.</p>
+            </>
+          )}
           <PictureField imagePath={picture.imagePath} uploading={picture.uploading} error={picture.error} onPick={(file) => void picture.pick(file)} onRemove={() => void picture.remove()} />
           <CheckboxField checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })}>
             Available to students
@@ -233,6 +272,8 @@ export function RewardsAdminPage() {
         </details>
       )}
 
+      <BonusPanel />
+
       <div className="ann__head">
         <h2>Reward items</h2>
         <Button onClick={() => openForm('new')}>Add an item</Button>
@@ -245,9 +286,10 @@ export function RewardsAdminPage() {
             <li key={reward.id}>
               <Card as="article" className="ann__item">
                 <div className="ann__meta">
-                  <span className="badge badge--medium">{reward.costPoints} pts</span>
+                  <span className="badge badge--medium">{reward.isBonus && reward.bonusCost !== null ? `${reward.bonusCost} pts (was ${reward.costPoints})` : `${reward.costPoints} pts`}</span>
+                  {reward.isBonus && <span className="badge">Bonus</span>}
                   {!reward.active && <span className="badge badge--minor">Hidden</span>}
-                  {reward.kind === 'digital' && <span className="badge">Ebook</span>}
+                  {reward.kind === 'digital' && <span className="badge">Digital</span>}
                   {reward.stock !== null && <span className="badge badge--minor">{reward.stock === 0 ? 'Sold out' : `${reward.stock} left`}</span>}
                 </div>
                 {reward.imagePath && <img className="picture-thumb" src={pictureUrl(reward.imagePath)} alt="" loading="lazy" />}

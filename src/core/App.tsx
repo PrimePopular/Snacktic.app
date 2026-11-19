@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import AdminApp from '../admin/AdminApp';
 import { useAuth } from '../features/authentication';
 import { FindFriendTag, ReferralClaimer } from '../features/find-a-friend';
+import { Onboarding } from '../features/onboarding';
 import { PushPrompt } from '../features/push';
 import { UpdateBanner } from '../pwa/UpdateBanner';
 import FindFriendPage from '../pages/find-a-friend/FindFriendPage';
@@ -38,6 +39,7 @@ const routes: RouteDef[] = [
   { path: '/support', title: 'Support', render: () => <SupportPage /> },
   { path: '/r/:code', title: 'Invite', render: (p) => <ReferralLandingPage code={p.code} /> },
   { path: '/rewards', title: 'Rewards', render: () => <RewardsPage /> },
+  { path: '/rewards/:id', title: 'Rewards', render: (p) => <RewardsPage focusId={p.id} /> },
   { path: '/profile', title: 'Profile', render: () => <ProfilePage /> },
   { path: '/privacy', title: 'Privacy', render: () => <PrivacyPage /> },
   { path: '/reset-password', title: 'New password', render: () => <ResetPasswordPage /> },
@@ -114,6 +116,7 @@ export default function App() {
       <UpdateBanner />
       <ReferralClaimer />
       <PushPrompt />
+      <Onboarding ready={!splash} />
       <FindFriendTag />
       <main id="main-content" className="app-main" tabIndex={-1}>
         <Router routes={routes} notFound={notFound} />

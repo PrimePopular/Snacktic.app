@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useState } from 'react';
 import { levelLabels, listLiveAnnouncements } from '../../features/announcements';
+import { CrossBonus } from '../../features/bonus';
 import type { Announcement } from '../../features/announcements';
 import { EventCard, listCategories, listUpcomingEvents } from '../../features/events';
 import type { EventCategory, EventItem } from '../../features/events';
@@ -444,6 +445,8 @@ export default function DiscoverPage() {
           )}
         </>
       )}
+
+      <CrossBonus section="discover" />
     </>
   );
 }

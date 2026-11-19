@@ -19,7 +19,7 @@ export default function PrivacyPage() {
               When you create an account: your name, a nickname, your email address and a password (stored scrambled, so nobody can read it). You can also add a WhatsApp number. It is needed only when you order a reward, and it is saved
               with the Nigeria country code (+234) if you leave it out.
             </li>
-            <li>As you use the app: your Crumb Points and their history, gifts you send and receive, rewards and ebooks you get, where an order should be delivered, and your game results and progress.</li>
+            <li>As you use the app: your Crumb Points and their history, gifts you send and receive, rewards and digital items you get, where an order should be delivered, and your game results and progress.</li>
             <li>Invites: if you open a friend's Find a Friend invite link, we remember who invited you, so they can earn their points.</li>
             <li>Support and feedback: what you write when you report a problem or send an idea, an optional screenshot, your phone and browser type, and the app version. You can also send a report without an account.</li>
             <li>Ads: we count how many people see and tap each ad. These are plain totals. For a signed-in student we also note which ads they have already been paid for, so nobody is paid twice.</li>

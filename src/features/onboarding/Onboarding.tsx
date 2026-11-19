@@ -31,8 +31,7 @@ export function openOnboarding(): void {
 }
 
 /**
- * A short, skippable tour of Snacktic. It opens by itself once, for a first-time visitor who is not signed in, after the
- * opening animation. Anyone can open it again from Profile or Support.
+ * A short, skippable tour of Snacktic. It opens by itself once for anyone who has not seen it, after the opening animation. Anyone can open it again from Profile or Support.
  */
 export function Onboarding({ ready }: { ready: boolean }) {
   const auth = useAuth();
@@ -42,15 +41,13 @@ export function Onboarding({ ready }: { ready: boolean }) {
   const titleId = useId();
   const touchX = useRef<number | null>(null);
 
-  // First visit: show once. Students who are already signed in do not need it. Invite and password-reset pages stay clear.
+  // Shown once to anyone who has not seen it, whether or not they are signed in, so a new student is never missed (for example
+  // someone who came through a Find a Friend link and registered straight away). The invite and password-reset pages stay clear,
+  // and the guide appears as soon as the person moves on from them.
   useEffect(() => {
     if (!ready || auth.status === 'loading' || open) return;
     if (path.startsWith('/r/') || path === '/reset-password') return;
     if (hasSeen()) return;
-    if (auth.status === 'signed-in') {
-      markSeen();
-      return;
-    }
     setIndex(0);
     setOpen(true);
   }, [ready, auth.status, path, open]);

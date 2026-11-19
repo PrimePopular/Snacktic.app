@@ -2,7 +2,8 @@ import { useId } from 'react';
 import type { ReactNode } from 'react';
 import { Button, Modal } from '../../shared/components';
 import { CardArt } from './CardArt';
-import { HeartIcon, ShareIcon } from './FeedCard';
+import { HeartIcon, ShareIcon, TagBadge } from './FeedCard';
+import type { ContentTag } from './FeedCard';
 import './feed.css';
 
 export interface Highlight {
@@ -24,6 +25,7 @@ interface DetailSheetProps {
   categoryId: number | null;
   imageUrl: string | null;
   categoryName?: string;
+  tag?: ContentTag;
   highlights: Highlight[];
   description?: string;
   saved: boolean;
@@ -55,7 +57,7 @@ function HighlightIcon({ kind }: { kind: Highlight['icon'] }) {
  * The details page for an event or place, shown as a nearly full-height sheet: picture, title,
  * highlights, like and share, the description, an optional map and who to contact.
  */
-export function DetailSheet({ open, onClose, title, categoryId, imageUrl, categoryName, highlights, description, saved, status, onToggleSaved, onShare, map, contact, children }: DetailSheetProps) {
+export function DetailSheet({ open, onClose, title, categoryId, imageUrl, categoryName, tag, highlights, description, saved, status, onToggleSaved, onShare, map, contact, children }: DetailSheetProps) {
   const titleId = useId();
   const tint = (categoryId ?? 0) % 3;
 
@@ -69,7 +71,7 @@ export function DetailSheet({ open, onClose, title, categoryId, imageUrl, catego
           </button>
         </div>
         <div className="detail__body">
-          {categoryName && <span className="badge">{categoryName}</span>}
+          {tag ? <TagBadge tag={tag} /> : categoryName && <span className="badge">{categoryName}</span>}
           <h2 id={titleId}>{title}</h2>
 
           {highlights.length > 0 && (

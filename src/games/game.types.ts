@@ -32,6 +32,13 @@ export interface GameResult {
    * paid for that try, once.
    */
   attemptId?: string;
+  /** A line shown on the result screen after a loss (for example the opponent's taunt). Leave out for none. */
+  taunt?: string;
+  /**
+   * A winning time measured privately inside the game, for a personal-best reward. Never shown. The database checks it,
+   * keeps the best, and decides whether to pay.
+   */
+  speed?: { level: number; ms: number };
 }
 
 export interface GameProps {

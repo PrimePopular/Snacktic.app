@@ -22,10 +22,11 @@ interface FormState {
   body: string;
   level: AnnouncementLevel;
   expires: string; // value for <input type="datetime-local">, or ''
+  starts: string; // when it starts showing, or '' for straight away
   published: boolean;
 }
 
-const emptyForm: FormState = { title: '', body: '', level: 'medium', expires: '', published: true };
+const emptyForm: FormState = { title: '', body: '', level: 'medium', expires: '', starts: '', published: true };
 
 /** ISO timestamp -> value for a datetime-local input, in the browser's time zone. */
 function toLocalInput(iso: string | null): string {
@@ -62,7 +63,8 @@ export function AnnouncementsPage() {
   }, [load]);
 
   function startNew() {
-    setForm(emptyForm);
+    // Announcements normally disappear after 24 hours, so a new one starts with that end time. Change or clear it if needed.
+    setForm({ ...emptyForm, expires: toLocalInput(new Date(Date.now() + 24 * 3_600_000).toISOString()) });
     picture.reset(null);
     setTitleError(null);
     setMessage(null);
@@ -75,6 +77,7 @@ export function AnnouncementsPage() {
       body: item.body,
       level: item.level,
       expires: toLocalInput(item.expiresAt),
+      starts: toLocalInput(item.startsAt),
       published: item.published,
     });
     picture.reset(item.imagePath);
@@ -113,6 +116,8 @@ export function AnnouncementsPage() {
       imagePath: picture.imagePath,
       published: form.published,
       expiresAt: form.expires ? new Date(form.expires).toISOString() : null,
+      // Clearing a start time that was set before: use the far past, which means "already started".
+      startsAt: form.starts ? new Date(form.starts).toISOString() : editing !== 'new' && editing?.startsAt ? new Date(0).toISOString() : null,
     };
     if (editing === 'new') {
       void run(async () => {
@@ -131,7 +136,7 @@ export function AnnouncementsPage() {
   if (editing) {
     return (
       <section aria-labelledby="ann-heading" className="ann">
-        <h1 id="ann-heading">{editing === 'new' ? 'New news item' : 'Edit news item'}</h1>
+        <h1 id="ann-heading">{editing === 'new' ? 'New announcement' : 'Edit announcement'}</h1>
         <form className="ann__form" onSubmit={handleSave} noValidate>
           <TextField
             label="Title"
@@ -160,11 +165,18 @@ export function AnnouncementsPage() {
           </SelectField>
           <PictureField imagePath={picture.imagePath} uploading={picture.uploading} error={picture.error} onPick={(file) => void picture.pick(file)} onRemove={() => void picture.remove()} />
           <TextField
+            label="Show from"
+            type="datetime-local"
+            value={form.starts}
+            onChange={(e) => setForm({ ...form, starts: e.target.value })}
+            hint="Optional. Leave empty to show it straight away; set a time to schedule it."
+          />
+          <TextField
             label="Disappears on"
             type="datetime-local"
             value={form.expires}
             onChange={(e) => setForm({ ...form, expires: e.target.value })}
-            hint="Optional. Leave empty to keep it up until you hide or delete it."
+            hint="New announcements are set to disappear after 24 hours. Change the time, or clear it to keep it up until you hide or delete it."
           />
           <CheckboxField checked={form.published} onChange={(e) => setForm({ ...form, published: e.target.checked })}>
             Visible in the app
@@ -198,10 +210,10 @@ export function AnnouncementsPage() {
     <section aria-labelledby="ann-heading" className="ann">
       <div className="ann__head">
         <div>
-          <h1 id="ann-heading">News &amp; announcements</h1>
-          <p className="text-secondary">This is the News tab students see in Discover. Major items also show as a slim bar at the top of Home.</p>
+          <h1 id="ann-heading">Announcements</h1>
+          <p className="text-secondary">These are the messages you control: updates, campus notices and reminders. Students see them in the Announcements tab of Discover, and they normally disappear after 24 hours. Major items also show as a slim bar at the top of Home. News is separate and fetched automatically.</p>
         </div>
-        <Button onClick={startNew}>New news item</Button>
+        <Button onClick={startNew}>New announcement</Button>
       </div>
 
       {message && (
@@ -217,8 +229,8 @@ export function AnnouncementsPage() {
         </EmptyState>
       )}
       {state.kind === 'ready' && state.items.length === 0 && (
-        <EmptyState title="No news yet" action={<Button onClick={startNew}>Write the first one</Button>}>
-          What you publish here shows up in the News tab of Discover.
+        <EmptyState title="No announcements yet" action={<Button onClick={startNew}>Write the first one</Button>}>
+          What you publish here shows up in the Announcements tab of Discover.
         </EmptyState>
       )}
       {state.kind === 'ready' && state.items.length > 0 && (

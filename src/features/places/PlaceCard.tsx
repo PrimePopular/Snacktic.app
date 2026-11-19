@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DetailSheet, FeedCard, useCardActions } from '../feed';
-import type { DetailLink } from '../feed';
+import type { ContentTag, DetailLink } from '../feed';
 import { pictureUrl } from '../../services/pictures';
 import { playTap } from '../../services/sound';
 import { googleMapsUrl, linkLabel, phoneHref, safeLink } from '../../shared/url';
@@ -8,13 +8,18 @@ import type { EventCategory } from '../events';
 import { recordInterest } from '../recommendations';
 import type { Place } from './places.types';
 
+const PLACE_TAG: ContentTag = { kind: 'place', label: 'PLACES TO VISIT' };
+
 interface PlaceCardProps {
   place: Place;
   category?: EventCategory;
 }
 
-/** A place to try. Same look as events; the details add a map when the place has a position. */
-export function PlaceCard({ place, category }: PlaceCardProps) {
+/**
+ * A place to visit. It is not an event: it carries a permanent PLACES TO VISIT tag with a location pin, and the event category
+ * (for example Hangout) is not shown as its label. The details add a map link when the place has a position.
+ */
+export function PlaceCard({ place }: PlaceCardProps) {
   const [open, setOpen] = useState(false);
   const imageUrl = place.imagePath ? pictureUrl(place.imagePath) : null;
   const actions = useCardActions({
@@ -40,7 +45,7 @@ export function PlaceCard({ place, category }: PlaceCardProps) {
         title={place.name}
         categoryId={place.categoryId}
         imageUrl={imageUrl}
-        categoryName={category?.name}
+        tag={PLACE_TAG}
         meta={place.address || undefined}
         saved={actions.saved}
         status={actions.status}
@@ -58,7 +63,7 @@ export function PlaceCard({ place, category }: PlaceCardProps) {
         title={place.name}
         categoryId={place.categoryId}
         imageUrl={imageUrl}
-        categoryName={category?.name}
+        tag={PLACE_TAG}
         highlights={place.address ? [{ icon: 'pin', text: place.address }] : []}
         description={place.description || undefined}
         saved={actions.saved}

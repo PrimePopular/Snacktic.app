@@ -67,3 +67,4 @@
 .news-card--major { border-width: 2px; border-color: var(--color-orange); }
 .news-card--minor { box-shadow: var(--shadow-sm); }
 .news-card--minor .news-card__body h2 { font-size: var(--text-lg); }
+.news-card--feed .news-card__media img { width: 100%; height: 100%; object-fit: cover; }

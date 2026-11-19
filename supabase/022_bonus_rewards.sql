@@ -8,7 +8,7 @@
 -- the offer must not have ended, and nobody can claim more than bonus_limit_per_user.
 
 alter table public.rewards add column if not exists is_bonus boolean not null default false;
-alter table public.rewards add column if not exists bonus_cost integer check (bonus_cost is null or bonus_cost >= 0);
+alter table public.rewards add column if not exists bonus_cost integer check (bonus_cost is null or bonus_cost >= 1);
 alter table public.rewards add column if not exists bonus_ends_at timestamptz;
 alter table public.rewards add column if not exists bonus_limit_per_user integer not null default 1 check (bonus_limit_per_user >= 1);
 

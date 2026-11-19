@@ -6,6 +6,7 @@ import { pictureUrl } from '../../services/pictures';
 import { Button, Card, CheckboxField, EmptyState, Loading, TextAreaField, TextField } from '../../shared/components';
 import { safeLink } from '../../shared/url';
 import { PictureField } from '../components/PictureField';
+import { AdAnalyticsPanel } from './AdAnalyticsPanel';
 import { usePictureEditor } from '../usePictureEditor';
 
 type LoadState =
@@ -197,6 +198,7 @@ export function AdsPage() {
           Ads you add will show up in the Home feed.
         </EmptyState>
       )}
+      {state.kind === 'ready' && state.ads.length > 0 && <AdAnalyticsPanel ads={state.ads} />}
       {state.kind === 'ready' && state.ads.length > 0 && (
         <ul className="ann__list">
           {state.ads.map((item) => {

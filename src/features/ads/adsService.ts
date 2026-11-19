@@ -127,7 +127,61 @@ export function trackAdEvent(adId: string, kind: 'view' | 'click'): void {
     if (seenThisSession.has(adId)) return;
     seenThisSession.add(adId);
   }
-  void Promise.resolve(supabase.rpc('track_ad_event', { p_ad: adId, p_kind: kind })).catch((error: unknown) => console.error('[ads] track', error));
+  const db = supabase;
+  // With a private viewer key, so the owner can see unique reach and unique clicks. If the database update (supabase/027) has not
+  // been run, fall back to the plain counter so tracking keeps working.
+  void Promise.resolve(db.rpc('track_ad_event', { p_ad: adId, p_kind: kind, p_viewer: deviceId() }))
+    .then(({ error }) => (error ? db.rpc('track_ad_event', { p_ad: adId, p_kind: kind }) : undefined))
+    .catch((error: unknown) => console.error('[ads] track', error));
+}
+
+/** A random id for this browser, so a visitor who is not signed in still counts once toward unique reach. It identifies no one. */
+function deviceId(): string {
+  try {
+    let id = localStorage.getItem('snacktic.deviceId');
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem('snacktic.deviceId', id);
+    }
+    return id;
+  } catch {
+    return '';
+  }
+}
+
+export interface AdAnalytics {
+  impressions: number;
+  reach: number;
+  clicks: number;
+  uniqueClicks: number;
+  /** Clicks as a percentage of impressions. */
+  ctr: number;
+  pointsPaid: number;
+  studentsPaid: number;
+}
+
+/** Owner only: totals for every ad over the last N days. */
+export async function ownerAdAnalytics(days: number): Promise<Record<string, AdAnalytics>> {
+  const { data, error } = await client().rpc('owner_ad_analytics', { p_days: days });
+  if (error) throw new Error(error.message);
+  const out: Record<string, AdAnalytics> = {};
+  for (const r of (data ?? []) as Record<string, number | string>[]) {
+    out[r.ad_id as string] = { impressions: Number(r.impressions), reach: Number(r.reach), clicks: Number(r.clicks), uniqueClicks: Number(r.unique_clicks), ctr: Number(r.ctr), pointsPaid: Number(r.points_paid), studentsPaid: Number(r.students_paid) };
+  }
+  return out;
+}
+
+export interface AdDay {
+  day: string;
+  views: number;
+  clicks: number;
+}
+
+/** Owner only: views and clicks per day for one ad. */
+export async function ownerAdDaily(adId: string, days: number): Promise<AdDay[]> {
+  const { data, error } = await client().rpc('owner_ad_daily', { p_ad: adId, p_days: days });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as { day: string; views: number | string; clicks: number | string }[]).map((r) => ({ day: r.day, views: Number(r.views), clicks: Number(r.clicks) }));
 }
 
 export interface AdReport {

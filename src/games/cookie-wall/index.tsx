@@ -7,6 +7,7 @@ import type { GameProps } from '../game.types';
 import { GameFrame } from '../shared/GameFrame';
 import type { SendToGame } from '../shared/GameFrame';
 import type { ProgressSpec } from '../shared/gameProgress';
+import { pickTaunt } from './taunts';
 
 const GAME_ID = 'cookie-wall';
 
@@ -31,7 +32,7 @@ export default function CookieWall({ start, onFinish, onExit }: GameProps) {
     ? `/games/cookie-wall/index.html?embed=1&auto=1&level=${firstLevel}${start.attemptId ? '&approved=1' : ''}`
     : '/games/cookie-wall/index.html?embed=1';
 
-  function finish(level: number, won: boolean, seconds: number) {
+  function finish(level: number, won: boolean, seconds: number, moveMs = 0) {
     if (done.current) return;
     done.current = true;
     onFinish({
@@ -41,6 +42,8 @@ export default function CookieWall({ start, onFinish, onExit }: GameProps) {
       durationMs: Math.max(0, Math.round(seconds * 1000)),
       finishedAt: new Date().toISOString(),
       attemptId: level > 3 ? attempt.current : undefined,
+      taunt: won ? undefined : pickTaunt(level),
+      speed: won && moveMs > 0 ? { level, ms: moveMs } : undefined,
     });
   }
 
@@ -91,7 +94,7 @@ export default function CookieWall({ start, onFinish, onExit }: GameProps) {
       onLeave={leave}
       onMessage={(message, send) => {
         if (message.type === 'request-start') return void approve(Number(message.level) || 4, send);
-        if (message.type === 'finish') finish(Number(message.level) || 1, message.won === true, Number(message.seconds) || 0);
+        if (message.type === 'finish') finish(Number(message.level) || 1, message.won === true, Number(message.seconds) || 0, Number(message.moveMs) || 0);
       }}
     />
     {pick && (

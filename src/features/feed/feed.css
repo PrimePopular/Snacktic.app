@@ -156,3 +156,13 @@
 .detail__map { width: 100%; height: 14rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--color-cream-deep); }
 .detail__contact { display: grid; gap: var(--space-2); width: 100%; padding: var(--space-4); background: var(--color-cream-deep); border-radius: var(--radius-md); }
 .detail__buttons { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+/* Permanent identity tags: PLACES TO VISIT (and BILLBOARD). They replace the category sticker on the picture. */
+.content-tag {
+  position: absolute; top: var(--space-3); left: var(--space-3); display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px var(--space-3); border-radius: 999px; font-size: var(--text-xs); font-weight: 800; letter-spacing: 0.06em;
+  background: #2f6b4f; color: #fff;
+}
+.content-tag--billboard { background: #5b1f4a; }
+.feed-card--place { border-bottom: 4px solid #2f6b4f; }
+.detail-sheet .content-tag, .modal .content-tag { position: static; }

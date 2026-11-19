@@ -9,6 +9,7 @@ import FindFriendPage from '../pages/find-a-friend/FindFriendPage';
 import ReferralLandingPage from '../pages/find-a-friend/ReferralLandingPage';
 import SupportPage from '../pages/support/SupportPage';
 import { flushPendingResults } from '../features/points';
+import BillboardsPage from '../pages/billboards/BillboardsPage';
 import DiscoverPage from '../pages/discover/DiscoverPage';
 import { GameHost } from '../pages/games/GameHost';
 import { SpecialEventHost } from '../pages/games/SpecialEventHost';
@@ -32,6 +33,7 @@ import type { RouteDef } from './router';
 const routes: RouteDef[] = [
   { path: '/', title: 'Home', render: () => <HomePage /> },
   { path: '/discover', title: 'Discover', render: () => <DiscoverPage /> },
+  { path: '/billboards', title: 'Billboards', render: () => <BillboardsPage /> },
   { path: '/games', title: 'Games', render: () => <GamesPage /> },
   { path: '/games/:id', title: 'Games', render: (p) => <GameHost id={p.id} /> },
   { path: '/games/events/:id', title: 'Special event', render: (p) => <SpecialEventHost id={p.id} /> },

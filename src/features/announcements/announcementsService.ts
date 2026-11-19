@@ -7,7 +7,16 @@ import { cached } from '../../services/offlineCache';
 import { removePicture } from '../../services/pictures';
 import type { Announcement, AnnouncementInput, AnnouncementLevel } from './announcements.types';
 
-const COLUMNS = 'id, title, body, level, image_path, published, expires_at, created_at';
+const BASE_COLUMNS = 'id, title, body, level, image_path, published, expires_at, created_at';
+const COLUMNS = `${BASE_COLUMNS}, starts_at`;
+
+/** Reads with the scheduling column; if the database update (supabase/025) has not been run yet, reads without it. */
+async function select(build: (columns: string) => PromiseLike<{ data: unknown; error: { message: string } | null }>): Promise<Row[]> {
+  let result = await build(COLUMNS);
+  if (result.error) result = await build(BASE_COLUMNS);
+  if (result.error) throw new Error(result.error.message);
+  return (result.data ?? []) as Row[];
+}
 
 interface Row {
   id: string;
@@ -17,6 +26,7 @@ interface Row {
   image_path: string | null;
   published: boolean;
   expires_at: string | null;
+  starts_at?: string | null;
   created_at: string;
 }
 
@@ -28,6 +38,7 @@ function fromRow(row: Row): Announcement {
     level: row.level,
     imagePath: row.image_path,
     published: row.published,
+    startsAt: row.starts_at ?? null,
     expiresAt: row.expires_at,
     createdAt: row.created_at,
   };
@@ -42,28 +53,18 @@ const levelRank: Record<AnnouncementLevel, number> = { major: 0, medium: 1, mino
 
 /** Admin view: everything, including hidden and expired. */
 export async function listAllAnnouncements(): Promise<Announcement[]> {
-  const { data, error } = await client()
-    .from('announcements')
-    .select(COLUMNS)
-    .order('created_at', { ascending: false });
-  if (error) throw new Error(error.message);
-  return ((data ?? []) as Row[]).map(fromRow);
+  const rows = await select((columns) => client().from('announcements').select(columns).order('created_at', { ascending: false }));
+  return rows.map(fromRow);
 }
 
 /** Student view: only what is published and not expired, most important first. */
 export async function listLiveAnnouncements(now: Date = new Date()): Promise<Announcement[]> {
-  const rows = await cached('announcements', async () => {
-    const { data, error } = await client()
-      .from('announcements')
-      .select(COLUMNS)
-      .eq('published', true)
-      .order('created_at', { ascending: false });
-    if (error) throw new Error(error.message);
-    return (data ?? []) as Row[];
-  });
+  const rows = await cached('announcements', () =>
+    select((columns) => client().from('announcements').select(columns).eq('published', true).order('created_at', { ascending: false })),
+  );
   return rows
     .map(fromRow)
-    .filter((a) => !a.expiresAt || Date.parse(a.expiresAt) > now.getTime())
+    .filter((a) => (!a.startsAt || Date.parse(a.startsAt) <= now.getTime()) && (!a.expiresAt || Date.parse(a.expiresAt) > now.getTime()))
     .sort((a, b) => levelRank[a.level] - levelRank[b.level] || Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
 
@@ -75,6 +76,8 @@ function toRow(input: AnnouncementInput) {
     image_path: input.imagePath,
     published: input.published,
     expires_at: input.expiresAt,
+    // Only sent when set, so saving still works before the database update (supabase/025) has been run.
+    ...(input.startsAt ? { starts_at: input.startsAt } : {}),
   };
 }
 

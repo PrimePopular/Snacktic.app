@@ -11,4 +11,10 @@ select
   to_regclass('public.feedback') is not null                                                           as "018 ebooks, retries, feedback",
   to_regclass('public.delivery_locations') is not null                                                 as "019 delivery and invites",
   to_regclass('public.scheduled_notifications') is not null                                            as "020 notifications schedule",
-  to_regclass('public.ad_opens') is not null                                                           as "021 ad engagement and invite limits";
+  to_regclass('public.ad_opens') is not null                                                           as "021 ad engagement and invite limits",
+  to_regclass('public.bonus_settings') is not null                                                     as "022 bonus rewards",
+  to_regclass('public.game_personal_bests') is not null                                                as "023 cookie war speed",
+  to_regprocedure('public.admin_points_overview(text,text,integer,integer)') is not null              as "024 points analysis",
+  to_regclass('public.news_items') is not null                                                         as "025 news and announcements",
+  to_regclass('public.billboard_posts') is not null                                                    as "026 billboards",
+  to_regclass('public.ad_reach') is not null                                                           as "027 ad analytics";

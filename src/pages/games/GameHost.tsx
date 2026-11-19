@@ -4,7 +4,7 @@ import { navigate } from '../../core/router';
 import { AdSlot } from '../../features/ads';
 import { useAuth } from '../../features/authentication';
 import { RetryPicker } from '../../games/shared/RetryPicker';
-import { submitGameResult } from '../../features/points';
+import { recordSpeedWin, submitGameResult } from '../../features/points';
 import type { AwardOutcome } from '../../features/points';
 import type { GameDefinition, GameProps, GameResult } from '../../games/game.types';
 import { findGame } from '../../games/registry';
@@ -81,6 +81,7 @@ export function GameHost({ id }: { id: string }) {
   const [round, setRound] = useState(0);
   const [start, setStart] = useState<GameProps['start']>(undefined);
   const [problem, setProblem] = useState<string | null>(null);
+  const [speedPoints, setSpeedPoints] = useState(0);
 
   const isDaily = Boolean(result && game?.modes?.find((m) => m.id === result.mode)?.dailyChallenge);
   // A single-mode game leaves `mode` out, so fall back to the same 'default' the points service uses.
@@ -98,6 +99,15 @@ export function GameHost({ id }: { id: string }) {
     setResult(finished);
     setOutcome('sending');
     setProblem(null);
+    setSpeedPoints(0);
+    if (finished.speed && auth.status === 'signed-in') {
+      void recordSpeedWin(finished.gameId, finished.speed.level, finished.speed.ms).then((s) => {
+        if (s.awarded > 0) {
+          setSpeedPoints(s.awarded);
+          playCoin();
+        }
+      });
+    }
     void submitGameResult(finished, auth.status === 'signed-in').then((o) => {
       setOutcome(o);
       if (o.status === 'awarded' && o.points > 0) playCoin();
@@ -128,7 +138,13 @@ export function GameHost({ id }: { id: string }) {
             <h2 className="game-result__title">{game.title}</h2>
             <p className="text-secondary">{isDaily ? 'Daily Challenge' : 'Your score'}</p>
             <p className="game-result__score">{result.score}</p>
+            {result.taunt && <p className="game-result__taunt">{result.taunt}</p>}
             {outcome && <PointsMessage outcome={outcome} />}
+            {speedPoints > 0 && (
+              <p className="game-result__plus" role="status">
+                New personal best! +{speedPoints} Crumb {speedPoints === 1 ? 'Point' : 'Points'}
+              </p>
+            )}
             <AdSlot />
             {problem && (
               <p className="form-error" role="alert">

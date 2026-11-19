@@ -9,6 +9,12 @@ const paths: Record<NavIconName, ReactElement> = {
       <path d="m15.5 8.5-2 5-5 2 2-5z" />
     </>
   ),
+  billboards: (
+    <>
+      <rect x="3" y="4" width="18" height="11" rx="2" />
+      <path d="M7 8.5h6M7 11.5h4M9 15v5M15 15v5" />
+    </>
+  ),
   games: (
     <>
       <rect x="3" y="7" width="18" height="11" rx="5" />

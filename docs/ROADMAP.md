@@ -141,10 +141,23 @@ account suspension, start-up animation, installable app and offline copies of pu
 - Store: coupons, gift cards, vouchers, discount percentages, and a Digital Library.
 - Cookie War: speed-based rewards and playful defeat messages (you said this is already handled).
 
-## Update 028
+## Update 028 (included in 029)
 - **Crumb Quest fix:** the phone layout now fits one screen with nothing bleeding off the sides (word board shrinks to fit, wheel sizes from the screen height), and swiping letters works reliably on touch screens inside the app.
 - **Onboarding tour:** 7 short skippable slides, shown once to first-time visitors, reopened from Profile or Support ("Take the Snacktic tour").
 - **Public Rewards browsing:** visitors who are not signed in can see every reward (picture, description, type, price, offers). Getting one asks them to sign in or register.
 - **Bonus Rewards (new):** special low-price items for new members. Run `supabase/022_bonus_rewards.sql`. The database enforces who can claim (account younger than the eligibility days), the end time, the quantity and the per-person limit. Admin: Rewards page, "Bonus Rewards: rules and numbers" (on/off, days, how often, where, views/clicks/claims) and a "Bonus Reward" switch on each item.
 - **"Ebooks" is now "Digital"** everywhere students and admins see it.
 - Service worker cache bumped to v2, so every phone drops old saved files on its next visit.
+
+## Update 029
+Run these in the Supabase SQL Editor, in order: `021` (if not yet), `022`, `023`, `024`, `025`, `026`, `027`. Then run `check_migrations.sql`: every line should say true.
+- **Cookie War:** a hidden timer starts at the player's first move and stops at the end (never shown). Levels 1 to 5: the first win is a personal best worth 1 point, each clearly faster win after that pays one more (2, 3, 4 ... up to 8 paid improvements per level). The database checks the time (impossible times are ignored), keeps the best, and pays once. Losing now shows an opponent taunt on the result screen, different for each level and sharper as the levels rise (Cookie Monster at level 5), rotated so a line is not repeated back to back.
+- **Points analysis (Admin, owner only):** where points come from and go (by source, for a period you choose), a list of every student with balance, earned, spent and the last 24 hours, flags for big earners, and the full transaction trail for any student. Built from the transaction records.
+- **Places to Visit:** places carry a permanent green PLACES TO VISIT tag with a location pin and their own card look. The event category (for example Hangout) is no longer shown as their label.
+- **News and Announcements are separate:** Discover has an Announcements tab (admin-written, new ones default to disappearing after 24 hours, with an optional start time) and a News tab (automatic feed, shown only when stories exist). See `docs/NEWS_SOURCES.md` for the API research and setup. News needs a YouTube key and the `fetch-news` function before it fills.
+- **Billboards:** a new bottom tab and an admin page (post layouts: text, big picture, swipeable pictures, video, link card, quote; featured, scheduled, draft, archive, edit, delete). Every post stays up at least 30 days (the database enforces it). Featured posts can show on Home, always tagged BILLBOARD.
+- **Ad analytics (Admin, Ads):** impressions, unique reach, clicks, unique clicks, click-through rate, Crumb Points paid, and activity over time per campaign, plus a copyable advertiser report with totals only.
+- Onboarding now reaches everyone who has not seen it, including people who arrive through an invite link.
+
+### Not built yet (ask for these next)
+Coupons, gift cards and vouchers as reward types, percentage discounts (50/80/90/custom) with start dates and per-product limits, custom product categories; places, shops and Billboards appearing across more sections with an admin switchboard; advertiser accounts and campaign approval; premium ad placement; news from Reddit and X (see NEWS_SOURCES.md for why not); load testing for 100 to 3,000 users; a record of Find a Friend scans that did not earn a reward.

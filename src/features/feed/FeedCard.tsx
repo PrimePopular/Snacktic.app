@@ -1,11 +1,36 @@
 import { CardArt } from './CardArt';
 import './feed.css';
 
+export interface ContentTag {
+  kind: 'place' | 'billboard';
+  label: string;
+}
+
+/** A small location pin, used by the PLACES TO VISIT tag. */
+export function PinIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" />
+    </svg>
+  );
+}
+
+export function TagBadge({ tag }: { tag: ContentTag }) {
+  return (
+    <span className={`content-tag content-tag--${tag.kind}`}>
+      {tag.kind === 'place' && <PinIcon />}
+      {tag.label}
+    </span>
+  );
+}
+
 interface FeedCardProps {
   title: string;
   categoryId: number | null;
   imageUrl: string | null;
   categoryName?: string;
+  /** A permanent identity label on the picture, for example PLACES TO VISIT. Replaces the category sticker. */
+  tag?: ContentTag;
   /** Short bold label on the picture, for example "Tomorrow 9:00 PM". Optional. */
   pill?: string;
   /** One line under the title, for example the place. */
@@ -40,15 +65,15 @@ export function ShareIcon() {
  * The shared card for events and places: picture across the top (or the default art), a big title,
  * and a slim row with a like and a share button. Tapping the picture or title opens the details.
  */
-export function FeedCard({ title, categoryId, imageUrl, categoryName, pill, meta, saved, status, onToggleSaved, onShare, onOpen }: FeedCardProps) {
+export function FeedCard({ title, categoryId, imageUrl, categoryName, tag, pill, meta, saved, status, onToggleSaved, onShare, onOpen }: FeedCardProps) {
   const tint = (categoryId ?? 0) % 3;
 
   return (
-    <article className="feed-card">
+    <article className={`feed-card${tag ? ` feed-card--${tag.kind}` : ''}`}>
       <button type="button" className="feed-card__open" onClick={onOpen} aria-haspopup="dialog">
         <span className={`feed-card__media ${imageUrl ? '' : `feed-card__media--tint${tint}`}`}>
           {imageUrl ? <img src={imageUrl} alt="" loading="lazy" decoding="async" /> : <CardArt />}
-          {categoryName && <span className="feed-card__sticker">{categoryName}</span>}
+          {tag ? <TagBadge tag={tag} /> : categoryName && <span className="feed-card__sticker">{categoryName}</span>}
           {pill && <span className="feed-card__pill">{pill}</span>}
         </span>
         <span className="feed-card__title">{title}</span>

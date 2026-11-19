@@ -109,7 +109,7 @@ export function RewardsAdminPage() {
     if (form.isBonus) {
       bonusCost = Number(form.bonusCost);
       bonusLimit = Number(form.bonusLimit || '1');
-      if (!Number.isInteger(bonusCost) || bonusCost < 0) return setFormError('The bonus price must be a whole number of points (0 or more).');
+      if (!Number.isInteger(bonusCost) || bonusCost < 1) return setFormError('The bonus price must be a whole number of points, at least 1.');
       if (bonusCost >= cost) return setFormError('The bonus price must be lower than the normal price, so it is a real offer.');
       if (!Number.isInteger(bonusLimit) || bonusLimit < 1) return setFormError('How many each person can claim must be at least 1.');
       if (form.bonusEnds) {
@@ -160,7 +160,7 @@ export function RewardsAdminPage() {
           </CheckboxField>
           {form.isBonus && (
             <>
-              <TextField label="Bonus price in points" type="number" inputMode="numeric" min={0} value={form.bonusCost} onChange={(e) => setForm({ ...form, bonusCost: e.target.value })} hint="What a new member pays. Must be lower than the normal price." />
+              <TextField label="Bonus price in points" type="number" inputMode="numeric" min={1} value={form.bonusCost} onChange={(e) => setForm({ ...form, bonusCost: e.target.value })} hint="What a new member pays. Must be lower than the normal price." />
               <TextField label="Offer ends (optional)" type="datetime-local" value={form.bonusEnds} onChange={(e) => setForm({ ...form, bonusEnds: e.target.value })} hint="Leave empty to keep it going until you switch it off or it sells out." />
               <TextField label="How many each person can claim" type="number" inputMode="numeric" min={1} value={form.bonusLimit} onChange={(e) => setForm({ ...form, bonusLimit: e.target.value })} />
               <p className="text-secondary text-small">Use "How many are in stock" above for a limited quantity. Who counts as a new member is set in the Bonus settings on the Rewards page.</p>

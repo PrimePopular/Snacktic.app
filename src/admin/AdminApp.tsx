@@ -6,6 +6,7 @@ import { Link } from '../core/router';
 import { Button, EmptyState, Loading, Logo, Modal } from '../shared/components';
 import { AdsPage } from './pages/AdsPage';
 import { AnnouncementsPage } from './pages/AnnouncementsPage';
+import { BillboardsAdminPage } from './pages/BillboardsAdminPage';
 import { CampusPage } from './pages/CampusPage';
 import { CategoriesPage } from './pages/CategoriesPage';
 import { DailyNotificationsPage } from './pages/DailyNotificationsPage';
@@ -18,6 +19,7 @@ import { GameChallengesPage } from './pages/GameChallengesPage';
 import { GamesAdminPage } from './pages/GamesAdminPage';
 import { PlacesPage } from './pages/PlacesPage';
 import { PointsAdminPage } from './pages/PointsAdminPage';
+import { PointsAnalysisPage } from './pages/PointsAnalysisPage';
 import { RewardsAdminPage } from './pages/RewardsAdminPage';
 import { ShareLinkPage } from './pages/ShareLinkPage';
 import { StorageCleanupPage } from './pages/StorageCleanupPage';
@@ -34,7 +36,7 @@ import './admin.css';
  * table and owner/admin checks inside the functions. The checks below only decide what to
  * display. Never trust them for security.
  */
-type Tab = 'students' | 'team' | 'announcements' | 'events' | 'places' | 'shops' | 'ads' | 'findfriend' | 'share' | 'campus' | 'gamechallenges' | 'dailynotes' | 'cleanup' | 'feedback' | 'delivery' | 'categories' | 'rewards' | 'points' | 'games';
+type Tab = 'students' | 'team' | 'announcements' | 'billboards' | 'events' | 'places' | 'shops' | 'ads' | 'findfriend' | 'share' | 'campus' | 'gamechallenges' | 'dailynotes' | 'cleanup' | 'feedback' | 'delivery' | 'categories' | 'rewards' | 'points' | 'analysis' | 'games';
 
 function Shell({ role, children }: { role?: Role; children: ReactNode }) {
   return (
@@ -58,7 +60,8 @@ interface Section {
 }
 
 const sections: Section[] = [
-  { id: 'announcements', label: 'News & announcements', group: 'Content' },
+  { id: 'announcements', label: 'Announcements', group: 'Content' },
+  { id: 'billboards', label: 'Billboards', group: 'Content' },
   { id: 'events', label: 'Events', group: 'Content' },
   { id: 'places', label: 'Places', group: 'Content' },
   { id: 'shops', label: 'Shops', group: 'Content' },
@@ -75,6 +78,7 @@ const sections: Section[] = [
   { id: 'dailynotes', label: 'Daily notifications', group: 'Owner only' },
   { id: 'delivery', label: 'Delivery places', group: 'Owner only' },
   { id: 'cleanup', label: 'Storage cleanup', group: 'Owner only' },
+  { id: 'analysis', label: 'Points analysis', group: 'Owner only' },
   { id: 'points', label: 'Points and limits', group: 'Owner only' },
   { id: 'games', label: 'Game points', group: 'Owner only' },
 ];
@@ -135,8 +139,10 @@ function Dashboard({ role }: { role: Role }) {
       {tab === 'team' && owner && <TeamPage />}
       {tab === 'rewards' && <RewardsAdminPage />}
       {tab === 'points' && owner && <PointsAdminPage />}
+      {tab === 'analysis' && owner && <PointsAnalysisPage />}
       {tab === 'games' && owner && <GamesAdminPage />}
       {tab === 'announcements' && <AnnouncementsPage />}
+      {tab === 'billboards' && <BillboardsAdminPage />}
       {tab === 'events' && <EventsPage />}
       {tab === 'places' && <PlacesPage />}
       {tab === 'shops' && <ShopsPage />}

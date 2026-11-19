@@ -59,3 +59,4 @@
 
 .slot-card--compact { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); }
 .slot-card--compact h3 { margin: 0; }
+.game-result__taunt { margin: 0; font-weight: 700; font-style: italic; color: var(--color-chocolate); }

@@ -1,5 +1,5 @@
-/** The four bottom tabs. Profile lives in the top bar, next to the points. */
-export type NavIconName = 'home' | 'discover' | 'games' | 'rewards' | 'profile';
+/** The five bottom tabs. Profile lives in the top bar, next to the points. */
+export type NavIconName = 'home' | 'discover' | 'billboards' | 'games' | 'rewards' | 'profile';
 
 export interface NavItem {
   id: string;
@@ -11,6 +11,7 @@ export interface NavItem {
 export const navItems: NavItem[] = [
   { id: 'home', label: 'Home', path: '/', icon: 'home' },
   { id: 'discover', label: 'Discover', path: '/discover', icon: 'discover' },
+  { id: 'billboards', label: 'Billboards', path: '/billboards', icon: 'billboards' },
   { id: 'games', label: 'Games', path: '/games', icon: 'games' },
   { id: 'rewards', label: 'Rewards', path: '/rewards', icon: 'rewards' },
 ];

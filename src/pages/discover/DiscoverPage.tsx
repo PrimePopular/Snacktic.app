@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useId, useState } from 'react';
 import { levelLabels, listLiveAnnouncements } from '../../features/announcements';
+import { listNews, NewsCard } from '../../features/news';
+import type { NewsItem } from '../../features/news';
 import { CrossBonus } from '../../features/bonus';
 import type { Announcement } from '../../features/announcements';
 import { EventCard, listCategories, listUpcomingEvents } from '../../features/events';
@@ -17,7 +19,7 @@ import { Button, EmptyState, Modal, PageHeader, SkeletonCards, TextField } from 
 import { distanceLabel, distanceMetres } from '../../shared/url';
 import './discover.css';
 
-type Section = 'events' | 'places' | 'shops' | 'news';
+type Section = 'events' | 'places' | 'shops' | 'announcements' | 'news';
 type Filter = number | 'all' | 'saved';
 type DateFilter = 'any' | 'today' | 'tomorrow' | 'weekend';
 
@@ -153,6 +155,7 @@ export default function DiscoverPage() {
   const [here, setHere] = useState<{ latitude: number; longitude: number } | null>(null);
   const [hereMessage, setHereMessage] = useState('');
   const [news, setNews] = useState<LoadState<Announcement[]>>({ kind: 'loading' });
+  const [feed, setFeed] = useState<NewsItem[]>([]);
   const [eventFilter, setEventFilter] = useState<Filter>('all');
   const [placeFilter, setPlaceFilter] = useState<Filter>('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>('any');
@@ -220,6 +223,7 @@ export default function DiscoverPage() {
     void loadPlaces();
     void loadShops();
     void loadNews();
+    void listNews().then(setFeed);
   }, [loadEvents, loadPlaces, loadShops, loadNews]);
 
   if (!isDatabaseConfigured) {
@@ -237,12 +241,13 @@ export default function DiscoverPage() {
     { id: 'events', label: 'Events' },
     { id: 'places', label: 'Places' },
     { id: 'shops', label: 'Shops' },
-    { id: 'news', label: 'News' },
+    { id: 'announcements', label: 'Announcements' },
+    ...(feed.length > 0 ? [{ id: 'news' as Section, label: 'News' }] : []),
   ];
 
   return (
     <>
-      <PageHeader tone="rose" title="Discover" description="Events, places to try, shops and news around campus." />
+      <PageHeader tone="rose" title="Discover" description="Events, places to visit, shops, announcements and news around campus." />
 
       <div className="segmented discover-tabs" role="group" aria-label="Discover sections">
         {tabs.map((t) => (
@@ -254,7 +259,7 @@ export default function DiscoverPage() {
 
       <OfflineNotice />
 
-      {section !== 'news' && (
+      {section !== 'news' && section !== 'announcements' && (
         <TextField label="Search" type="search" placeholder={section === 'events' ? 'Search events' : section === 'places' ? 'Search places' : 'Search shops and products'} value={query} onChange={(e) => setQuery(e.target.value)} autoComplete="off" />
       )}
 
@@ -410,15 +415,25 @@ export default function DiscoverPage() {
       )}
 
       {section === 'news' && (
+        <ul className="news-list" aria-label="News">
+          {feed.map((item) => (
+            <li key={item.id}>
+              <NewsCard item={item} />
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {section === 'announcements' && (
         <>
-          {news.kind === 'loading' && <SkeletonCards label="Loading news" count={2} />}
+          {news.kind === 'loading' && <SkeletonCards label="Loading announcements" count={2} />}
           {news.kind === 'error' && (
-            <EmptyState title="We couldn't load the news" action={<Button onClick={() => void loadNews()}>Try again</Button>}>
+            <EmptyState title="We couldn't load the announcements" action={<Button onClick={() => void loadNews()}>Try again</Button>}>
               Check your connection and try again.
             </EmptyState>
           )}
           {news.kind === 'ready' && news.data.length === 0 && (
-            <EmptyState title="No news right now">Announcements from the Snacktic team will show up here.</EmptyState>
+            <EmptyState title="No announcements right now">Messages from the Snacktic team will show up here, and normally disappear after a day.</EmptyState>
           )}
           {news.kind === 'ready' && news.data.length > 0 && (
             <ul className="news-list">

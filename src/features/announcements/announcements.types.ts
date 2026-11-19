@@ -7,6 +7,8 @@ export interface Announcement {
   level: AnnouncementLevel;
   imagePath: string | null;
   published: boolean;
+  /** When it starts showing. Null means straight away. */
+  startsAt: string | null;
   expiresAt: string | null;
   createdAt: string;
 }
@@ -17,6 +19,7 @@ export interface AnnouncementInput {
   level: AnnouncementLevel;
   imagePath: string | null;
   published: boolean;
+  startsAt: string | null;
   expiresAt: string | null;
 }
 

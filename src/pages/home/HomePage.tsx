@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdCard, listLiveAds, NudgeCard, nudges, orderAds } from '../../features/ads';
+import { CrossBillboard } from '../../features/billboards';
 import { CrossBonus } from '../../features/bonus';
 import type { Ad, Nudge } from '../../features/ads';
 import { listLiveAnnouncements } from '../../features/announcements';
@@ -214,6 +215,7 @@ export default function HomePage() {
               );
             })}
           </ul>
+          <CrossBillboard />
           <CrossBonus section="home" />
           <p className="home-more">
             <Link to="/discover">See everything in Discover</Link>

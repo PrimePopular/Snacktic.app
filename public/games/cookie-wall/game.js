@@ -177,11 +177,11 @@ const saveP=()=>{try{localStorage.setItem('snacktic-set',JSON.stringify(set));lo
 const SNACK=new URLSearchParams(location.search),EMBED=window.parent!==window&&SNACK.get('embed')==='1';
 function report(m){if(!EMBED)return;try{window.parent.postMessage(Object.assign({source:'snacktic-game',game:'cookie-wall'},m),location.origin)}catch(e){}}
 if(EMBED){set.assist=false;set.suggest=false;prog.assist=0}
-let startedAt=Date.now();
+let startedAt=Date.now(),firstMoveAt=0; /* firstMoveAt: the hidden speed timer starts at the player's first move and is never shown */
 const LINES={w:['Not so fast!','Walls are my favorite snack.','Take a detour, friend.','Om nom nom… blocked!'],m:['Just a quick stroll…','Smell that? Victory crumbs.','Tick tock!','Catch me if you can!']};
 function confetti(){const o=$('s-over');for(let i=0;i<26;i++){const s=document.createElement('span');s.className='sn-conf';s.textContent=['🍪','✨','🍓','⭐','🍫'][i%5];s.style.cssText=`left:${Math.random()*92}%;animation-duration:${2+Math.random()*1.8}s;animation-delay:${Math.random()*.5}s`;o.appendChild(s);setTimeout(()=>s.remove(),4200)}}
 const helped=()=>set.assist?prog.assist:0,eff=()=>Math.max(1,level-helped());
-function newGame(){startedAt=Date.now();G={s:newState(),over:false,hist:[],lv:eff()};if(level-helped()<1)G.s.w[1]=8;G.hist.push(key(G.s));ghost=null;busy=false;lastPos=null;lastW=null;mode='m';render()}
+function newGame(){startedAt=Date.now();firstMoveAt=0;G={s:newState(),over:false,hist:[],lv:eff()};if(level-helped()<1)G.s.w[1]=8;G.hist.push(key(G.s));ghost=null;busy=false;lastPos=null;lastW=null;mode='m';render()}
 function setStatus(t,th){$('st').textContent=t;$('bdg').className='badge'+(th?' think':'')}
 function render(){const s=G.s;let h='';
  for(let r=0;r<9;r++)for(let c=0;c<9;c++){const f=r==0?'#F6C9C6':r==8?'#DDE6CA':'#F3E1C7';
@@ -214,7 +214,7 @@ function after(){const s=G.s;G.hist.push(key(s));
 function ai(){if(G.over)return;const m=think(G.s,G.lv);ap(G.s,m);m.w?S.wall(1):S.step(1);busy=false;ghost=null;after();if(!G.over&&Math.random()<.4)setStatus(NAMES[level-1]+': “'+pick2(m.w?LINES.w:LINES.m)+'”')}
 const pick2=a=>a[Math.random()*a.length|0];
 
-function end(w){G.over=true;busy=false;render();report({type:'finish',level:level,won:w==0,seconds:Math.round((Date.now()-startedAt)/1000)});const name=NAMES[level-1],real=G.lv==5;let t,p,e,note='',offer=null;
+function end(w){G.over=true;busy=false;render();report({type:'finish',level:level,won:w==0,seconds:Math.round((Date.now()-startedAt)/1000),moveMs:firstMoveAt?Date.now()-firstMoveAt:0});const name=NAMES[level-1],real=G.lv==5;let t,p,e,note='',offer=null;
  if(prog.cool>0)prog.cool--;
  if(w==0){e='🍪';t='You win!';p='Sweet victory over '+name+'.';prog.pts=0;prog.wins++;
   if(real){rec[0]++;const n=Math.min(G.hist.length-1,26);for(let i=G.hist.length-1-n;i<G.hist.length;i++)learn.set(G.hist[i],5000);
@@ -247,8 +247,8 @@ svg.onpointerleave=()=>{const g=$('gh');if(g)g.setAttribute('opacity',0)};
 svg.onclick=e=>{if(G.over||busy||G.s.t)return;const[x,y]=toUnits(e),w=gapAt(x,y);
  if(w){if(G.s.w[0]<1){S.bad();buzz([20,40,20]);setStatus('No walls left – move instead.');return}
   if(!wallOk(G.s,w.o,w.r,w.c)){S.bad();buzz([20,40,20]);setStatus('Can’t build there – it overlaps a wall or seals a path.');return}
-  ap(G.s,{w:1,...w});S.wall(0);buzz(30);return after()}
- const d=e.target.dataset;if(d.r!=null){const r=+d.r,c=+d.c;if(pm(G.s,0).some(a=>a[0]==r&&a[1]==c)){ap(G.s,{w:0,r,c});S.step(0);buzz(15);after()}}};
+  if(!firstMoveAt)firstMoveAt=Date.now();ap(G.s,{w:1,...w});S.wall(0);buzz(30);return after()}
+ const d=e.target.dataset;if(d.r!=null){const r=+d.r,c=+d.c;if(pm(G.s,0).some(a=>a[0]==r&&a[1]==c)){if(!firstMoveAt)firstMoveAt=Date.now();ap(G.s,{w:0,r,c});S.step(0);buzz(15);after()}}};
 
 /* ---- screens: home -> level -> loading logo -> game ---- */
 const DESC=['Easy going.','Warming up.','Getting serious.','Daily Challenge.','Daily Challenge. Good luck!'];

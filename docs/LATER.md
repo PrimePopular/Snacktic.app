@@ -3,11 +3,7 @@
 Things asked for that are queued. Tell me which to do next.
 
 ## From the latest feedback
-- **Billboard likes and comments.** Students can like a Billboard post and comment on it; likes and comment counts show on the post; the owner can remove comments.
-- **Billboards everywhere, back to back.** Random Billboard posts (not only featured ones) fill the Home feed and other sections so it never feels thin, including several in a row. Every one keeps its BILLBOARD tag. Today a Billboard shows now and then (featured on Home, a random one in Discover, Games and Rewards).
-- **Who posted what.** In Analysis, show which admin posted each Billboard post, announcement and event, so every post can be traced to a person.
-- **Sub-admins with limited access.** A new admin level that can only manage Billboards (and probably Events), nothing else.
-- **Treasure Hunt.** Up to 10 hidden QR codes printed and placed around campus. Each code has a scan limit (for example 10 to 100); when it is used up it says "too late". Each scan earns points, and a Treasure Hunt category of rewards can be bought with them. Harder hunts over time.
+- **Treasure Hunt.** Up to 10 hidden QR codes printed and placed around campus. Each code has a scan limit (for example 10 to 100); when it is used up it says "too late". Each scan earns points, and a Treasure Hunt category of rewards can be bought with them. Harder hunts over time. Needs: points per code, whether each code can have its own amount, and what "harder" should mean.
 - **Videos in ads.** Today an ad has text, a picture and a link. A video would need a video field and a player, like Billboards.
 - **UI polish pass.** A round of visual improvements after the features settle.
 

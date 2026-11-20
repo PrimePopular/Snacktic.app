@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from 'react';
 import type { ReactNode } from 'react';
-import { isAdminRole, isOwnerRole, roleLabel, useAuth } from '../features/authentication';
+import { isAdminRole, isEditorRole, isOwnerRole, roleLabel, useAuth } from '../features/authentication';
 import type { Role } from '../features/authentication';
 import { Link } from '../core/router';
 import { Button, EmptyState, Loading, Logo, Modal } from '../shared/components';
@@ -87,8 +87,10 @@ const sections: Section[] = [
 
 function Dashboard({ role }: { role: Role }) {
   const owner = isOwnerRole(role);
-  const available = sections.filter((s) => owner || s.group === 'Content');
-  const [tab, setTab] = useState<Tab>(owner ? 'students' : 'announcements');
+  const editor = isEditorRole(role);
+  // A content editor sees only Billboards and Events. Admins see Content. The owner sees everything.
+  const available = sections.filter((s) => (editor ? s.id === 'billboards' || s.id === 'events' : owner || s.group === 'Content'));
+  const [tab, setTab] = useState<Tab>(owner ? 'students' : editor ? 'billboards' : 'announcements');
   const [menuOpen, setMenuOpen] = useState(false);
   const menuTitleId = useId();
   // Events that ended are removed (with their pictures) whenever an admin opens the dashboard.

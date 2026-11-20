@@ -80,3 +80,42 @@ export async function getRewardStats(days: number): Promise<RewardStat[]> {
 export async function getFriendStats(): Promise<FriendStat[]> {
   return (await rows('admin_friend_analytics')).map((r) => ({ campaign: String(r.campaign), invites: num(r.invites), inviters: num(r.inviters), pointsPaid: num(r.points_paid) }));
 }
+
+export interface StaffSummary {
+  actorId: string | null;
+  name: string;
+  role: string;
+  created: number;
+  edited: number;
+  deleted: number;
+  lastAt: string | null;
+}
+
+export interface StaffAction {
+  at: string;
+  name: string;
+  action: string;
+  area: string;
+  title: string;
+}
+
+/** Who has been posting and changing content: one row per admin, owner or editor. */
+export async function getStaffSummary(days: number): Promise<StaffSummary[]> {
+  return (await rows('owner_activity_summary', { p_days: days })).map((r) => ({ actorId: (r.actor_id as string | null) ?? null, name: String(r.actor_name), role: String(r.role ?? ''), created: num(r.created), edited: num(r.edited), deleted: num(r.deleted), lastAt: (r.last_at as string | null) ?? null }));
+}
+
+export async function getStaffActions(actorId: string | null, offset: number): Promise<StaffAction[]> {
+  return (await rows('owner_activity_list', { p_actor: actorId, p_limit: 40, p_offset: offset })).map((r) => ({ at: String(r.at), name: String(r.actor_name), action: String(r.action), area: String(r.area), title: String(r.item_title) }));
+}
+
+/** Plain names for the content areas shown in the trail. */
+export const areaLabels: Record<string, string> = {
+  billboard_posts: 'Billboard post',
+  announcements: 'Announcement',
+  events: 'Event',
+  places: 'Place',
+  shops: 'Shop',
+  ads: 'Ad',
+  rewards: 'Reward',
+  news_items: 'News story',
+};

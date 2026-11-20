@@ -1,6 +1,7 @@
 import { pictureUrl } from '../../services/pictures';
 import { linkLabel, safeLink } from '../../shared/url';
 import { shareContent } from '../feed';
+import { BillboardSocial } from './BillboardSocial';
 import type { BillboardPost } from './billboards.types';
 import './billboards.css';
 
@@ -59,6 +60,7 @@ export function BillboardCard({ post }: { post: BillboardPost }) {
           </a>
         )}
       </div>
+      <BillboardSocial postId={post.id} />
       <footer className="billboard__foot">
         <button type="button" className="link-button" onClick={() => void shareContent(post.title || 'Snacktic Billboard', post.title || post.body.slice(0, 80) || 'Something worth a look on Snacktic')}>
           Share

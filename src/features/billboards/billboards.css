@@ -22,3 +22,13 @@
 .billboard-feed { display: grid; gap: var(--space-4); list-style: none; padding: 0; margin: 0; max-width: 34rem; }
 
 .billboard__play-icon { width: 0; height: 0; border-left: 26px solid #fff; border-top: 16px solid transparent; border-bottom: 16px solid transparent; filter: drop-shadow(0 2px 8px rgba(0,0,0,.6)); margin-left: 6px; }
+
+.billboard__social { display: grid; gap: var(--space-2); }
+.billboard__social-bar { display: flex; gap: var(--space-4); }
+.billboard__action { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 6px 4px; font: inherit; font-weight: 700; color: var(--text-secondary); cursor: pointer; }
+.billboard__action--on { color: #c0392b; }
+.billboard__comment-form { display: flex; gap: var(--space-2); }
+.billboard__comment-form input { flex: 1; min-width: 0; padding: 10px 14px; border-radius: 999px; border: 1px solid var(--border); font: inherit; }
+.billboard__comment-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.billboard__comment-list p { margin: 2px 0; white-space: pre-line; overflow-wrap: anywhere; }
+.billboard-stream__end { text-align: center; }

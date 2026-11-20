@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdCard, listLiveAds, NudgeCard, nudges, orderAds } from '../../features/ads';
-import { CrossBillboard } from '../../features/billboards';
+import { BillboardStream } from '../../features/billboards';
 import { CrossBonus } from '../../features/bonus';
 import { CrossFeature } from '../../features/cross';
 import { CrossNews } from '../../features/news';
@@ -217,7 +217,6 @@ export default function HomePage() {
               );
             })}
           </ul>
-          <CrossBillboard />
           <CrossNews />
           <CrossFeature section="home" count={2} />
           <CrossBonus section="home" />
@@ -226,6 +225,7 @@ export default function HomePage() {
           </p>
         </>
       )}
+      <BillboardStream />
     </>
   );
 }

@@ -169,3 +169,10 @@ Coupons, gift cards and vouchers as reward types, percentage discounts (50/80/90
 - **Find a Friend** uses icons instead of emoji. The reward text already follows each event's own points per friend, so it changes with the event.
 - **Everything in every section:** rewards, places, Billboards and games now drop into Home, Discover, Billboards, Games and Rewards, each keeping its own label (REWARD, PLACES TO VISIT, BILLBOARD, GAME).
 - Queued items are in `docs/LATER.md`.
+
+## Update 030
+Run `supabase/029_billboard_likes_comments.sql` and `supabase/030_content_trail_and_editors.sql`, then `check_migrations.sql`.
+- **Billboard likes and comments.** Heart and comment buttons with counts on every post. Anyone can read; signing in is needed to like or comment (5 comments a minute at most, 500 characters). A student can delete their own comment; the owner, admins and editors can delete any.
+- **Billboards on Home never run dry.** After the Home feed, Billboard posts keep coming, a page at a time, mixed up each visit, loading more as you scroll, each tagged BILLBOARD.
+- **Who posted what.** Analysis has a new "Who posted" tab: one line per admin, helper or editor (posted, edited, deleted, last active) and a full list of every action with name, what and when. It is recorded by the database, so it cannot be hidden from the app. Recording starts when 030 is run. Covers Billboards, announcements, events, places, shops, ads, rewards and news.
+- **Content editor role.** In Team, "Make content editor" gives someone access to Billboards and Events only. They cannot see anything else in admin, and the database enforces it.

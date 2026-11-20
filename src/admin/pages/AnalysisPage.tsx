@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { listAllAds } from '../../features/ads';
 import type { Ad } from '../../features/ads';
-import { getFriendStats, getGameStats, getOverview, getRewardStats, getTopPlayers } from '../../features/points';
-import type { FriendStat, GameStat, Overview, RewardStat, TopPlayer } from '../../features/points';
-import { Card, EmptyState, Loading, SelectField } from '../../shared/components';
+import { areaLabels, getFriendStats, getGameStats, getOverview, getRewardStats, getStaffActions, getStaffSummary, getTopPlayers } from '../../features/points';
+import type { FriendStat, GameStat, Overview, RewardStat, StaffAction, StaffSummary, TopPlayer } from '../../features/points';
+import { Button, Card, EmptyState, Loading, SelectField } from '../../shared/components';
 import { AdAnalyticsPanel } from './AdAnalyticsPanel';
 import { PointsAnalysisPage } from './PointsAnalysisPage';
 
-type Tab = 'overview' | 'games' | 'ads' | 'points' | 'rewards' | 'friends';
+type Tab = 'overview' | 'games' | 'ads' | 'points' | 'rewards' | 'friends' | 'staff';
 const tabs: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'games', label: 'Games' },
@@ -15,6 +15,7 @@ const tabs: { id: Tab; label: string }[] = [
   { id: 'points', label: 'Points' },
   { id: 'rewards', label: 'Rewards' },
   { id: 'friends', label: 'Find a Friend' },
+  { id: 'staff', label: 'Who posted' },
 ];
 const n = (v: number) => v.toLocaleString();
 
@@ -179,6 +180,68 @@ function FriendsTab() {
   );
 }
 
+const whenFmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+
+/** Who posted or changed what. Every create, edit and delete by an admin, helper or editor is recorded and cannot be removed. */
+function StaffTab() {
+  const [days, setDays] = useState('30');
+  const [actor, setActor] = useState<StaffSummary | null>(null);
+  const [offset, setOffset] = useState(0);
+  const summary = useLoad<StaffSummary[]>(() => getStaffSummary(Number(days)), [days]);
+  const actions = useLoad<StaffAction[]>(() => getStaffActions(actor?.actorId ?? null, offset), [actor, offset]);
+  return (
+    <>
+      <p className="text-secondary text-small">Recording starts when supabase/030 is run. Tap a name to see only their actions.</p>
+      <SelectField label="Summary period" value={days} onChange={(e) => setDays(e.target.value)}>
+        <option value="7">Last 7 days</option>
+        <option value="30">Last 30 days</option>
+        <option value="90">Last 90 days</option>
+        <option value="365">Last year</option>
+      </SelectField>
+      {summary.error && <Problem text={summary.error.replace('028', '030')} />}
+      {!summary.data && !summary.error && <Loading label="Loading" />}
+      {summary.data && summary.data.length === 0 && <EmptyState title="Nothing recorded yet">Posts and changes by your team show up here from now on.</EmptyState>}
+      {summary.data && summary.data.length > 0 && (
+        <ul className="activity-list">
+          {summary.data.map((s) => (
+            <li key={s.actorId ?? s.name} className="activity-row">
+              <button type="button" className="link-button" onClick={() => { setOffset(0); setActor(actor?.actorId === s.actorId ? null : s); }}>
+                {s.name || 'Unknown'} {s.role && <small>({s.role})</small>}
+              </button>
+              <span className="text-xs text-secondary">
+                {n(s.created)} posted · {n(s.edited)} edited · {n(s.deleted)} deleted{s.lastAt ? ` · last ${whenFmt.format(new Date(s.lastAt))}` : ''}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <h3>{actor ? `Actions by ${actor.name}` : 'Latest actions by everyone'}</h3>
+      {actions.data && actions.data.length === 0 && <p className="text-secondary text-small">No actions.</p>}
+      {actions.data && actions.data.length > 0 && (
+        <ul className="activity-list">
+          {actions.data.map((a, i) => (
+            <li key={`${a.at}-${i}`} className="activity-row">
+              <span>
+                <strong>{a.name}</strong> {a.action} {areaLabels[a.area] ?? a.area}
+                {a.title ? `: ${a.title}` : ''}
+              </span>
+              <span className="text-xs text-secondary">{whenFmt.format(new Date(a.at))}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="game-result__actions">
+        <Button variant="secondary" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - 40))}>
+          Newer
+        </Button>
+        <Button variant="secondary" disabled={!actions.data || actions.data.length < 40} onClick={() => setOffset(offset + 40)}>
+          Older
+        </Button>
+      </div>
+    </>
+  );
+}
+
 /**
  * One place for everything: the numbers right now, games (who plays what), ads, points (with the flag rule for cheating),
  * rewards and Find a Friend. Owner only. Only nicknames are shown.
@@ -201,6 +264,7 @@ export function AnalysisPage() {
       {tab === 'points' && <PointsAnalysisPage embedded />}
       {tab === 'rewards' && <RewardsTab />}
       {tab === 'friends' && <FriendsTab />}
+      {tab === 'staff' && <StaffTab />}
     </section>
   );
 }

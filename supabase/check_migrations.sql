@@ -18,4 +18,6 @@ select
   to_regclass('public.news_items') is not null                                                         as "025 news and announcements",
   to_regclass('public.billboard_posts') is not null                                                    as "026 billboards",
   to_regclass('public.ad_reach') is not null                                                           as "027 ad analytics",
-  to_regprocedure('public.admin_overview()') is not null                                               as "028 analysis hub";
+  to_regprocedure('public.admin_overview()') is not null                                               as "028 analysis hub",
+  to_regclass('public.billboard_comments') is not null                                                 as "029 billboard likes and comments",
+  to_regclass('public.admin_activity') is not null                                                     as "030 content trail and editors";

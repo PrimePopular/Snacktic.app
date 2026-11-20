@@ -58,7 +58,7 @@ export function TeamPage() {
     void load();
   }, [load]);
 
-  async function setRole(targetEmail: string, role: 'admin' | 'student') {
+  async function setRole(targetEmail: string, role: 'admin' | 'editor' | 'student') {
     const client = supabase;
     if (!client) return;
     setBusy(true);
@@ -71,9 +71,9 @@ export function TeamPage() {
       } else {
         setMessage({
           kind: 'ok',
-          text: role === 'admin' ? `${data} is now a helper admin.` : `${data} no longer has admin access.`,
+          text: role === 'admin' ? `${data} is now a helper admin.` : role === 'editor' ? `${data} is now a content editor (Billboards and Events only).` : `${data} no longer has admin access.`,
         });
-        if (role === 'admin') setEmail('');
+        if (role !== 'student') setEmail('');
         await load();
       }
     } catch (error) {
@@ -97,7 +97,7 @@ export function TeamPage() {
       <div>
         <h1 id="team-heading">Team</h1>
         <p className="text-secondary">
-          Helper admins can manage announcements and events. They cannot see students or change points.
+          Helper admins can manage content such as announcements, events and Billboards. Content editors can manage only Billboards and Events. Neither can see students or change points.
         </p>
       </div>
 
@@ -112,6 +112,9 @@ export function TeamPage() {
         />
         <Button type="submit" disabled={busy || !email.trim()}>
           Make admin
+        </Button>
+        <Button variant="secondary" disabled={busy || !email.trim()} onClick={() => void setRole(email.trim(), 'editor')}>
+          Make content editor
         </Button>
       </form>
 
@@ -137,12 +140,12 @@ export function TeamPage() {
                 </p>
                 <p className="text-secondary text-small">{member.email}</p>
               </div>
-              {member.role === 'admin' && (
+              {(member.role === 'admin' || member.role === 'editor') && (
                 <Button
                   variant="secondary"
                   disabled={busy}
                   onClick={() => {
-                    if (window.confirm(`Remove admin access for ${member.username}?`)) void setRole(member.email, 'student');
+                    if (window.confirm(`Remove ${member.role === 'editor' ? 'editor' : 'admin'} access for ${member.username}?`)) void setRole(member.email, 'student');
                   }}
                 >
                   Revoke

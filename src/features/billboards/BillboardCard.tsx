@@ -26,7 +26,7 @@ export function BillboardCard({ post }: { post: BillboardPost }) {
     <article className={`billboard billboard--${post.layout}${post.featured ? ' billboard--featured' : ''}`}>
       <header className="billboard__head">
         <span className="content-tag content-tag--billboard billboard__tag">BILLBOARD</span>
-        {post.featured && <span className="billboard__star">★ Featured</span>}
+        {post.featured && <span className="billboard__star">Featured</span>}
         <span className="billboard__date">{when.format(new Date(post.publishAt))}</span>
       </header>
 
@@ -45,7 +45,7 @@ export function BillboardCard({ post }: { post: BillboardPost }) {
       ) : (
         <a className="billboard__video" href={video} target="_blank" rel="noopener noreferrer" aria-label={`Watch: ${post.title || 'video'}`}>
           {thumb ? <img src={thumb} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <span className="billboard__video-fallback">Watch</span>}
-          <span className="billboard__play" aria-hidden="true">▶</span>
+          <span className="billboard__play" aria-hidden="true"><span className="billboard__play-icon" /></span>
         </a>
       ))}
 

@@ -79,3 +79,4 @@
 .market-rail { list-style: none; margin: 0 calc(var(--space-4) * -1) var(--space-3); padding: 0 var(--space-4) var(--space-2); display: flex; gap: var(--space-3); overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
 .market-rail > li { flex: 0 0 11.5rem; scroll-snap-align: start; }
 .reward-card__cost { font-family: var(--font-heading); font-size: var(--text-md); background: var(--color-orange); color: var(--color-chocolate); font-weight: 800; }
+.analysis-grid { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }

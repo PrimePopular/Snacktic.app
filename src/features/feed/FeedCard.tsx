@@ -2,7 +2,7 @@ import { CardArt } from './CardArt';
 import './feed.css';
 
 export interface ContentTag {
-  kind: 'place' | 'billboard';
+  kind: 'place' | 'billboard' | 'reward' | 'game';
   label: string;
 }
 

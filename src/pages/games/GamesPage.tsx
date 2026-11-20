@@ -2,6 +2,7 @@ import { useLiveFindFriend } from '../../features/find-a-friend';
 import { AdCard, useRotatedAds, weaveAds } from '../../features/ads';
 import { CrossEvent } from '../../features/events';
 import { CrossBonus } from '../../features/bonus';
+import { CrossFeature } from '../../features/cross';
 import { classicGames, classicSlots, isEventActive, specialEvents } from '../../games/registry';
 import { Button, Card, PageHeader } from '../../shared/components';
 import './games.css';
@@ -58,6 +59,7 @@ export default function GamesPage() {
       </section>
 
       <CrossEvent />
+      <CrossFeature section="games" />
       <CrossBonus section="games" />
 
       <section className="games-section" aria-labelledby="events-heading">

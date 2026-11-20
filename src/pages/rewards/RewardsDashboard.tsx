@@ -4,6 +4,7 @@ import { useAuth } from '../../features/authentication';
 import { validatePhone } from '../../features/authentication/validation';
 import { AdCard, useRotatedAds, weaveAds } from '../../features/ads';
 import { CrossEvent } from '../../features/events';
+import { CrossFeature } from '../../features/cross';
 import { getBonusStatus, isOfferLive, NO_BONUS, priceOf, forgetBonusStatus } from '../../features/bonus';
 import type { BonusStatus } from '../../features/bonus';
 import { listDeliveryLocations, requestDeliveryLocation } from '../../features/delivery';
@@ -283,6 +284,8 @@ export function RewardsDashboard({ focusId }: { focusId?: string }) {
       </div>
 
       <CrossEvent chance={0.4} />
+
+      <CrossFeature section="rewards" />
 
       <Modal open={buying !== null} onClose={() => setBuying(null)} labelledBy={buyTitleId}>
         {buying && (

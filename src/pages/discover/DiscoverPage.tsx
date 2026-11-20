@@ -3,6 +3,7 @@ import { levelLabels, listLiveAnnouncements } from '../../features/announcements
 import { listNews, NewsCard } from '../../features/news';
 import type { NewsItem } from '../../features/news';
 import { CrossBonus } from '../../features/bonus';
+import { CrossFeature } from '../../features/cross';
 import type { Announcement } from '../../features/announcements';
 import { EventCard, listCategories, listUpcomingEvents } from '../../features/events';
 import type { EventCategory, EventItem } from '../../features/events';
@@ -461,6 +462,7 @@ export default function DiscoverPage() {
         </>
       )}
 
+      <CrossFeature section="discover" />
       <CrossBonus section="discover" />
     </>
   );

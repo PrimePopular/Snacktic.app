@@ -17,4 +17,5 @@ select
   to_regprocedure('public.admin_points_overview(text,text,integer,integer)') is not null              as "024 points analysis",
   to_regclass('public.news_items') is not null                                                         as "025 news and announcements",
   to_regclass('public.billboard_posts') is not null                                                    as "026 billboards",
-  to_regclass('public.ad_reach') is not null                                                           as "027 ad analytics";
+  to_regclass('public.ad_reach') is not null                                                           as "027 ad analytics",
+  to_regprocedure('public.admin_overview()') is not null                                               as "028 analysis hub";

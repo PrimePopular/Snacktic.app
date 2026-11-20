@@ -257,7 +257,7 @@ export function BillboardsAdminPage() {
                   <div className="ann__meta">
                     <span className="badge">{layoutLabels[p.layout]}</span>
                     <span className={live ? 'badge' : 'badge badge--minor'}>{live ? 'Live' : p.status === 'published' ? (new Date(p.publishAt).getTime() > Date.now() ? 'Scheduled' : 'Ended') : p.status === 'draft' ? 'Draft' : 'Archived'}</span>
-                    {p.featured && <span className="badge badge--medium">★ Featured</span>}
+                    {p.featured && <span className="badge badge--medium">Featured</span>}
                     <span className="text-xs text-secondary">{dateFmt.format(new Date(p.publishAt))}</span>
                   </div>
                   {p.images[0] && <img className="picture-thumb" src={pictureUrl(p.images[0])} alt="" loading="lazy" />}

@@ -24,3 +24,11 @@
 .scanner__view { position: relative; width: min(22rem, 100%); aspect-ratio: 1; overflow: hidden; border-radius: var(--radius-lg); background: var(--color-charcoal); }
 .scanner__video { width: 100%; height: 100%; object-fit: cover; }
 .scanner__frame { position: absolute; inset: 15%; border: 3px solid var(--color-orange); border-radius: var(--radius-md); }
+
+/* Icons instead of emoji */
+.ff-chip svg { vertical-align: -3px; }
+.ff-steps__icon { display: inline-grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 12px; background: var(--color-orange); color: #fff; flex: none; }
+.ff-podium__medal { display: inline-grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 999px; font-weight: 800; color: #35231f; background: #d9d9d9; }
+.ff-podium__medal--1 { background: #f2b705; }
+.ff-podium__medal--2 { background: #c9ced6; }
+.ff-podium__medal--3 { background: #d99a5b; }

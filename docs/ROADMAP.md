@@ -150,7 +150,7 @@ account suspension, start-up animation, installable app and offline copies of pu
 - Service worker cache bumped to v2, so every phone drops old saved files on its next visit.
 
 ## Update 029
-Run these in the Supabase SQL Editor, in order: `021` (if not yet), `022`, `023`, `024`, `025`, `026`, `027`. Then run `check_migrations.sql`: every line should say true.
+Run these in the Supabase SQL Editor, in order: `021` (if not yet), `022`, `023`, `024`, `025`, `026`, `027`, `028`. Then run `check_migrations.sql`: every line should say true.
 - **Cookie War:** a hidden timer starts at the player's first move and stops at the end (never shown). Levels 1 to 5: the first win is a personal best worth 1 point, each clearly faster win after that pays one more (2, 3, 4 ... up to 8 paid improvements per level). The database checks the time (impossible times are ignored), keeps the best, and pays once. Losing now shows an opponent taunt on the result screen, different for each level and sharper as the levels rise (Cookie Monster at level 5), rotated so a line is not repeated back to back.
 - **Points analysis (Admin, owner only):** where points come from and go (by source, for a period you choose), a list of every student with balance, earned, spent and the last 24 hours, flags for big earners, and the full transaction trail for any student. Built from the transaction records.
 - **Places to Visit:** places carry a permanent green PLACES TO VISIT tag with a location pin and their own card look. The event category (for example Hangout) is no longer shown as their label.
@@ -161,3 +161,11 @@ Run these in the Supabase SQL Editor, in order: `021` (if not yet), `022`, `023`
 
 ### Not built yet (ask for these next)
 Coupons, gift cards and vouchers as reward types, percentage discounts (50/80/90/custom) with start dates and per-product limits, custom product categories; places, shops and Billboards appearing across more sections with an admin switchboard; advertiser accounts and campaign approval; premium ad placement; news from Reddit and X (see NEWS_SOURCES.md for why not); load testing for 100 to 3,000 users; a record of Find a Friend scans that did not earn a reward.
+
+### Update 029, second round
+- **Crumb Quest:** swiping now works inside the app. Cause: every letter selection rebuilt all the wheel buttons, which removed the button under the finger, so touch screens stopped sending the rest of the swipe. Buttons are now updated in place. Hint prices in the shop now show the real price the app charges (set in Admin, Points and limits). The game no longer shows "+5 crumbs" for the hidden cookie or floating "+N" popups inside Snacktic, because Crumb Points are paid by the app when the game ends, not per word.
+- **Analysis (Admin, owner only):** one page with Overview (students, active right now, plays, points in and out), Games (plays, players, plays today, players in the last 15 minutes, scores, top players per game), Ads, Points (with a flag rule you set and save, for example 300 points in 4 hours), Rewards and Find a Friend. Run `supabase/028_analysis_hub.sql`.
+- **News in Admin:** a News page lists fetched stories and lets you hide or delete them. Home shows one or two of the most popular. Students see a News tab in Discover once stories exist.
+- **Find a Friend** uses icons instead of emoji. The reward text already follows each event's own points per friend, so it changes with the event.
+- **Everything in every section:** rewards, places, Billboards and games now drop into Home, Discover, Billboards, Games and Rewards, each keeping its own label (REWARD, PLACES TO VISIT, BILLBOARD, GAME).
+- Queued items are in `docs/LATER.md`.

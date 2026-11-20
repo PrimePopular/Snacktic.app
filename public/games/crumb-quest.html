@@ -1473,8 +1473,18 @@ function renderShop() {
     ui.shopCrumbs.textContent = String(state.score);
     ui.shopBank.textContent = String(state.hintBank);
     ui.shopList.querySelectorAll('[data-pack]').forEach((button) => {
-        const pack = HINT_PACKS[Number(button.dataset.pack)];
+        const index = Number(button.dataset.pack);
+        const pack = HINT_PACKS[index];
         button.disabled = state.score < pack.cost;
+        // Show the price the app will really charge (the owner sets these in the admin), never the built-in default.
+        const price = button.querySelector('.shop-price');
+        if (price)
+            price.textContent = `${pack.cost} pts`;
+        const note = button.querySelector('.shop-note');
+        if (note && index > 0) {
+            const saving = HINT_PACKS[0].cost * pack.qty - pack.cost;
+            note.textContent = saving > 0 ? `Save ${saving} pts` : `${pack.qty} hints`;
+        }
     });
 }
 function openShop() {
@@ -1631,6 +1641,22 @@ function starMarkup(points) {
   </svg>`;
 }
 function renderWheel() {
+    // The wheel buttons are built once per round (or when the letters are shuffled) and then only updated in place. Rebuilding them
+    // on every selection removed the button under the player's finger, which made touch screens stop sending the rest of a swipe.
+    const signature = `${currentRound().letters.join('')}|${state.shuffled.join('')}`;
+    if (ui.wheel.dataset.built !== signature || ui.wheel.querySelectorAll('.letter-button').length !== state.shuffled.length)
+        buildWheel(signature);
+    ui.wheel.querySelectorAll('.letter-button').forEach((button) => {
+        const index = Number(button.dataset.letterIndex);
+        const letter = state.shuffled[index];
+        button.classList.toggle('selected', state.current.includes(index));
+        const usedCount = state.current.filter((selectedIndex) => state.shuffled[selectedIndex] === letter).length;
+        const availableCount = state.shuffled.slice(0, index + 1).filter((item) => item === letter).length;
+        button.classList.toggle('used', availableCount <= usedCount);
+    });
+    updateLetterConnection();
+}
+function buildWheel(signature) {
     const letters = currentRound().letters;
     const count = letters.length;
     const points = wheelPositions(count);
@@ -1647,12 +1673,6 @@ function renderWheel() {
         button.style.top = `${points[index].y}%`;
         button.dataset.letterIndex = String(index);
         button.setAttribute('aria-label', `Letter ${letter}. Drag across to select.`);
-        if (state.current.includes(index))
-            button.classList.add('selected');
-        const usedCount = state.current.filter((selectedIndex) => state.shuffled[selectedIndex] === letter).length;
-        const availableCount = state.shuffled.slice(0, index + 1).filter((item) => item === letter).length;
-        if (availableCount <= usedCount)
-            button.classList.add('used');
         button.addEventListener('click', (event) => {
             if (event.detail === 0)
                 addLetter(index);
@@ -1661,7 +1681,7 @@ function renderWheel() {
     });
     ui.wheel.className = `letter-wheel cq-wheel${isStar ? ' star-wheel' : ''}${ui.wheel.classList.contains('is-dragging') ? ' is-dragging' : ''}`;
     ui.wheel.dataset.count = String(count);
-    updateLetterConnection();
+    ui.wheel.dataset.built = signature;
 }
 function updateLetterConnection() {
     const line = $('#letter-connection');
@@ -1753,7 +1773,7 @@ function discoverSecret(word) {
     renderSecretWords();
     updateTimerDisplay();
     saveGameProgress();
-    announce(`Found ${word}! +5 crumbs${state.mode === 'hard' ? ' · +5 seconds' : ''}`);
+    announce(EMBED ? `Found ${word}!${state.mode === 'hard' ? ' +5 seconds' : ''}` : `Found ${word}! +5 crumbs${state.mode === 'hard' ? ' · +5 seconds' : ''}`);
     playSound('success');
 }
 function addPoints(points) {
@@ -1808,7 +1828,8 @@ function submitWord() {
         const multiplier = Math.min(3, 1 + Math.floor((state.streak - 1) / 3) * .5);
         const earned = Math.round(word.length * 10 * multiplier);
         addPoints(earned);
-        floatText(`+${earned}`);
+        if (!EMBED)
+            floatText(`+${earned}`);
         if (state.mode === 'hard')
             addTime(5);
         state.current = [];

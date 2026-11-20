@@ -1,3 +1,4 @@
+import { ClockIcon, GiftIcon, PassIcon, ScanIcon, StarIcon, TrophyIcon } from '../../features/find-a-friend/FfIcons';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../features/authentication';
 import { claimReferral, getLeaderboard, getMyCode, inviteLink, joinEvent, listMyFriends, QrCode, QrScanner, useLiveFindFriend } from '../../features/find-a-friend';
@@ -126,30 +127,36 @@ export default function FindFriendPage() {
         <p className="ff-hero__lead">Bring your friends to Snacktic and earn Crumb Points for every one who joins.</p>
         <div className="ff-chips">
           <span className="ff-chip">
-            🎁 <strong>{live.pointsPerScan}</strong> {live.pointsPerScan === 1 ? 'point' : 'points'} per friend
+            <GiftIcon size={16} /> <strong>{live.pointsPerScan}</strong> {live.pointsPerScan === 1 ? 'point' : 'points'} per friend
           </span>
-          <span className="ff-chip">⏳ Ends {endFormat.format(new Date(live.endsAt))}</span>
-          {prizes.length > 0 && <span className="ff-chip">🏆 Top 3 win bonus</span>}
+          <span className="ff-chip">
+            <ClockIcon size={16} /> Ends {endFormat.format(new Date(live.endsAt))}
+          </span>
+          {prizes.length > 0 && (
+            <span className="ff-chip">
+              <TrophyIcon size={16} /> Top 3 win bonus
+            </span>
+          )}
         </div>
       </section>
 
       <ol className="ff-steps">
         <li>
-          <span className="ff-steps__icon">📲</span>
+          <span className="ff-steps__icon"><PassIcon /></span>
           <div>
             <strong>Get your pass</strong>
             <p>Tap Join to get your personal QR pass.</p>
           </div>
         </li>
         <li>
-          <span className="ff-steps__icon">📷</span>
+          <span className="ff-steps__icon"><ScanIcon /></span>
           <div>
             <strong>Let them scan it</strong>
             <p>A friend scans it with their normal camera. Snacktic opens, even if they don't have it yet.</p>
           </div>
         </li>
         <li>
-          <span className="ff-steps__icon">🎉</span>
+          <span className="ff-steps__icon"><StarIcon /></span>
           <div>
             <strong>You earn points</strong>
             <p>When they sign up or sign in, you get {live.pointsPerScan} Crumb {live.pointsPerScan === 1 ? 'Point' : 'Points'}. Each person can only be invited once.</p>
@@ -253,7 +260,9 @@ export default function FindFriendPage() {
                 {podium.map((row, i) =>
                   row ? (
                     <li key={row.place + row.name} className={`ff-podium__step ff-podium__step--${row.place}`}>
-                      <span className="ff-podium__medal">{row.place === 1 ? '🥇' : row.place === 2 ? '🥈' : '🥉'}</span>
+                      <span className={`ff-podium__medal ff-podium__medal--${row.place}`} aria-label={`Place ${row.place}`}>
+                        {row.place}
+                      </span>
                       <span className="ff-podium__name">{row.name}</span>
                       <span className="ff-podium__count">{row.found}</span>
                     </li>

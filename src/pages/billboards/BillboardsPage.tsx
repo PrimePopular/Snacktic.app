@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { BillboardCard, listBillboards, PAGE_SIZE } from '../../features/billboards';
 import type { BillboardPost } from '../../features/billboards';
 import { CrossBonus } from '../../features/bonus';
+import { CrossFeature } from '../../features/cross';
 import { Button, EmptyState, Loading, PageHeader } from '../../shared/components';
 
 /**
@@ -62,6 +63,7 @@ export default function BillboardsPage() {
           )}
         </>
       )}
+      <CrossFeature section="billboards" />
       <CrossBonus section="home" />
     </>
   );

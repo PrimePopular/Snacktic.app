@@ -6,3 +6,4 @@ export * from './gameExtrasService';
 export * from './gameItemsService';
 export * from './speedService';
 export * from './pointsAnalysisService';
+export * from './analysisService';

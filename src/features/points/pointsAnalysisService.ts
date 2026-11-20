@@ -6,7 +6,8 @@ export interface StudentPoints {
   balance: number;
   earned: number;
   spent: number;
-  earned24h: number;
+  /** Points earned inside the flag window (hours chosen by the owner). */
+  earnedWindow: number;
   entries: number;
   lastActivity: string | null;
 }
@@ -26,7 +27,7 @@ export interface PointsEntry {
   note: string;
 }
 
-export type PointsSort = 'balance' | 'earned' | 'earned_24h' | 'recent';
+export type PointsSort = 'balance' | 'earned' | 'earned_window' | 'recent';
 
 /** Friendly names for where points come from or go to. */
 export const sourceLabels: Record<string, string> = {
@@ -49,8 +50,8 @@ function client() {
   return supabase;
 }
 
-export async function listStudentPoints(search: string, sort: PointsSort, offset: number, limit = 25): Promise<StudentPoints[]> {
-  const { data, error } = await client().rpc('admin_points_overview', { p_search: search, p_sort: sort, p_limit: limit, p_offset: offset });
+export async function listStudentPoints(search: string, sort: PointsSort, offset: number, limit = 25, windowHours = 4): Promise<StudentPoints[]> {
+  const { data, error } = await client().rpc('admin_points_overview', { p_search: search, p_sort: sort, p_limit: limit, p_offset: offset, p_window_hours: windowHours });
   if (error) throw new Error(error.message);
   return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
     userId: r.user_id as string,
@@ -58,7 +59,7 @@ export async function listStudentPoints(search: string, sort: PointsSort, offset
     balance: Number(r.balance),
     earned: Number(r.earned),
     spent: Number(r.spent),
-    earned24h: Number(r.earned_24h),
+    earnedWindow: Number(r.earned_window),
     entries: Number(r.entries),
     lastActivity: (r.last_activity as string | null) ?? null,
   }));

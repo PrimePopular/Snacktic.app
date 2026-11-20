@@ -4,21 +4,34 @@ import type { PointsEntry, PointsSort, SourceTotal, StudentPoints } from '../../
 import { Button, Card, EmptyState, Loading, Modal, SelectField, TextField } from '../../shared/components';
 
 const PAGE = 25;
+const FLAG_KEY = 'snacktic.pointsFlag';
+
+/** The owner's flag rule (points within hours), kept on this device. */
+function loadFlag(): { amount: string; hours: string } {
+  try {
+    const saved = JSON.parse(localStorage.getItem(FLAG_KEY) ?? 'null') as { amount?: string; hours?: string } | null;
+    return { amount: saved?.amount ?? '300', hours: saved?.hours ?? '4' };
+  } catch {
+    return { amount: '300', hours: '4' };
+  }
+}
 const when = (iso: string) => new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
 
 /**
  * Where every Crumb Point comes from. Built from the transaction records, so a strange balance can be traced to the exact
  * entries that made it. Rows that earned a lot in the last 24 hours are flagged so cheating stands out.
  */
-export function PointsAnalysisPage() {
+export function PointsAnalysisPage({ embedded = false }: { embedded?: boolean }) {
   const [days, setDays] = useState('30');
   const [sources, setSources] = useState<SourceTotal[] | null>(null);
   const [students, setStudents] = useState<StudentPoints[] | null>(null);
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
-  const [sort, setSort] = useState<PointsSort>('earned_24h');
+  const [sort, setSort] = useState<PointsSort>('earned_window');
   const [offset, setOffset] = useState(0);
-  const [flagAt, setFlagAt] = useState('40');
+  const [flagAt, setFlagAt] = useState(loadFlag().amount);
+  const [flagHours, setFlagHours] = useState(loadFlag().hours);
+  const [flagSaved, setFlagSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<StudentPoints | null>(null);
   const [trail, setTrail] = useState<PointsEntry[] | null>(null);
@@ -34,11 +47,11 @@ export function PointsAnalysisPage() {
 
   const loadStudents = useCallback(async () => {
     try {
-      setStudents(await listStudentPoints(query, sort, offset, PAGE));
+      setStudents(await listStudentPoints(query, sort, offset, PAGE, Math.max(1, Number(flagHours) || 4)));
     } catch (e) {
       setError(e instanceof Error ? `${e.message}. Has supabase/024 been run?` : 'Something went wrong.');
     }
-  }, [query, sort, offset]);
+  }, [query, sort, offset, flagHours]);
 
   useEffect(() => {
     void loadSources();
@@ -61,9 +74,19 @@ export function PointsAnalysisPage() {
   const totalSpent = sources?.reduce((n, s) => n + s.spent, 0) ?? 0;
   const flag = Number(flagAt) > 0 ? Number(flagAt) : Infinity;
 
+  function saveFlag() {
+    try {
+      localStorage.setItem(FLAG_KEY, JSON.stringify({ amount: flagAt, hours: flagHours }));
+      setFlagSaved(true);
+      window.setTimeout(() => setFlagSaved(false), 2500);
+    } catch {
+      setError('This browser would not save the setting.');
+    }
+  }
+
   return (
     <section aria-labelledby="pa-heading">
-      <h1 id="pa-heading">Points analysis</h1>
+      {!embedded && <h1 id="pa-heading">Points analysis</h1>}
       <p className="text-secondary">See where Crumb Points come from, who is earning a lot, and every transaction behind a balance. Only the nickname is shown.</p>
       {error && (
         <p className="form-error" role="alert">
@@ -114,12 +137,16 @@ export function PointsAnalysisPage() {
         Search
       </Button>
       <SelectField label="Sort by" value={sort} onChange={(e) => { setOffset(0); setSort(e.target.value as PointsSort); }}>
-        <option value="earned_24h">Earned in the last 24 hours</option>
+        <option value="earned_window">Earned inside the flag window</option>
         <option value="balance">Current balance</option>
         <option value="earned">Earned in total</option>
         <option value="recent">Most recent activity</option>
       </SelectField>
-      <TextField label="Flag anyone who earned at least this many points in 24 hours" type="number" inputMode="numeric" min={1} value={flagAt} onChange={(e) => setFlagAt(e.target.value)} hint="Flagged rows are marked so you can look at them first." />
+      <TextField label="Flag anyone who earns at least this many points" type="number" inputMode="numeric" min={1} value={flagAt} onChange={(e) => setFlagAt(e.target.value)} />
+      <TextField label="...within this many hours" type="number" inputMode="numeric" min={1} max={168} value={flagHours} onChange={(e) => setFlagHours(e.target.value)} hint="Find a Friend events can pay a lot quickly, so choose a number a real player would not reach. For example 300 points in 4 hours." />
+      <Button variant="secondary" onClick={saveFlag}>
+        {flagSaved ? 'Saved' : 'Save flag rule'}
+      </Button>
 
       {!students ? (
         <Loading label="Loading students" />
@@ -130,11 +157,11 @@ export function PointsAnalysisPage() {
           {students.map((s) => (
             <li key={s.userId} className="activity-row">
               <button type="button" className="link-button" onClick={() => void openStudent(s)}>
-                {s.earned24h >= flag ? '⚠ ' : ''}
+                {s.earnedWindow >= flag ? 'Flagged · ' : ''}
                 {s.username}
               </button>
               <span className="text-xs text-secondary">
-                Balance {s.balance.toLocaleString()} · earned {s.earned.toLocaleString()} · spent {s.spent.toLocaleString()} · last 24h +{s.earned24h.toLocaleString()}
+                Balance {s.balance.toLocaleString()} · earned {s.earned.toLocaleString()} · spent {s.spent.toLocaleString()} · last {flagHours || 4}h +{s.earnedWindow.toLocaleString()}
                 {s.lastActivity ? ` · last active ${when(s.lastActivity)}` : ''}
               </span>
             </li>

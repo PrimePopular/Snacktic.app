@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdCard, listLiveAds, NudgeCard, nudges, orderAds } from '../../features/ads';
+import { SignupBanner } from '../../features/authentication';
+import { DailyReward } from '../../features/daily';
 import { BillboardStream } from '../../features/billboards';
 import { CrossBonus } from '../../features/bonus';
 import { CrossFeature } from '../../features/cross';
@@ -169,6 +171,8 @@ export default function HomePage() {
 
   return (
     <>
+      <SignupBanner />
+      <DailyReward />
       {majors.map((item) => (
         <MajorBar key={item.id} item={item} onDismiss={dismiss} />
       ))}

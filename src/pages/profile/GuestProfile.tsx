@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from '../../core/router';
-import { useAuth } from '../../features/authentication';
+import { GoogleButton, useAuth, useSignupBonus } from '../../features/authentication';
 import {
   validateEmail,
   validateFullName,
@@ -19,6 +19,7 @@ type Mode = 'signup' | 'signin' | 'reset';
 /** What a guest sees: a welcome and the account forms. Guests can still use the rest of the app. */
 export function GuestProfile() {
   const auth = useAuth();
+  const bonus = useSignupBonus();
   const [mode, setMode] = useState<Mode>('signup');
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
@@ -86,8 +87,8 @@ export function GuestProfile() {
     <>
       <Card tone="dark" className="guest-hero">
         <Logo size={56} tone="light" />
-        <h1>Browsing as a guest</h1>
-        <p>Create an account to keep your Crumb Points, send gifts to friends and sync across devices.</p>
+        <h1>{bonus > 0 ? `Sign up and get ${bonus} Crumb Points` : 'Sign up to start earning'}</h1>
+        <p>Create an account to keep your Crumb Points, play games, join events and get rewards. It takes a minute.</p>
       </Card>
 
       <div className="segmented" role="group" aria-label="Account options">
@@ -98,6 +99,15 @@ export function GuestProfile() {
           Sign in
         </button>
       </div>
+
+      {mode !== 'reset' && (
+        <>
+          <GoogleButton label={mode === 'signup' ? 'Sign up with Google' : 'Sign in with Google'} />
+          <p className="text-secondary text-small" style={{ textAlign: 'center' }}>
+            or use your email
+          </p>
+        </>
+      )}
 
       <form className="auth-form" onSubmit={handleSubmit} noValidate>
         {mode === 'reset' && (

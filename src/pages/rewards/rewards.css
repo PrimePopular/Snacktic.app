@@ -80,3 +80,6 @@
 .market-rail > li { flex: 0 0 11.5rem; scroll-snap-align: start; }
 .reward-card__cost { font-family: var(--font-heading); font-size: var(--text-md); background: var(--color-orange); color: var(--color-chocolate); font-weight: 800; }
 .analysis-grid { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }
+.treasure-card { display: grid; gap: var(--space-3); max-width: 30rem; text-align: center; }
+.treasure-card--win { border: 3px solid #f2b705; background: #fff7e0; }
+.treasure-cta { padding: 14px 20px; border: 0; border-radius: 999px; background: #2563eb; color: #fff; font: inherit; font-weight: 900; font-size: 1.1rem; cursor: pointer; }

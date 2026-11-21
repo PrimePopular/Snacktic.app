@@ -42,6 +42,8 @@ export interface AuthContextValue {
   email: string | null;
   signUp: (input: SignUpInput) => Promise<AuthResult>;
   signIn: (email: string, password: string) => Promise<AuthResult>;
+  /** Sends the person to Google to sign up or sign in. They come back signed in. */
+  signInWithGoogle: () => Promise<AuthResult>;
   /** True while the person arrived from a password-reset email and has not chosen a new password yet. */
   recovering: boolean;
   /** Sends a reset link. Always reports success for unknown emails, so accounts cannot be guessed. */

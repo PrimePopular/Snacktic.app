@@ -1,0 +1,12 @@
+.daily { display: grid; gap: var(--space-3); padding: var(--space-4); margin-bottom: var(--space-5); border-radius: 24px; background: #fff7e0; border: 2px solid #f2b705; max-width: 34rem; }
+.daily__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
+.daily__head h2 { margin: 0; }
+.daily__days { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.daily__day { display: grid; gap: 2px; justify-items: center; padding: 8px 2px; border-radius: 12px; background: #fff; border: 1px solid var(--border); font-size: var(--text-xs); }
+.daily__label { font-size: 0.65rem; color: var(--text-secondary); }
+.daily__day--done { background: #e4eed0; }
+.daily__day--today { background: #2563eb; color: #fff; border-color: #2563eb; transform: translateY(-2px); }
+.daily__day--today .daily__label { color: #dbe7ff; }
+.daily__claim { padding: 14px 20px; border: 0; border-radius: 999px; background: #2563eb; color: #fff; font: inherit; font-weight: 900; font-size: 1.05rem; cursor: pointer; }
+.daily__claim:disabled { opacity: 0.7; }
+.daily__note { margin: 0; font-weight: 700; }

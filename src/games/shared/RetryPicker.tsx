@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { previewAttempt, startAttempt } from '../../features/points';
+import { getBalance, previewAttempt, startAttempt } from '../../features/points';
 import type { AttemptPreview } from '../../features/points';
 import { Button } from '../../shared/components';
 import { AdGate } from './AdGate';
@@ -12,12 +12,13 @@ interface RetryPickerProps {
 }
 
 /**
- * Retrying a daily challenge: watch an ad first (about 15 seconds), at most a few times a day. If no ad is available the
- * student is told so and can check again a little later. The owner can retry freely, to test the games.
+ * Retrying a daily challenge, two ways: spend Crumb Points, or watch an ad (about 15 seconds) for free. Both count toward the
+ * daily retry limit. If no ad is available the student is told so and can still pay with points. The owner can retry freely.
  */
 export function RetryPicker({ gameId, mode, onStart }: RetryPickerProps) {
   const [preview, setPreview] = useState<AttemptPreview | null>(null);
   const [ad, setAd] = useState(false);
+  const [balance, setBalance] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,6 +31,7 @@ export function RetryPicker({ gameId, mode, onStart }: RetryPickerProps) {
 
   useEffect(() => {
     check();
+    void getBalance().then(setBalance).catch(() => setBalance(null));
   }, [check]);
 
   async function begin(gateId?: string) {
@@ -67,24 +69,28 @@ export function RetryPicker({ gameId, mode, onStart }: RetryPickerProps) {
 
   if (preview.retriesLeft <= 0) return <p className="text-secondary">No retries left today. Come back tomorrow for a new try.</p>;
 
+  const cost = preview.cost;
+  const missing = balance !== null && cost > 0 ? cost - balance : 0;
+
   return (
     <div className="retry-picker">
-      {preview.adsAvailable ? (
-        <>
-          <Button disabled={busy} onClick={() => setAd(true)}>
-            Watch an ad to retry
-          </Button>
-          <p className="text-secondary text-small">
-            {preview.retriesLeft} {preview.retriesLeft === 1 ? 'retry' : 'retries'} left today.
-          </p>
-        </>
-      ) : (
-        <>
-          <p className="text-secondary">There is no ad available right now, so you can't retry yet. Please try again in a little while.</p>
-          <Button variant="secondary" onClick={check}>
+      <p className="text-secondary text-small">
+        Try again. Pick one: {preview.retriesLeft} {preview.retriesLeft === 1 ? 'retry' : 'retries'} left today.
+      </p>
+      <Button disabled={busy || missing > 0} onClick={() => void begin()}>
+        {cost > 0 ? `Retry with ${cost.toLocaleString()} Crumb Points` : 'Try again'}
+      </Button>
+      {missing > 0 && <p className="text-secondary text-small">You need {missing.toLocaleString()} more Crumb Points for this one.</p>}
+      <Button variant="secondary" disabled={busy || !preview.adsAvailable} onClick={() => setAd(true)}>
+        Watch an ad to retry (free)
+      </Button>
+      {!preview.adsAvailable && (
+        <p className="text-secondary text-small">
+          No ad is available right now.{' '}
+          <button type="button" className="link-button" onClick={check}>
             Check again
-          </Button>
-        </>
+          </button>
+        </p>
       )}
       {error && <p className="form-error" role="alert">{error}</p>}
       {ad && <AdGate gameId={gameId} mode={mode} onCancel={() => setAd(false)} onReady={(gate) => void begin(gate)} />}

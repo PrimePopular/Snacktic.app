@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { adminAdjustPoints, adminSaveGiftLimits, getGiftLimits } from '../../features/points';
 import { Button, TextField } from '../../shared/components';
+import { RewardSettingsCard } from './RewardSettingsCard';
 
 /** Owner only: give or take points, and the limits on gifts between students. */
 export function PointsAdminPage() {
@@ -65,6 +66,8 @@ export function PointsAdminPage() {
         <h1 id="pt-heading">Points and limits</h1>
         <p className="text-secondary">Owner only. Helper admins cannot change anyone's points.</p>
       </div>
+
+      <RewardSettingsCard />
 
       {message && (
         <p className={message.kind === 'ok' ? 'form-notice' : 'form-error'} role={message.kind === 'ok' ? 'status' : 'alert'}>

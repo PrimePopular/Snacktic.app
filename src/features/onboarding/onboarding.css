@@ -10,3 +10,10 @@
 .tour__dot--on { width: 22px; background: var(--color-orange); }
 .tour__actions { display: flex; justify-content: center; gap: var(--space-3); }
 .help-tour { margin-top: var(--space-5); }
+.tour__hold { height: 4px; border-radius: 999px; background: var(--border); overflow: hidden; }
+.tour__hold-fill { display: block; height: 100%; width: 0; background: var(--color-orange); animation-name: tour-hold; animation-timing-function: linear; animation-fill-mode: forwards; }
+@keyframes tour-hold { from { width: 0; } to { width: 100%; } }
+.tour__skip { justify-self: center; }
+.tour__skip:disabled { opacity: 0.4; }
+.tour__small { margin: 0; font-size: var(--text-sm); color: var(--text-secondary); }
+.modal--tour { max-height: 92vh; overflow-y: auto; }

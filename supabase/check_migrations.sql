@@ -20,4 +20,6 @@ select
   to_regclass('public.ad_reach') is not null                                                           as "027 ad analytics",
   to_regprocedure('public.admin_overview()') is not null                                               as "028 analysis hub",
   to_regclass('public.billboard_comments') is not null                                                 as "029 billboard likes and comments",
-  to_regclass('public.admin_activity') is not null                                                     as "030 content trail and editors";
+  to_regclass('public.admin_activity') is not null                                                     as "030 content trail and editors",
+  to_regclass('public.reward_settings') is not null                                                    as "031 signup and daily rewards",
+  to_regclass('public.treasure_codes') is not null                                                     as "032 treasure hunt";

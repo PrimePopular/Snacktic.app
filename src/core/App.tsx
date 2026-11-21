@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import AdminApp from '../admin/AdminApp';
 import { useAuth } from '../features/authentication';
 import { FindFriendTag, ReferralClaimer } from '../features/find-a-friend';
+import { SignupStrip } from '../features/authentication';
 import { Onboarding } from '../features/onboarding';
+import { TreasureClaimer } from '../features/treasure';
+import TreasurePage from '../pages/treasure/TreasurePage';
 import { PushPrompt } from '../features/push';
 import { UpdateBanner } from '../pwa/UpdateBanner';
 import FindFriendPage from '../pages/find-a-friend/FindFriendPage';
@@ -39,6 +42,7 @@ const routes: RouteDef[] = [
   { path: '/games/events/:id', title: 'Special event', render: (p) => <SpecialEventHost id={p.id} /> },
   { path: '/find-a-friend', title: 'Find a Friend', render: () => <FindFriendPage /> },
   { path: '/support', title: 'Support', render: () => <SupportPage /> },
+  { path: '/t/:token', title: 'Treasure', render: (p) => <TreasurePage token={p.token} /> },
   { path: '/r/:code', title: 'Invite', render: (p) => <ReferralLandingPage code={p.code} /> },
   { path: '/rewards', title: 'Rewards', render: () => <RewardsPage /> },
   { path: '/rewards/:id', title: 'Rewards', render: (p) => <RewardsPage focusId={p.id} /> },
@@ -117,10 +121,12 @@ export default function App() {
       <TopBar />
       <UpdateBanner />
       <ReferralClaimer />
+      <TreasureClaimer />
       <PushPrompt />
       <Onboarding ready={!splash} />
       <FindFriendTag />
       <main id="main-content" className="app-main" tabIndex={-1}>
+        <SignupStrip />
         <Router routes={routes} notFound={notFound} />
       </main>
       <AppNav />

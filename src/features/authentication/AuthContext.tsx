@@ -118,6 +118,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const signInWithGoogle = useCallback(async (): Promise<AuthResult> => {
+    if (!supabase) return { ok: false, message: 'The app is not connected to its database yet.' };
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/` } });
+    if (error) return { ok: false, message: 'Google sign-in is not available right now. You can sign up with your email instead.' };
+    return { ok: true };
+  }, []);
+
   const signIn = useCallback(async (email: string, password: string): Promise<AuthResult> => {
     const client = supabase;
     if (!client) return { ok: false, message: 'The database is not connected yet.' };
@@ -216,6 +223,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: user?.email ?? null,
       signUp,
       signIn,
+      signInWithGoogle,
       recovering,
       requestPasswordReset,
       updatePassword,
@@ -224,7 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setMarketingOptIn,
       retry,
     }),
-    [status, profile, user, signUp, signIn, recovering, requestPasswordReset, updatePassword, signOut, updateDetails, setMarketingOptIn, retry],
+    [status, profile, user, signUp, signIn, signInWithGoogle, recovering, requestPasswordReset, updatePassword, signOut, updateDetails, setMarketingOptIn, retry],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

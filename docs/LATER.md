@@ -3,7 +3,7 @@
 Things asked for that are queued. Tell me which to do next.
 
 ## From the latest feedback
-- **Treasure Hunt.** Up to 10 hidden QR codes printed and placed around campus. Each code has a scan limit (for example 10 to 100); when it is used up it says "too late". Each scan earns points, and a Treasure Hunt category of rewards can be bought with them. Harder hunts over time. Needs: points per code, whether each code can have its own amount, and what "harder" should mean.
+- **Treasure Hunt extras.** Harder hunts over time (for example codes that unlock in order), and a Treasure Hunt category in the Rewards Store.
 - **Videos in ads.** Today an ad has text, a picture and a link. A video would need a video field and a player, like Billboards.
 - **UI polish pass.** A round of visual improvements after the features settle.
 

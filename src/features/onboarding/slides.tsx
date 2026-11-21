@@ -127,9 +127,9 @@ export const slides: Slide[] = [
     art: frame(
       <g>
         <path d="M54 40h92a8 8 0 0 1 8 8v44a8 8 0 0 1-8 8h-48l-22 18v-18H54a8 8 0 0 1-8-8V48a8 8 0 0 1 8-8z" fill="#fff8ef" stroke="#35231f" strokeWidth="4" strokeLinejoin="round" />
-        <path d="M66 58h68M66 72h44" stroke="#2563eb" strokeWidth="6" strokeLinecap="round" />
+        <path d="M66 58h68M66 72h44" stroke="#e96b73" strokeWidth="6" strokeLinecap="round" />
       </g>,
-      '#dbe7ff',
+      '#ffe0c2',
     ),
   },
   {
@@ -140,7 +140,7 @@ export const slides: Slide[] = [
       <g>
         <rect x="76" y="26" width="48" height="88" rx="10" fill="#fff8ef" stroke="#35231f" strokeWidth="4" />
         <circle cx="100" cy="102" r="4" fill="#35231f" />
-        <path d="M100 44v32M88 66l12 12 12-12" fill="none" stroke="#2563eb" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M100 44v32M88 66l12 12 12-12" fill="none" stroke="#e96b73" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
       </g>,
       '#e4eed0',
     ),

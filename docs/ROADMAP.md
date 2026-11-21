@@ -179,10 +179,10 @@ Run `supabase/029_billboard_likes_comments.sql` and `supabase/030_content_trail_
 
 ## Update 031 (priority: getting people to sign up)
 Run `supabase/031_signup_and_daily_rewards.sql` and `supabase/032_treasure_hunt.sql`, then `check_migrations.sql`. For Google sign-in, follow `docs/GOOGLE_SIGNIN.md`.
-- **Sign up is impossible to miss.** First-time visitors get the tour with a bold blue Sign up bar (and Sign up with Google) on every slide. A big blue "Sign up free" banner tops Home, and a slim blue strip shows on the other screens, for anyone not signed in. Each can be dismissed.
+- **Sign up is impossible to miss.** First-time visitors get the tour with a bold orange Sign up bar (and Sign up with Google) on every slide. A big orange "Sign up free" banner tops Home, and a slim orange strip shows on the other screens, for anyone not signed in. Each can be dismissed.
 - **Sign up with Google** on the sign-up screen, Home banner and tour. Needs setup in Supabase and Google (docs/GOOGLE_SIGNIN.md). Google users get a nickname automatically; name and WhatsApp number are asked only when they redeem a physical reward.
 - **Welcome bonus:** 10 Crumb Points for signing up (you set the amount in Admin, Points and limits). Paid once, when the email is confirmed (Google straight away).
-- **Daily login reward:** a 7-day cycle shown on Home, 5, 8, 10, 12, 15, 20, 30 (100 in total), starting again after day 7 or after a missed day. You can change each day's amount.
+- **Daily login reward:** a 7-day cycle (a slim Claim line on Home until claimed, the full week in Profile), 5, 8, 10, 12, 15, 20, 30 (100 in total), starting again after day 7 or after a missed day. You can change each day's amount.
 - **Daily Challenge retries are back to two options:** Retry with Crumb Points, or Watch an ad (free). Both count toward the daily retry limit.
 - **Tour rewritten:** 9 short slides (welcome, how Crumb Points work, Discover, Games, Events you can join with Find a Friend and Treasure Hunt, Billboards, Rewards, feedback, install). Next and Skip wait 2 seconds on each slide. The last slide offers to add Snacktic to the home screen.
 - **Treasure Hunt:** Admin, Treasure Hunt. Make a code, set the points and how many people can claim it, print the QR card and paste it up. When that many different people have scanned it, it says "Too late". Each person can claim a code once. A visitor who scans signs up first and is brought straight back to claim it. Shows who found each code.

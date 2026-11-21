@@ -1,4 +1,5 @@
 import { useAuth } from '../../features/authentication';
+import { DailyReward } from '../../features/daily';
 import { openOnboarding } from '../../features/onboarding';
 import { Button, EmptyState, Loading, PageHeader } from '../../shared/components';
 import { AccountProfile } from './AccountProfile';
@@ -41,6 +42,7 @@ export default function ProfilePage() {
   return (
     <>
       {auth.status === 'signed-in' ? <AccountProfile /> : <GuestProfile />}
+      <DailyReward variant="full" />
       <p className="help-tour">
         <Button variant="secondary" onClick={openOnboarding}>
           Take the Snacktic tour

@@ -5,4 +5,4 @@
 .cross-teaser__media img { width: 100%; height: 100%; object-fit: cover; }
 .cross-teaser__cta { justify-self: start; padding: 6px 14px; border-radius: 999px; background: var(--color-orange); color: #fff; font-weight: 800; font-size: var(--text-sm); }
 .content-tag--reward { background: #b8501a; }
-.content-tag--game { background: #2a5b8a; }
+.content-tag--game { background: #7a4a1e; }

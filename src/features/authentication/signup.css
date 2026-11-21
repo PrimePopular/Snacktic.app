@@ -1,18 +1,19 @@
-.signup-banner { display: grid; gap: var(--space-3); padding: var(--space-5); margin-bottom: var(--space-5); border-radius: 24px; background: linear-gradient(160deg, #1d4ed8, #2563eb); color: #fff; box-shadow: 0 10px 28px rgba(37, 99, 235, 0.35); max-width: 34rem; }
-.signup-banner h2 { margin: 0; font-size: 1.8rem; color: #fff; }
-.signup-banner p { margin: 0; }
+/* Sign up: the Snacktic colours (orange, chocolate, cream), never a foreign blue. */
+.signup-banner { display: grid; gap: var(--space-3); padding: var(--space-5); margin-bottom: var(--space-5); border-radius: 24px; background: linear-gradient(160deg, var(--color-orange), #ffb273); color: var(--color-chocolate); box-shadow: 0 10px 26px rgba(255, 138, 61, 0.35); max-width: 34rem; }
+.signup-banner h2 { margin: 0; font-size: 1.8rem; color: var(--color-chocolate); }
+.signup-banner p { margin: 0; font-weight: 600; }
 .signup-banner__small { font-size: var(--text-sm); }
-.signup-banner a { color: #fff; text-decoration: underline; font-weight: 700; }
-.signup-banner__later { color: #dbe7ff; justify-self: center; }
-.signup-cta { padding: 16px 24px; border: 0; border-radius: 999px; background: #fff; color: #1d4ed8; font: inherit; font-size: 1.2rem; font-weight: 900; letter-spacing: 0.03em; cursor: pointer; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); }
-.signup-cta:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.signup-banner a { color: var(--color-chocolate); text-decoration: underline; font-weight: 800; }
+.signup-banner__later { color: var(--color-chocolate); justify-self: center; }
+.signup-cta { padding: 16px 24px; border: 0; border-radius: 999px; background: var(--color-chocolate); color: var(--color-cream); font: inherit; font-size: 1.2rem; font-weight: 900; letter-spacing: 0.03em; cursor: pointer; box-shadow: 0 6px 16px rgba(53, 35, 31, 0.25); }
+.signup-cta:focus-visible { outline: 3px solid var(--color-chocolate); outline-offset: 3px; }
 .google-wrap { display: grid; gap: var(--space-2); }
-.google-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 18px; border-radius: 999px; border: 1px solid #dadce0; background: #fff; color: #3c4043; font: inherit; font-weight: 700; cursor: pointer; width: 100%; }
+.google-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 18px; border-radius: 999px; border: 2px solid var(--color-chocolate); background: var(--color-cream); color: var(--color-chocolate); font: inherit; font-weight: 800; cursor: pointer; width: 100%; }
 .google-btn:disabled { opacity: 0.7; }
-.signup-strip { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: 10px var(--space-4); margin-bottom: var(--space-4); border-radius: 16px; background: #2563eb; color: #fff; font-weight: 700; }
-.signup-strip__btn { padding: 8px 18px; border: 0; border-radius: 999px; background: #fff; color: #1d4ed8; font: inherit; font-weight: 900; cursor: pointer; }
+.signup-strip { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: 10px var(--space-4); margin-bottom: var(--space-4); border-radius: 16px; background: var(--color-orange); color: var(--color-chocolate); font-weight: 800; }
+.signup-strip__btn { padding: 8px 18px; border: 0; border-radius: 999px; background: var(--color-chocolate); color: var(--color-cream); font: inherit; font-weight: 900; cursor: pointer; }
 /* Used in the tour: a bold Sign up bar that stays on every slide. */
-.tour-signup { display: grid; gap: var(--space-2); padding: var(--space-3); border-radius: 18px; background: #2563eb; color: #fff; }
+.tour-signup { display: grid; gap: var(--space-2); padding: var(--space-3); border-radius: 18px; background: var(--color-orange); color: var(--color-chocolate); }
 .tour-signup__title { margin: 0; font-weight: 800; }
 .tour-signup .signup-cta { padding: 12px 18px; font-size: 1.05rem; }
-.tour-signup a, .tour-signup .link-button { color: #fff; text-decoration: underline; font-weight: 700; justify-self: center; }
+.tour-signup a, .tour-signup .link-button { color: var(--color-chocolate); text-decoration: underline; font-weight: 800; justify-self: center; }

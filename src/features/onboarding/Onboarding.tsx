@@ -34,7 +34,7 @@ export function openOnboarding(): void {
 
 /**
  * A short tour of Snacktic that opens by itself once, for anyone who has not seen it. For visitors who have not signed up, a bold
- * blue Sign up bar (with Google) stays on every slide, so joining is always one tap away. Next and Skip wait two seconds on each
+ * orange Sign up bar (with Google) stays on every slide, so joining is always one tap away. Next and Skip wait two seconds on each
  * slide so the guide is actually read.
  */
 export function Onboarding({ ready }: { ready: boolean }) {

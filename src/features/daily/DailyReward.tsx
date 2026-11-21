@@ -6,13 +6,16 @@ import './daily.css';
 
 /**
  * The 7-day login reward. Each day in a row pays a little more; miss a day or finish day 7 and it starts again at day 1.
- * Shown to signed-in students at the top of Home. If the database update (supabase/031) has not been run, nothing shows.
+ * Two shapes. "bar" (Home): one slim line with a Claim button, shown only until today's reward is claimed, then it disappears so it
+ * never takes up the screen. "full" (Profile): the whole 7-day view, to see the streak. If the database update (supabase/031) has not
+ * been run, nothing shows.
  */
-export function DailyReward() {
+export function DailyReward({ variant = 'full' }: { variant?: 'bar' | 'full' }) {
   const auth = useAuth();
   const [status, setStatus] = useState<DailyStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [gone, setGone] = useState(false);
 
   const load = useCallback(async () => setStatus(await getDailyStatus()), []);
   useEffect(() => {
@@ -28,6 +31,7 @@ export function DailyReward() {
       const r = await claimDaily();
       setMessage(r.awarded > 0 ? `+${r.awarded} Crumb Points. See you tomorrow!` : 'Already claimed today.');
       await load();
+      if (variant === 'bar') window.setTimeout(() => setGone(true), 2200);
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Something went wrong.');
     }
@@ -35,6 +39,21 @@ export function DailyReward() {
   }
 
   const { nextDay, claimedToday, amounts } = status;
+
+  if (variant === 'bar') {
+    // Home: only until today is claimed (and a moment after, to say well done).
+    if (gone || (claimedToday && !message)) return null;
+    return (
+      <div className="daily-bar" role="status">
+        <span>{message ?? `Daily reward ready: +${amounts[nextDay - 1]} Crumb Points`}</span>
+        {!message && (
+          <button type="button" className="daily-bar__btn" disabled={busy} onClick={() => void claim()}>
+            {busy ? 'Claiming…' : 'Claim'}
+          </button>
+        )}
+      </div>
+    );
+  }
   const tomorrow = amounts[nextDay % 7];
   return (
     <section className="daily" aria-label="Daily reward">

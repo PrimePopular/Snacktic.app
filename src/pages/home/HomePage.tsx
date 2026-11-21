@@ -172,7 +172,7 @@ export default function HomePage() {
   return (
     <>
       <SignupBanner />
-      <DailyReward />
+      <DailyReward variant="bar" />
       {majors.map((item) => (
         <MajorBar key={item.id} item={item} onDismiss={dismiss} />
       ))}

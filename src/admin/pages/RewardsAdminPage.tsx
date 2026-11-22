@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useAuth, isOwnerRole } from '../../features/authentication';
-import { adminDeleteRedemption, adminDeleteReward, adminGetRewardFile, adminListRedemptions, adminListRewards, adminSaveReward, adminSetRedemptionStatus } from '../../features/points';
-import type { AdminRedemption, Reward } from '../../features/points';
+import { adminDeleteRedemption, adminDeleteReward, adminGetRewardFile, adminListRedemptions, adminListRewards, adminSaveReward, adminSetRedemptionStatus, listRewardCategories, productTypeLabels } from '../../features/points';
+import type { AdminRedemption, ProductType, Reward, RewardCategory } from '../../features/points';
 import { pictureUrl } from '../../services/pictures';
 import { Button, Card, CheckboxField, EmptyState, Loading, SelectField, TextAreaField, TextField } from '../../shared/components';
 import { whatsappLink } from '../../shared/phone';
 import { PictureField } from '../components/PictureField';
 import { BonusPanel } from './BonusPanel';
+import { RewardCategoriesPanel } from './RewardCategoriesPanel';
 import { usePictureEditor } from '../usePictureEditor';
 
 type LoadState =
@@ -27,9 +28,16 @@ interface RewardForm {
   bonusCost: string;
   bonusEnds: string;
   bonusLimit: string;
+  productType: ProductType;
+  discountMode: 'none' | '50' | '80' | '90' | 'custom';
+  discountCustom: string;
+  discountStart: string;
+  discountEnd: string;
+  perUserLimit: string;
+  categoryId: string;
 }
 
-const emptyReward: RewardForm = { name: '', description: '', cost: '', stock: '', kind: 'physical', fileUrl: '', active: true, isBonus: false, bonusCost: '', bonusEnds: '', bonusLimit: '1' };
+const emptyReward: RewardForm = { name: '', description: '', cost: '', stock: '', kind: 'physical', fileUrl: '', active: true, isBonus: false, bonusCost: '', bonusEnds: '', bonusLimit: '1', productType: 'item', discountMode: 'none', discountCustom: '', discountStart: '', discountEnd: '', perUserLimit: '', categoryId: '' };
 
 /** An ISO time as the text a datetime-local box wants (in the admin's own time zone). */
 function toLocalInput(iso: string | null): string {
@@ -49,6 +57,13 @@ export function RewardsAdminPage() {
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<'new' | Reward | null>(null);
   const [form, setForm] = useState<RewardForm>(emptyReward);
+  const [categories, setCategories] = useState<RewardCategory[]>([]);
+  const loadCategories = useCallback(() => {
+    void listRewardCategories().then(setCategories);
+  }, []);
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
   const [formError, setFormError] = useState<string | null>(null);
   const picture = usePictureEditor();
 
@@ -88,7 +103,7 @@ export function RewardsAdminPage() {
       setForm(emptyReward);
       picture.reset(null);
     } else {
-      setForm({ name: target.name, description: target.description, cost: String(target.costPoints), stock: target.stock === null ? '' : String(target.stock), kind: target.kind, fileUrl: '', active: target.active, isBonus: target.isBonus, bonusCost: target.bonusCost === null ? '' : String(target.bonusCost), bonusEnds: toLocalInput(target.bonusEndsAt), bonusLimit: String(target.bonusLimitPerUser) });
+      setForm({ name: target.name, description: target.description, cost: String(target.costPoints), stock: target.stock === null ? '' : String(target.stock), kind: target.kind, fileUrl: '', active: target.active, isBonus: target.isBonus, bonusCost: target.bonusCost === null ? '' : String(target.bonusCost), bonusEnds: toLocalInput(target.bonusEndsAt), bonusLimit: String(target.bonusLimitPerUser), productType: target.productType, discountMode: target.discountPercent === null ? 'none' : [50, 80, 90].includes(target.discountPercent) ? (String(target.discountPercent) as '50' | '80' | '90') : 'custom', discountCustom: target.discountPercent !== null && ![50, 80, 90].includes(target.discountPercent) ? String(target.discountPercent) : '', discountStart: toLocalInput(target.discountStartsAt), discountEnd: toLocalInput(target.discountEndsAt), perUserLimit: target.perUserLimit === null ? '' : String(target.perUserLimit), categoryId: target.categoryId ?? '' });
       if (target.kind === 'digital') void adminGetRewardFile(target.id).then((url) => setForm((f) => ({ ...f, fileUrl: url }))).catch(() => undefined);
       picture.reset(target.imagePath);
     }
@@ -118,10 +133,28 @@ export function RewardsAdminPage() {
         bonusEndsAt = when.toISOString();
       }
     }
+    // Store settings: discount percent with dates, limit per person, category and product type.
+    let discountPercent: number | null = null;
+    if (!form.isBonus && form.discountMode !== 'none') {
+      discountPercent = form.discountMode === 'custom' ? Number(form.discountCustom) : Number(form.discountMode);
+      if (!Number.isInteger(discountPercent) || discountPercent < 1 || discountPercent > 99) return setFormError('A discount must be a whole percent from 1 to 99.');
+    }
+    const discountStartsAt = form.discountStart ? new Date(form.discountStart) : null;
+    const discountEndsAt = form.discountEnd ? new Date(form.discountEnd) : null;
+    if ((discountStartsAt && Number.isNaN(discountStartsAt.getTime())) || (discountEndsAt && Number.isNaN(discountEndsAt.getTime()))) return setFormError('A discount date is not valid.');
+    if (discountStartsAt && discountEndsAt && discountEndsAt <= discountStartsAt) return setFormError('The discount must end after it starts.');
+    const perUserLimit = form.perUserLimit.trim() ? Number(form.perUserLimit) : null;
+    if (perUserLimit !== null && (!Number.isInteger(perUserLimit) || perUserLimit < 1)) return setFormError('The limit per person must be a whole number, at least 1.');
+    const productType: ProductType = form.kind === 'physical' ? 'item' : form.productType === 'item' ? 'ebook' : form.productType;
+    const store = { productType, discountPercent, discountStartsAt: discountStartsAt ? discountStartsAt.toISOString() : null, discountEndsAt: discountEndsAt ? discountEndsAt.toISOString() : null, perUserLimit, categoryId: form.categoryId || null };
+    const original = editing && editing !== 'new' ? editing : null;
+    const defaultType: ProductType = form.kind === 'physical' ? 'item' : 'ebook';
+    const storeUsed = productType !== defaultType || discountPercent !== null || perUserLimit !== null || store.categoryId !== null;
+    const storeHad = original ? original.discountPercent !== null || original.perUserLimit !== null || original.categoryId !== null || original.productType !== (original.kind === 'physical' ? 'item' : 'ebook') : false;
     setFormError(null);
     const id = editing && editing !== 'new' ? editing.id : null;
     const ok = await run(async () => {
-      await adminSaveReward(id, { name: form.name, description: form.description, costPoints: cost, active: form.active, imagePath: picture.imagePath, stock, kind: form.kind, fileUrl: form.kind === 'digital' ? form.fileUrl.trim() : '', bonus: { isBonus: form.isBonus, bonusCost, bonusEndsAt, bonusLimitPerUser: bonusLimit } });
+      await adminSaveReward(id, { name: form.name, description: form.description, costPoints: cost, active: form.active, imagePath: picture.imagePath, stock, kind: form.kind, fileUrl: form.kind === 'digital' ? form.fileUrl.trim() : '', bonus: { isBonus: form.isBonus, bonusCost, bonusEndsAt, bonusLimitPerUser: bonusLimit }, ...(storeUsed || storeHad ? { store } : {}) });
       await picture.commit();
     }, id ? 'Reward updated.' : 'Reward added.');
     if (ok) setEditing(null);
@@ -166,6 +199,44 @@ export function RewardsAdminPage() {
               <p className="text-secondary text-small">Use "How many are in stock" above for a limited quantity. Who counts as a new member is set in the Bonus settings on the Rewards page.</p>
             </>
           )}
+          {form.kind === 'digital' && (
+            <SelectField label="What kind of digital product" value={form.productType === 'item' ? 'ebook' : form.productType} onChange={(e) => setForm({ ...form, productType: e.target.value as ProductType })}>
+              {(Object.keys(productTypeLabels) as ProductType[]).filter((k) => k !== 'item').map((k) => (
+                <option key={k} value={k}>
+                  {productTypeLabels[k]}
+                </option>
+              ))}
+            </SelectField>
+          )}
+          {categories.length > 0 && (
+            <SelectField label="Category" value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
+              <option value="">No category</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </SelectField>
+          )}
+          {!form.isBonus && (
+            <>
+              <SelectField label="Discount" value={form.discountMode} onChange={(e) => setForm({ ...form, discountMode: e.target.value as RewardForm['discountMode'] })}>
+                <option value="none">No discount</option>
+                <option value="50">50% off</option>
+                <option value="80">80% off</option>
+                <option value="90">90% off</option>
+                <option value="custom">Custom percent</option>
+              </SelectField>
+              {form.discountMode === 'custom' && <TextField label="Percent off" type="number" inputMode="numeric" min={1} max={99} value={form.discountCustom} onChange={(e) => setForm({ ...form, discountCustom: e.target.value })} />}
+              {form.discountMode !== 'none' && (
+                <>
+                  <TextField label="Discount starts (optional)" type="datetime-local" value={form.discountStart} onChange={(e) => setForm({ ...form, discountStart: e.target.value })} hint="Leave empty to start straight away." />
+                  <TextField label="Discount ends (optional)" type="datetime-local" value={form.discountEnd} onChange={(e) => setForm({ ...form, discountEnd: e.target.value })} hint="Leave empty to keep it until you change it." />
+                </>
+              )}
+            </>
+          )}
+          <TextField label="Most times one person can get this (optional)" type="number" inputMode="numeric" min={1} value={form.perUserLimit} onChange={(e) => setForm({ ...form, perUserLimit: e.target.value })} hint="Leave empty for no limit. Use stock above for a limited total." />
           <PictureField imagePath={picture.imagePath} uploading={picture.uploading} error={picture.error} onPick={(file) => void picture.pick(file)} onRemove={() => void picture.remove()} />
           <CheckboxField checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })}>
             Available to students
@@ -273,6 +344,7 @@ export function RewardsAdminPage() {
       )}
 
       <BonusPanel />
+      <RewardCategoriesPanel categories={categories} onChange={loadCategories} />
 
       <div className="ann__head">
         <h2>Reward items</h2>

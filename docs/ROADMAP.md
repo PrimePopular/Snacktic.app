@@ -186,3 +186,10 @@ Run `supabase/031_signup_and_daily_rewards.sql` and `supabase/032_treasure_hunt.
 - **Daily Challenge retries are back to two options:** Retry with Crumb Points, or Watch an ad (free). Both count toward the daily retry limit.
 - **Tour rewritten:** 9 short slides (welcome, how Crumb Points work, Discover, Games, Events you can join with Find a Friend and Treasure Hunt, Billboards, Rewards, feedback, install). Next and Skip wait 2 seconds on each slide. The last slide offers to add Snacktic to the home screen.
 - **Treasure Hunt:** Admin, Treasure Hunt. Make a code, set the points and how many people can claim it, print the QR card and paste it up. When that many different people have scanned it, it says "Too late". Each person can claim a code once. A visitor who scans signs up first and is brought straight back to claim it. Shows who found each code.
+
+## Update 032
+Run `supabase/033_ads_video.sql`, `034_rewards_expansion.sql` and `035_friend_scan_log.sql`, then `check_migrations.sql`.
+- **Billboard likes and comments are disconnected** (hidden from students and admins). The code and database stay; set `BILLBOARD_SOCIAL_ENABLED` to true in `src/features/billboards/flags.ts` to bring them back.
+- **Videos in ads.** An ad can have a video link: a YouTube link (opens in YouTube) or a direct .mp4 link (plays inside the ad). Add it in Admin, Ads.
+- **Bigger Rewards Store.** Digital products can be an e-book, novel, coupon, gift card, discount voucher, subscription, template, download or other. Percentage discounts (50, 80, 90 or any percent) with optional start and end dates. A limit on how many times one person can get a reward. Categories you create (Admin, Rewards, Store categories) with filter chips in the store. All prices are worked out in the database, so they cannot be tricked.
+- **Find a Friend scan record.** Every scan is recorded with its outcome (rewarded, already invited, own code, limit reached, bad code, no event), shown in Analysis, Find a Friend.

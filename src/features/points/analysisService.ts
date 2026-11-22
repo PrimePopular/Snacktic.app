@@ -119,3 +119,25 @@ export const areaLabels: Record<string, string> = {
   rewards: 'Reward',
   news_items: 'News story',
 };
+
+export interface FriendScan {
+  at: string;
+  referrer: string;
+  scanner: string;
+  outcome: string;
+}
+
+/** Plain words for what happened to each Find a Friend scan. */
+export const scanOutcomeLabels: Record<string, string> = {
+  rewarded: 'Rewarded',
+  already_referred: 'Already invited before, no reward',
+  self: 'Scanned their own code',
+  limit: 'Inviter reached a limit, no reward',
+  invalid: 'Code not recognised',
+  no_event: 'No event running',
+};
+
+/** Every scan, including the ones that did not earn a reward. */
+export async function getFriendScans(offset: number): Promise<FriendScan[]> {
+  return (await rows('owner_friend_scan_log', { p_limit: 40, p_offset: offset })).map((r) => ({ at: String(r.at), referrer: String(r.referrer), scanner: String(r.scanner), outcome: String(r.outcome) }));
+}

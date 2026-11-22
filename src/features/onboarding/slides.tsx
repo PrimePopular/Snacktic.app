@@ -95,7 +95,7 @@ export const slides: Slide[] = [
   {
     id: 'billboards',
     title: 'Billboards',
-    text: 'A feed of music, creators, stories and things worth a look. Like and comment on what you enjoy.',
+    text: 'A feed of music, creators, stories and things worth a look. Scroll and see what is new.',
     art: frame(
       <g>
         <rect x="46" y="34" width="108" height="56" rx="8" fill="#fff8ef" stroke="#35231f" strokeWidth="4" />

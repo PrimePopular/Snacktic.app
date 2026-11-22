@@ -22,4 +22,7 @@ select
   to_regclass('public.billboard_comments') is not null                                                 as "029 billboard likes and comments",
   to_regclass('public.admin_activity') is not null                                                     as "030 content trail and editors",
   to_regclass('public.reward_settings') is not null                                                    as "031 signup and daily rewards",
-  to_regclass('public.treasure_codes') is not null                                                     as "032 treasure hunt";
+  to_regclass('public.treasure_codes') is not null                                                     as "032 treasure hunt",
+  exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'ads' and column_name = 'video_url') as "033 ads video",
+  to_regclass('public.reward_categories') is not null                                                  as "034 rewards expansion",
+  to_regclass('public.find_friend_scan_log') is not null                                               as "035 friend scan log";

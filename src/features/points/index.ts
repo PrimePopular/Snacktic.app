@@ -8,3 +8,4 @@ export * from './speedService';
 export * from './pointsAnalysisService';
 export * from './analysisService';
 export * from './rewardSettingsService';
+export * from './rewardCategoriesService';

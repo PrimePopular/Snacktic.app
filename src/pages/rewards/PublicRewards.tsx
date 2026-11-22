@@ -2,10 +2,11 @@ import { useEffect, useId, useState } from 'react';
 import { isOfferLive, getBonusStatus, NO_BONUS, priceOf, endsText } from '../../features/bonus';
 import type { BonusStatus } from '../../features/bonus';
 import { CardArt } from '../../features/feed';
-import { listRewards } from '../../features/points';
-import type { Reward } from '../../features/points';
+import { listRewardCategories, listRewards } from '../../features/points';
+import type { Reward, RewardCategory } from '../../features/points';
 import { pictureUrl } from '../../services/pictures';
 import { Button, EmptyState, Loading, Modal, PageHeader } from '../../shared/components';
+import { CategoryChips } from './CategoryChips';
 import { RewardCard } from './RewardCard';
 
 type Tab = 'physical' | 'digital';
@@ -19,11 +20,14 @@ export function PublicRewards({ focusId }: { focusId?: string }) {
   const [failed, setFailed] = useState(false);
   const [bonus, setBonus] = useState<BonusStatus>(NO_BONUS);
   const [tab, setTab] = useState<Tab>('physical');
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<RewardCategory[]>([]);
   const [open, setOpen] = useState<Reward | null>(null);
   const titleId = useId();
 
   useEffect(() => {
     let active = true;
+    void listRewardCategories().then((c) => active && setCategories(c));
     void Promise.all([listRewards(), getBonusStatus()])
       .then(([list, status]) => {
         if (!active) return;
@@ -54,7 +58,7 @@ export function PublicRewards({ focusId }: { focusId?: string }) {
   }
   if (!rewards) return <Loading label="Loading rewards" />;
 
-  const items = rewards.filter((r) => r.kind === tab && (!r.isBonus || isOfferLive(r))).sort((a, b) => Number(b.isBonus) - Number(a.isBonus));
+  const items = rewards.filter((r) => r.kind === tab && (categoryId === null || r.categoryId === categoryId) && (!r.isBonus || isOfferLive(r))).sort((a, b) => Number(b.isBonus) - Number(a.isBonus));
   const bonusOpen = open?.isBonus && isOfferLive(open);
 
   return (
@@ -74,6 +78,7 @@ export function PublicRewards({ focusId }: { focusId?: string }) {
           Digital
         </button>
       </div>
+      <CategoryChips categories={categories} rewards={rewards.filter((r) => r.kind === tab)} selected={categoryId} onSelect={setCategoryId} />
       {items.length === 0 ? (
         <EmptyState title={tab === 'digital' ? 'No digital rewards yet' : 'No items yet'}>New things are added by the Snacktic team. Check back soon.</EmptyState>
       ) : (

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { listAllAds } from '../../features/ads';
 import type { Ad } from '../../features/ads';
-import { areaLabels, getFriendStats, getGameStats, getOverview, getRewardStats, getStaffActions, getStaffSummary, getTopPlayers } from '../../features/points';
-import type { FriendStat, GameStat, Overview, RewardStat, StaffAction, StaffSummary, TopPlayer } from '../../features/points';
+import { areaLabels, getFriendScans, getFriendStats, scanOutcomeLabels, getGameStats, getOverview, getRewardStats, getStaffActions, getStaffSummary, getTopPlayers } from '../../features/points';
+import type { FriendScan, FriendStat, GameStat, Overview, RewardStat, StaffAction, StaffSummary, TopPlayer } from '../../features/points';
 import { Button, Card, EmptyState, Loading, SelectField } from '../../shared/components';
 import { AdAnalyticsPanel } from './AdAnalyticsPanel';
 import { PointsAnalysisPage } from './PointsAnalysisPage';
@@ -163,20 +163,51 @@ function RewardsTab() {
 
 function FriendsTab() {
   const { data, error } = useLoad<FriendStat[]>(getFriendStats, []);
-  if (error) return <Problem text={error} />;
-  if (!data) return <Loading label="Loading" />;
-  if (data.length === 0) return <EmptyState title="No Find a Friend events yet">Start one under Find a Friend.</EmptyState>;
+  const [offset, setOffset] = useState(0);
+  const scans = useLoad<FriendScan[]>(() => getFriendScans(offset), [offset]);
+  const fmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
   return (
-    <ul className="activity-list">
-      {data.map((f, i) => (
-        <li key={`${f.campaign}-${i}`} className="activity-row">
-          <strong>{f.campaign}</strong>
-          <span className="text-xs text-secondary">
-            {n(f.invites)} friends invited · {n(f.inviters)} inviters · {n(f.pointsPaid)} points paid
-          </span>
-        </li>
-      ))}
-    </ul>
+    <>
+      {error && <Problem text={error} />}
+      {!data && !error && <Loading label="Loading" />}
+      {data && data.length === 0 && <EmptyState title="No Find a Friend events yet">Start one under Find a Friend.</EmptyState>}
+      {data && data.length > 0 && (
+        <ul className="activity-list">
+          {data.map((f, i) => (
+            <li key={`${f.campaign}-${i}`} className="activity-row">
+              <strong>{f.campaign}</strong>
+              <span className="text-xs text-secondary">
+                {n(f.invites)} friends invited · {n(f.inviters)} inviters · {n(f.pointsPaid)} points paid
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <h3>Every scan, including ones that earned nothing</h3>
+      <p className="text-secondary text-small">Recording starts when supabase/035 is run.</p>
+      {scans.error && <Problem text={scans.error.replace('028', '035')} />}
+      {scans.data && scans.data.length === 0 && <p className="text-secondary text-small">No scans recorded yet.</p>}
+      {scans.data && scans.data.length > 0 && (
+        <ul className="activity-list">
+          {scans.data.map((s, i) => (
+            <li key={`${s.at}-${i}`} className="activity-row">
+              <span>
+                <strong>{s.scanner || 'Someone'}</strong> used {s.referrer ? `${s.referrer}'s` : 'a'} code: {scanOutcomeLabels[s.outcome] ?? s.outcome}
+              </span>
+              <span className="text-xs text-secondary">{fmt.format(new Date(s.at))}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="game-result__actions">
+        <Button variant="secondary" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - 40))}>
+          Newer
+        </Button>
+        <Button variant="secondary" disabled={!scans.data || scans.data.length < 40} onClick={() => setOffset(offset + 40)}>
+          Older
+        </Button>
+      </div>
+    </>
   );
 }
 

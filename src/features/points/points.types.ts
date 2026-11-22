@@ -33,6 +33,35 @@ export interface Reward {
   bonusCost: number | null;
   bonusEndsAt: string | null;
   bonusLimitPerUser: number;
+  /** What kind of product: a physical item, or a digital one such as an ebook, coupon or gift card. */
+  productType: ProductType;
+  /** A percentage off the Crumb Point price (for example 50, 80 or 90), inside its dates. null means no discount. */
+  discountPercent: number | null;
+  discountStartsAt: string | null;
+  discountEndsAt: string | null;
+  /** How many times one person can get this reward. null means no limit. */
+  perUserLimit: number | null;
+  categoryId: string | null;
+}
+
+export type ProductType = 'item' | 'ebook' | 'novel' | 'coupon' | 'gift_card' | 'voucher' | 'subscription' | 'template' | 'download' | 'other';
+
+export const productTypeLabels: Record<ProductType, string> = {
+  item: 'Item',
+  ebook: 'E-book',
+  novel: 'Novel',
+  coupon: 'Coupon',
+  gift_card: 'Gift card',
+  voucher: 'Discount voucher',
+  subscription: 'Subscription',
+  template: 'Template',
+  download: 'Download',
+  other: 'Digital',
+};
+
+export interface RewardCategory {
+  id: string;
+  name: string;
 }
 
 export interface DigitalPurchase {

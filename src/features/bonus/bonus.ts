@@ -7,9 +7,19 @@ export function isOfferLive(reward: Reward, now = Date.now()): boolean {
   return reward.stock === null || reward.stock > 0;
 }
 
-/** What this person would pay: the special price for a live bonus offer, otherwise the normal price. */
+/** Is an ordinary percentage discount running right now (inside its dates)? */
+export function isDiscountLive(reward: Reward, now = Date.now()): boolean {
+  if (reward.isBonus || reward.discountPercent === null) return false;
+  if (reward.discountStartsAt && new Date(reward.discountStartsAt).getTime() > now) return false;
+  if (reward.discountEndsAt && new Date(reward.discountEndsAt).getTime() <= now) return false;
+  return true;
+}
+
+/** What this person would pay: the special price for a bonus offer, the discounted price during a discount, otherwise the normal price. */
 export function priceOf(reward: Reward): number {
-  return reward.isBonus && reward.bonusCost !== null ? reward.bonusCost : reward.costPoints;
+  if (reward.isBonus && reward.bonusCost !== null) return reward.bonusCost;
+  if (isDiscountLive(reward) && reward.discountPercent !== null) return Math.max(1, Math.ceil((reward.costPoints * (100 - reward.discountPercent)) / 100));
+  return reward.costPoints;
 }
 
 /** "Ends in 2 days" / "Ends today", or null when there is no end time. */

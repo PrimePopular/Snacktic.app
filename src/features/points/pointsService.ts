@@ -45,6 +45,7 @@ const SHOWABLE = [
   'That offer is not ready yet',
   'You have already claimed this offer',
   'Bonus offers are paused right now',
+  'You have reached the limit for this reward',
   'Sign in to gift points',
   'Sign in to redeem rewards',
   'Owner only',
@@ -106,10 +107,17 @@ interface RewardRow {
   bonus_cost?: number | null;
   bonus_ends_at?: string | null;
   bonus_limit_per_user?: number;
+  product_type?: Reward['productType'];
+  discount_percent?: number | null;
+  discount_starts_at?: string | null;
+  discount_ends_at?: string | null;
+  per_user_limit?: number | null;
+  category_id?: string | null;
 }
 
 const BASE_COLUMNS = 'id, name, description, cost_points, active, image_path, stock, kind';
 const BONUS_COLUMNS = `${BASE_COLUMNS}, is_bonus, bonus_cost, bonus_ends_at, bonus_limit_per_user`;
+const FULL_COLUMNS = `${BONUS_COLUMNS}, product_type, discount_percent, discount_starts_at, discount_ends_at, per_user_limit, category_id`;
 
 const rewardFromRow = (r: RewardRow): Reward => ({
   id: r.id,
@@ -124,6 +132,13 @@ const rewardFromRow = (r: RewardRow): Reward => ({
   bonusCost: r.bonus_cost ?? null,
   bonusEndsAt: r.bonus_ends_at ?? null,
   bonusLimitPerUser: r.bonus_limit_per_user ?? 1,
+  // Digital rewards saved before product types existed count as e-books.
+  productType: (r.kind === 'digital' && (!r.product_type || r.product_type === 'item') ? 'ebook' : r.product_type) ?? 'item',
+  discountPercent: r.discount_percent ?? null,
+  discountStartsAt: r.discount_starts_at ?? null,
+  discountEndsAt: r.discount_ends_at ?? null,
+  perUserLimit: r.per_user_limit ?? null,
+  categoryId: r.category_id ?? null,
 });
 
 /**
@@ -132,7 +147,8 @@ const rewardFromRow = (r: RewardRow): Reward => ({
  */
 export async function listRewards(): Promise<Reward[]> {
   const run = (columns: string) => client().from('rewards').select(columns).eq('active', true).order('cost_points', { ascending: true });
-  let { data, error } = await run(BONUS_COLUMNS);
+  let { data, error } = await run(FULL_COLUMNS);
+  if (error) ({ data, error } = await run(BONUS_COLUMNS));
   if (error) ({ data, error } = await run(BASE_COLUMNS));
   if (error) throw failure(error.message);
   return ((data ?? []) as unknown as RewardRow[]).map(rewardFromRow);
@@ -178,7 +194,8 @@ export async function listMyRedemptions(): Promise<Redemption[]> {
 
 export async function adminListRewards(): Promise<Reward[]> {
   const run = (columns: string) => client().from('rewards').select(columns).order('cost_points', { ascending: true });
-  let { data, error } = await run(BONUS_COLUMNS);
+  let { data, error } = await run(FULL_COLUMNS);
+  if (error) ({ data, error } = await run(BONUS_COLUMNS));
   if (error) ({ data, error } = await run(BASE_COLUMNS));
   if (error) throw failure(error.message);
   return ((data ?? []) as unknown as RewardRow[]).map(rewardFromRow);
@@ -199,6 +216,8 @@ export async function adminSaveReward(
     fileUrl?: string;
     /** Bonus Reward settings. Leave out to keep them as they are. */
     bonus?: { isBonus: boolean; bonusCost: number | null; bonusEndsAt: string | null; bonusLimitPerUser: number };
+    /** Store settings. Leave out to keep them as they are. Only sent when given, so saving works before supabase/034 is run. */
+    store?: { productType: Reward['productType']; discountPercent: number | null; discountStartsAt: string | null; discountEndsAt: string | null; perUserLimit: number | null; categoryId: string | null };
   },
 ): Promise<void> {
   const row = {
@@ -209,6 +228,7 @@ export async function adminSaveReward(
     image_path: input.imagePath,
     stock: input.stock,
     ...(input.kind ? { kind: input.kind } : {}),
+    ...(input.store ? { product_type: input.store.productType, discount_percent: input.store.discountPercent, discount_starts_at: input.store.discountStartsAt, discount_ends_at: input.store.discountEndsAt, per_user_limit: input.store.perUserLimit, category_id: input.store.categoryId } : {}),
     ...(input.bonus ? { is_bonus: input.bonus.isBonus, bonus_cost: input.bonus.bonusCost, bonus_ends_at: input.bonus.bonusEndsAt, bonus_limit_per_user: input.bonus.bonusLimitPerUser } : {}),
   };
   let rewardId = id;

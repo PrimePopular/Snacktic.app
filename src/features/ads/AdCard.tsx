@@ -1,3 +1,4 @@
+import { isVideoFile, youtubeThumb } from '../../shared/video';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Modal } from '../../shared/components';
 import { pictureUrl } from '../../services/pictures';
@@ -37,9 +38,22 @@ interface AdFullProps {
 /** The whole ad: picture, advertiser, full message and link. Used in the expanded view and while waiting to retry a game. */
 export function AdFull({ ad, titleId, trackLink = false }: AdFullProps) {
   const link = safeLink(ad.link);
+  const video = ad.videoUrl ? safeLink(ad.videoUrl) : null;
+  const thumb = video ? youtubeThumb(video) : null;
   return (
     <div className="ad-full">
-      {ad.imagePath && (
+      {video && isVideoFile(video) && (
+        <div className="ad-full__media">
+          <video src={video} controls preload="metadata" playsInline />
+        </div>
+      )}
+      {video && !isVideoFile(video) && (
+        <a className="ad-full__media ad-full__video" href={video} target="_blank" rel="noopener noreferrer sponsored" aria-label={`Watch the video: ${ad.title}`}>
+          {thumb ? <img src={thumb} alt="" referrerPolicy="no-referrer" /> : <span className="ad-full__video-text">Watch the video</span>}
+          <span className="ad-full__play" aria-hidden="true" />
+        </a>
+      )}
+      {!video && ad.imagePath && (
         <div className="ad-full__media">
           <img src={pictureUrl(ad.imagePath)} alt="" decoding="async" />
         </div>

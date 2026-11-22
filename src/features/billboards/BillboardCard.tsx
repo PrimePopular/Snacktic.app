@@ -1,15 +1,11 @@
 import { pictureUrl } from '../../services/pictures';
 import { linkLabel, safeLink } from '../../shared/url';
+import { isVideoFile, youtubeThumb } from '../../shared/video';
 import { shareContent } from '../feed';
 import { BillboardSocial } from './BillboardSocial';
+import { BILLBOARD_SOCIAL_ENABLED } from './flags';
 import type { BillboardPost } from './billboards.types';
 import './billboards.css';
-
-/** The YouTube picture for a link, or null for any other address. */
-function youtubeThumb(url: string): string | null {
-  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([\w-]{11})/);
-  return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : null;
-}
 
 const when = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
 
@@ -21,7 +17,7 @@ export function BillboardCard({ post }: { post: BillboardPost }) {
   const link = post.linkUrl ? safeLink(post.linkUrl) : null;
   const video = post.videoUrl ? safeLink(post.videoUrl) : null;
   const thumb = video ? youtubeThumb(video) : null;
-  const isFile = video ? /\.(mp4|webm|mov)(\?|$)/i.test(video) : false;
+  const isFile = video ? isVideoFile(video) : false;
 
   return (
     <article className={`billboard billboard--${post.layout}${post.featured ? ' billboard--featured' : ''}`}>
@@ -60,7 +56,7 @@ export function BillboardCard({ post }: { post: BillboardPost }) {
           </a>
         )}
       </div>
-      <BillboardSocial postId={post.id} />
+      {BILLBOARD_SOCIAL_ENABLED && <BillboardSocial postId={post.id} />}
       <footer className="billboard__foot">
         <button type="button" className="link-button" onClick={() => void shareContent(post.title || 'Snacktic Billboard', post.title || post.body.slice(0, 80) || 'Something worth a look on Snacktic')}>
           Share

@@ -9,7 +9,16 @@ import { removePicture } from '../../services/pictures';
 import { notifyPointsChanged } from '../points';
 import type { Ad, AdInput } from './ads.types';
 
-const COLUMNS = 'id, advertiser, title, body, image_path, link, points, ends_at, published, created_at';
+const BASE_COLUMNS = 'id, advertiser, title, body, image_path, link, points, ends_at, published, created_at';
+const COLUMNS = `${BASE_COLUMNS}, video_url`;
+
+/** Reads with the video column; if the database update (supabase/033) has not been run yet, reads without it. */
+async function selectAds(build: (columns: string) => PromiseLike<{ data: unknown; error: { message: string } | null }>): Promise<Row[]> {
+  let result = await build(COLUMNS);
+  if (result.error) result = await build(BASE_COLUMNS);
+  if (result.error) throw new Error(result.error.message);
+  return (result.data ?? []) as Row[];
+}
 
 interface Row {
   id: string;
@@ -17,6 +26,7 @@ interface Row {
   title: string;
   body: string;
   image_path: string | null;
+  video_url?: string | null;
   link: string;
   points: number;
   ends_at: string | null;
@@ -35,6 +45,7 @@ const fromRow = (r: Row): Ad => ({
   title: r.title,
   body: r.body,
   imagePath: r.image_path,
+  videoUrl: r.video_url ?? null,
   link: r.link,
   points: r.points,
   endsAt: r.ends_at,
@@ -51,14 +62,14 @@ const toRow = (i: AdInput) => ({
   points: i.points,
   ends_at: i.endsAt,
   published: i.published,
+  // Only sent when it changes, so saving still works before the database update (supabase/033) has been run.
+  ...(i.videoUrl !== undefined ? { video_url: i.videoUrl } : {}),
 });
 
 /** Student view: ads that are visible and not finished. The database filters them too. */
 export async function listLiveAds(): Promise<Ad[]> {
   const rows = await cached('ads', async () => {
-    const { data, error } = await client().from('ads').select(COLUMNS).eq('published', true).order('created_at', { ascending: false });
-    if (error) throw new Error(error.message);
-    return (data ?? []) as Row[];
+    return selectAds((columns) => client().from('ads').select(columns).eq('published', true).order('created_at', { ascending: false }));
   });
   const now = Date.now();
   return rows.map(fromRow).filter((a) => !a.endsAt || Date.parse(a.endsAt) > now);
@@ -66,9 +77,8 @@ export async function listLiveAds(): Promise<Ad[]> {
 
 /** Owner view: every ad, including hidden and finished ones. */
 export async function listAllAds(): Promise<Ad[]> {
-  const { data, error } = await client().from('ads').select(COLUMNS).order('created_at', { ascending: false });
-  if (error) throw new Error(error.message);
-  return ((data ?? []) as Row[]).map(fromRow);
+  const rows = await selectAds((columns) => client().from('ads').select(columns).order('created_at', { ascending: false }));
+  return rows.map(fromRow);
 }
 
 /** How many different students saw each ad. Owner only. */

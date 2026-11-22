@@ -9,10 +9,11 @@ import { getBonusStatus, isOfferLive, NO_BONUS, priceOf, forgetBonusStatus } fro
 import type { BonusStatus } from '../../features/bonus';
 import { listDeliveryLocations, requestDeliveryLocation } from '../../features/delivery';
 import type { DeliveryLocation } from '../../features/delivery';
-import { buyDigitalReward, getBalance, listMyDigitalPurchases, listRewards, redeemReward } from '../../features/points';
-import type { Reward } from '../../features/points';
+import { buyDigitalReward, getBalance, listMyDigitalPurchases, listRewardCategories, listRewards, redeemReward } from '../../features/points';
+import type { Reward, RewardCategory } from '../../features/points';
 import { playCoin } from '../../services/sound';
 import { Button, EmptyState, Loading, Modal, PageHeader, SelectField, TextField } from '../../shared/components';
+import { CategoryChips } from './CategoryChips';
 import { RewardCard } from './RewardCard';
 
 type Tab = 'physical' | 'digital';
@@ -34,6 +35,11 @@ export function RewardsDashboard({ focusId }: { focusId?: string }) {
   const ads = useRotatedAds('rewards');
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
   const [tab, setTab] = useState<Tab>('physical');
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<RewardCategory[]>([]);
+  useEffect(() => {
+    void listRewardCategories().then(setCategories);
+  }, []);
   const [visible, setVisible] = useState(PAGE);
   const [notice, setNotice] = useState<string | null>(null);
   const [buying, setBuying] = useState<Reward | null>(null);
@@ -90,7 +96,7 @@ export function RewardsDashboard({ focusId }: { focusId?: string }) {
   const items =
     state.kind === 'ready'
       ? state.rewards
-          .filter((r) => r.kind === tab && (!r.isBonus || isOfferLive(r)))
+          .filter((r) => r.kind === tab && (categoryId === null || r.categoryId === categoryId) && (!r.isBonus || isOfferLive(r)))
           // New members see their special offers first.
           .sort((a, b) => (bonusInfo.eligible ? Number(b.isBonus) - Number(a.isBonus) : 0))
       : [];
@@ -246,7 +252,8 @@ export function RewardsDashboard({ focusId }: { focusId?: string }) {
       </div>
 
       <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} className="market-swipe">
-        {items.length === 0 ? (
+        {state.kind === 'ready' && <CategoryChips categories={categories} rewards={state.rewards.filter((r) => r.kind === tab)} selected={categoryId} onSelect={setCategoryId} />}
+      {items.length === 0 ? (
           <EmptyState title={tab === 'digital' ? 'No digital rewards yet' : 'No items yet'}>New things are added by the Snacktic team. Check back soon.</EmptyState>
         ) : (
           <>

@@ -19,13 +19,14 @@ interface FormState {
   title: string;
   body: string;
   link: string;
+  video: string;
   points: string;
   endDate: string;
   published: boolean;
 }
 
-const emptyForm: FormState = { advertiser: '', title: '', body: '', link: '', points: '1', endDate: '', published: true };
-type Errors = { title?: string; link?: string; points?: string };
+const emptyForm: FormState = { advertiser: '', title: '', body: '', link: '', video: '', points: '1', endDate: '', published: true };
+type Errors = { title?: string; link?: string; video?: string; points?: string };
 
 /** yyyy-mm-dd of a stored time, in the admin's own time zone. */
 function toDateInput(iso: string | null): string {
@@ -78,6 +79,7 @@ export function AdsPage() {
         title: target.title,
         body: target.body,
         link: target.link,
+        video: target.videoUrl ?? '',
         points: String(target.points),
         endDate: toDateInput(target.endsAt),
         published: target.published,
@@ -109,6 +111,7 @@ export function AdsPage() {
     const points = Number(form.points);
     if (title.length < 1 || title.length > 120) next.title = 'Enter a title (up to 120 characters).';
     if (form.link.trim() && !safeLink(form.link)) next.link = 'Enter a full link that starts with https://';
+    if (form.video.trim() && !safeLink(form.video)) next.video = 'Enter a full video link that starts with https://';
     if (!Number.isInteger(points) || points < 0 || points > 5) next.points = 'Enter a whole number from 0 to 5.';
     setErrors(next);
     if (Object.keys(next).length > 0) return;
@@ -119,6 +122,8 @@ export function AdsPage() {
       body: form.body,
       imagePath: picture.imagePath,
       link: form.link,
+      // Only sent when there is a video, or when an existing video is removed.
+      ...(form.video.trim() ? { videoUrl: form.video.trim() } : editing !== 'new' && editing?.videoUrl ? { videoUrl: null } : {}),
       points,
       endsAt: fromDateInput(form.endDate),
       published: form.published,
@@ -139,6 +144,7 @@ export function AdsPage() {
           <TextField label="Advertiser" value={form.advertiser} onChange={(e) => setForm({ ...form, advertiser: e.target.value })} maxLength={80} hint="Optional. Who is paying for it." />
           <TextField label="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} error={errors.title} maxLength={120} />
           <TextAreaField label="Message" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} hint="Optional. Keep it short (up to 400 characters)." maxLength={400} />
+          <TextField label="Video link" type="url" inputMode="url" value={form.video} onChange={(e) => setForm({ ...form, video: e.target.value })} error={errors.video} hint="Optional. A YouTube link (opens in YouTube) or a direct .mp4 link (plays right here in the ad)." />
           <TextField label="Link" type="url" inputMode="url" value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} error={errors.link} hint="Optional. A website or WhatsApp link the button opens." />
           <TextField label="Crumb Points for seeing it" type="number" inputMode="numeric" min={0} max={5} step={1} value={form.points} onChange={(e) => setForm({ ...form, points: e.target.value })} error={errors.points} hint="0 to 5. Each student earns this once per ad." />
           <TextField label="Last day it runs" type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} hint="Optional. Leave empty to run until you hide it." />

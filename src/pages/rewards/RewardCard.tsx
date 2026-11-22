@@ -1,6 +1,6 @@
-import { isOfferLive, priceOf } from '../../features/bonus';
-import { endsText } from '../../features/bonus';
+import { endsText, isDiscountLive, isOfferLive, priceOf } from '../../features/bonus';
 import { CardArt } from '../../features/feed';
+import { productTypeLabels } from '../../features/points';
 import type { Reward } from '../../features/points';
 import { pictureUrl } from '../../services/pictures';
 import { Button } from '../../shared/components';
@@ -24,6 +24,7 @@ export interface RewardCardProps {
 export function RewardCard({ reward, balance, ownedUrl, suspended, eligible, claimed, onGet, onOpen }: RewardCardProps) {
   const bonus = reward.isBonus && isOfferLive(reward);
   const price = priceOf(reward);
+  const discount = isDiscountLive(reward) ? reward.discountPercent : null;
   const missing = balance === null ? 0 : price - balance;
   const soldOut = reward.stock === 0;
   const ends = bonus ? endsText(reward) : null;
@@ -51,9 +52,9 @@ export function RewardCard({ reward, balance, ownedUrl, suspended, eligible, cla
         {reward.imagePath ? <img src={pictureUrl(reward.imagePath)} alt="" loading="lazy" decoding="async" /> : <CardArt />}
         <span className="reward-card__cost">
           {price.toLocaleString()} pts
-          {bonus && <span className="reward-card__was">{reward.costPoints.toLocaleString()}</span>}
+          {(bonus || discount !== null) && <span className="reward-card__was">{reward.costPoints.toLocaleString()}</span>}
         </span>
-        {bonus ? <span className="reward-card__tag reward-card__tag--bonus">Bonus</span> : reward.kind === 'digital' && <span className="reward-card__tag">Digital</span>}
+        {bonus ? <span className="reward-card__tag reward-card__tag--bonus">Bonus</span> : discount !== null ? <span className="reward-card__tag reward-card__tag--bonus">{discount}% off</span> : reward.kind === 'digital' && <span className="reward-card__tag">{productTypeLabels[reward.productType]}</span>}
       </div>
       <div className="reward-card__body">
         <h3>{reward.name}</h3>

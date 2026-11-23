@@ -32,6 +32,7 @@ interface FormState {
   contactName: string;
   contactPhone: string;
   contactLink: string;
+  points: string;
   published: boolean;
 }
 
@@ -45,10 +46,11 @@ const emptyForm: FormState = {
   contactName: '',
   contactPhone: '',
   contactLink: '',
+  points: '0',
   published: true,
 };
 
-type Errors = { name?: string; starts?: string; ends?: string; contactPhone?: string; contactLink?: string };
+type Errors = { name?: string; starts?: string; ends?: string; contactPhone?: string; contactLink?: string; points?: string };
 
 function toLocalInput(iso: string): string {
   const d = new Date(iso);
@@ -100,6 +102,7 @@ export function EventsPage() {
         contactName: target.contactName,
         contactPhone: target.contactPhone,
         contactLink: target.contactLink,
+        points: String(target.points),
         published: target.published,
       });
       picture.reset(target.imagePath);
@@ -144,6 +147,8 @@ export function EventsPage() {
     if (!form.ends) next.ends = 'Choose when it ends. It disappears from the app after this.';
     if (form.starts && form.ends && new Date(form.ends) <= new Date(form.starts)) next.ends = 'The end must be after the start.';
     if (form.contactLink.trim() && !safeLink(form.contactLink)) next.contactLink = 'Enter a full link that starts with https://';
+    const pts = Number(form.points || '0');
+    if (!Number.isInteger(pts) || pts < 0 || pts > 50) next.points = 'Use a whole number from 0 to 50.';
     if (!/^[0-9+()\-\s]{0,25}$/.test(form.contactPhone)) next.contactPhone = 'Use numbers only (spaces, + and brackets are fine).';
     setErrors(next);
     if (Object.keys(next).length > 0) return;
@@ -159,6 +164,8 @@ export function EventsPage() {
       contactName: form.contactName,
       contactPhone: form.contactPhone,
       contactLink: form.contactLink,
+      // Only sent when the event has points, or had them before, so saving works before supabase/036 is run.
+      ...(Number(form.points || '0') > 0 || (editing !== 'new' && editing && editing.points > 0) ? { points: Number(form.points || '0') } : {}),
       published: form.published,
     };
 
@@ -184,6 +191,7 @@ export function EventsPage() {
           <TextField label="Ends (disappears after this)" type="datetime-local" value={form.ends} onChange={(e) => setForm({ ...form, ends: e.target.value })} error={errors.ends} />
           <TextField label="Where" value={form.locationText} onChange={(e) => setForm({ ...form, locationText: e.target.value })} hint="Optional. For example: Student corner kiosk." />
 
+          <TextField label="Crumb Points for looking at this event" type="number" inputMode="numeric" min={0} max={50} value={form.points} onChange={(e) => setForm({ ...form, points: e.target.value })} error={errors.points} hint="0 means none. A signed-in student earns these once, after keeping the event open for a few seconds (you set the seconds in Points and limits). The amount is not shown to students in advance." />
           <fieldset className="form-group">
             <legend>Who to contact (optional)</legend>
             <p className="field__hint">Students see these as buttons they can tap for more information.</p>

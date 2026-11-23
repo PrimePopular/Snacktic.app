@@ -21,6 +21,7 @@ import { PlacesPage } from './pages/PlacesPage';
 import { NewsAdminPage } from './pages/NewsAdminPage';
 import { PointsAdminPage } from './pages/PointsAdminPage';
 import { AnalysisPage } from './pages/AnalysisPage';
+import { CrossMixPage } from './pages/CrossMixPage';
 import { TreasureAdminPage } from './pages/TreasureAdminPage';
 import { RewardsAdminPage } from './pages/RewardsAdminPage';
 import { ShareLinkPage } from './pages/ShareLinkPage';
@@ -38,7 +39,7 @@ import './admin.css';
  * table and owner/admin checks inside the functions. The checks below only decide what to
  * display. Never trust them for security.
  */
-type Tab = 'students' | 'team' | 'announcements' | 'billboards' | 'news' | 'events' | 'places' | 'shops' | 'ads' | 'findfriend' | 'share' | 'campus' | 'gamechallenges' | 'dailynotes' | 'cleanup' | 'feedback' | 'delivery' | 'categories' | 'rewards' | 'points' | 'analysis' | 'treasure' | 'games';
+type Tab = 'students' | 'team' | 'announcements' | 'billboards' | 'news' | 'events' | 'places' | 'shops' | 'ads' | 'findfriend' | 'share' | 'campus' | 'gamechallenges' | 'dailynotes' | 'cleanup' | 'feedback' | 'delivery' | 'categories' | 'rewards' | 'points' | 'analysis' | 'treasure' | 'crossmix' | 'games';
 
 function Shell({ role, children }: { role?: Role; children: ReactNode }) {
   return (
@@ -83,6 +84,7 @@ const sections: Section[] = [
   { id: 'cleanup', label: 'Storage cleanup', group: 'Owner only' },
   { id: 'analysis', label: 'Analysis', group: 'Owner only' },
   { id: 'treasure', label: 'Treasure Hunt', group: 'Owner only' },
+  { id: 'crossmix', label: 'Where content appears', group: 'Owner only' },
   { id: 'points', label: 'Points and limits', group: 'Owner only' },
   { id: 'games', label: 'Game points', group: 'Owner only' },
 ];
@@ -147,6 +149,7 @@ function Dashboard({ role }: { role: Role }) {
       {tab === 'points' && owner && <PointsAdminPage />}
       {tab === 'analysis' && owner && <AnalysisPage />}
       {tab === 'treasure' && owner && <TreasureAdminPage />}
+      {tab === 'crossmix' && owner && <CrossMixPage />}
       {tab === 'games' && owner && <GamesAdminPage />}
       {tab === 'announcements' && <AnnouncementsPage />}
       {tab === 'billboards' && <BillboardsAdminPage />}

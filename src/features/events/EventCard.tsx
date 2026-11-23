@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../authentication';
 import { DetailSheet, FeedCard, useCardActions } from '../feed';
 import type { DetailLink } from '../feed';
 import { playTap } from '../../services/sound';
 import { googleMapsUrl, linkLabel, phoneHref, safeLink } from '../../shared/url';
+import { getRewardSettings } from '../points';
 import { recordInterest } from '../recommendations';
-import { eventImageUrl } from './eventsService';
+import { beginEventOpen, claimEventPoints, eventImageUrl, eventRewarded, rememberEventRewarded } from './eventsService';
 import type { EventCategory, EventItem } from './events.types';
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
@@ -44,6 +46,33 @@ interface EventCardProps {
  */
 export function EventCard({ event, category }: EventCardProps) {
   const [open, setOpen] = useState(false);
+  const { status } = useAuth();
+  const [earned, setEarned] = useState(0);
+
+  // Points for looking at the event: the clock runs on the server; the amount is not shown until it is earned.
+  useEffect(() => {
+    if (!open || event.points <= 0 || status !== 'signed-in' || eventRewarded(event.id)) return;
+    let cancelled = false;
+    let timer: number | undefined;
+    void beginEventOpen(event.id).then(async () => {
+      if (cancelled) return;
+      const seconds = (await getRewardSettings()).eventViewSeconds;
+      if (cancelled) return;
+      timer = window.setTimeout(() => {
+        void claimEventPoints(event.id).then((points) => {
+          rememberEventRewarded(event.id);
+          if (!cancelled && points > 0) {
+            setEarned(points);
+            window.setTimeout(() => setEarned(0), 3500);
+          }
+        });
+      }, seconds * 1000 + 300);
+    });
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [open, event.id, event.points, status]);
   const when = whenLabel(event.startsAt, event.expiresAt);
   const imageUrl = event.imagePath ? eventImageUrl(event.imagePath) : null;
   const actions = useCardActions({
@@ -98,6 +127,11 @@ export function EventCard({ event, category }: EventCardProps) {
         map={googleMapsUrl({ address: event.locationText }) ? { openUrl: googleMapsUrl({ address: event.locationText }) as string } : undefined}
         contact={links.length > 0 || event.contactName ? { heading: 'Want to know more?', name: event.contactName || undefined, links } : undefined}
       />
+      {earned > 0 && (
+        <p className="event-earned" role="status">
+          +{earned} Crumb {earned === 1 ? 'Point' : 'Points'} for looking at this event
+        </p>
+      )}
     </>
   );
 }

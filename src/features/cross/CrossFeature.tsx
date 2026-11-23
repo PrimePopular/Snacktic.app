@@ -9,22 +9,9 @@ import type { Place } from '../places';
 import { listRewards } from '../points';
 import type { Reward } from '../points';
 import { pictureUrl } from '../../services/pictures';
+import { getCrossMatrix } from './crossSettings';
+import type { CrossKind as Kind, CrossSection } from './crossSettings';
 import './cross.css';
-
-export type CrossSection = 'home' | 'discover' | 'billboards' | 'games' | 'rewards';
-type Kind = 'reward' | 'place' | 'billboard' | 'game';
-
-/**
- * Which kinds of content may drop into each section. The section's own kind is left out, so Rewards never shows a reward teaser
- * to someone already looking at rewards. (Events and special offers have their own cards, Cross Event and Cross Bonus.)
- */
-const ALLOWED: Record<CrossSection, Kind[]> = {
-  home: ['reward', 'game', 'place', 'billboard'],
-  discover: ['billboard', 'reward', 'game'],
-  billboards: ['reward', 'place', 'game'],
-  games: ['place', 'billboard', 'reward'],
-  rewards: ['place', 'billboard', 'game'],
-};
 
 type Pick = { kind: 'reward'; reward: Reward } | { kind: 'place'; place: Place } | { kind: 'billboard'; post: BillboardPost } | { kind: 'game'; id: string; title: string; summary: string };
 const random = <T,>(list: T[]): T | undefined => list[Math.floor(Math.random() * list.length)];
@@ -56,7 +43,8 @@ export function CrossFeature({ section, count = 1 }: { section: CrossSection; co
   useEffect(() => {
     let active = true;
     void (async () => {
-      const kinds = [...ALLOWED[section]].sort(() => Math.random() - 0.5).slice(0, count);
+      const matrix = await getCrossMatrix();
+      const kinds = [...matrix[section]].sort(() => Math.random() - 0.5).slice(0, count);
       const found = (await Promise.all(kinds.map((k) => choose(k).catch(() => null)))).filter((p): p is Pick => p !== null);
       if (active) setPicks(found);
     })();

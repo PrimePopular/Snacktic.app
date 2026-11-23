@@ -5,10 +5,20 @@
 import { supabase } from '../../services/database';
 import { cached } from '../../services/offlineCache';
 import { pictureUrl, removePicture, uploadPicture } from '../../services/pictures';
+import { notifyPointsChanged } from '../points';
 import type { CategoryKind, EventCategory, EventInput, EventItem } from './events.types';
 
-const EVENT_COLUMNS =
+const BASE_EVENT_COLUMNS =
   'id, name, description, category_id, starts_at, expires_at, location_text, image_path, contact_name, contact_phone, contact_link, published, created_at';
+const EVENT_COLUMNS = `${BASE_EVENT_COLUMNS}, points`;
+
+/** Reads with the points column; if the database update (supabase/036) has not been run yet, reads without it. */
+async function selectEvents(build: (columns: string) => PromiseLike<{ data: unknown; error: { message: string } | null }>): Promise<EventRow[]> {
+  let result = await build(EVENT_COLUMNS);
+  if (result.error) result = await build(BASE_EVENT_COLUMNS);
+  if (result.error) throw new Error(result.error.message);
+  return (result.data ?? []) as EventRow[];
+}
 
 interface EventRow {
   id: string;
@@ -22,6 +32,7 @@ interface EventRow {
   contact_name: string | null;
   contact_phone: string | null;
   contact_link: string | null;
+  points?: number;
   published: boolean;
   created_at: string;
 }
@@ -51,6 +62,7 @@ function eventFromRow(row: EventRow): EventItem {
     contactName: row.contact_name ?? '',
     contactPhone: row.contact_phone ?? '',
     contactLink: row.contact_link ?? '',
+    points: row.points ?? 0,
     published: row.published,
     createdAt: row.created_at,
   };
@@ -69,6 +81,8 @@ function eventToRow(input: EventInput) {
     contact_phone: input.contactPhone.trim(),
     contact_link: input.contactLink.trim(),
     published: input.published,
+    // Only sent when set, so saving works before the database update (supabase/036) has been run.
+    ...(input.points !== undefined ? { points: input.points } : {}),
   };
 }
 
@@ -106,22 +120,13 @@ export async function updateCategory(id: number, patch: { name?: string; active?
 
 /** Admin view: everything, including hidden and finished events. */
 export async function listAllEvents(): Promise<EventItem[]> {
-  const { data, error } = await client().from('events').select(EVENT_COLUMNS).order('starts_at', { ascending: false });
-  if (error) throw new Error(error.message);
-  return ((data ?? []) as EventRow[]).map(eventFromRow);
+  const rows = await selectEvents((columns) => client().from('events').select(columns).order('starts_at', { ascending: false }));
+  return rows.map(eventFromRow);
 }
 
 /** Student view: published events that have not ended, soonest first. */
 export async function listUpcomingEvents(now: Date = new Date()): Promise<EventItem[]> {
-  const rows = await cached('events', async () => {
-    const { data, error } = await client()
-      .from('events')
-      .select(EVENT_COLUMNS)
-      .eq('published', true)
-      .order('starts_at', { ascending: true });
-    if (error) throw new Error(error.message);
-    return (data ?? []) as EventRow[];
-  });
+  const rows = await cached('events', () => selectEvents((columns) => client().from('events').select(columns).eq('published', true).order('starts_at', { ascending: true })));
   return rows
     .map(eventFromRow)
     .filter((e) => Date.parse(e.expiresAt) > now.getTime());
@@ -176,3 +181,45 @@ export async function purgeEndedEvents(graceDays = 1): Promise<number> {
 export const uploadEventImage = uploadPicture;
 export const removeEventImage = removePicture;
 export const eventImageUrl = pictureUrl;
+
+/* ------------------------------ Points for viewing ------------------------------ */
+
+/** Starts the clock for a signed-in student who opened an event. The server pays only if the claim comes late enough. */
+export async function beginEventOpen(eventId: string): Promise<void> {
+  try {
+    await client().rpc('begin_event_open', { p_event: eventId });
+  } catch {
+    /* points are optional: never spoil opening the event */
+  }
+}
+
+/** Asks the database to pay for viewing this event. Returns the points paid, or 0. Never throws. */
+export async function claimEventPoints(eventId: string): Promise<number> {
+  try {
+    const { data, error } = await client().rpc('claim_event_points', { p_event: eventId });
+    if (error) return 0;
+    const points = Number(data ?? 0);
+    if (points > 0) notifyPointsChanged();
+    return points;
+  } catch {
+    return 0;
+  }
+}
+
+const KEY = 'snacktic.eventPoints';
+/** Events already rewarded to this student, remembered on this device so the app does not ask again. */
+export function eventRewarded(id: string): boolean {
+  try {
+    return (JSON.parse(localStorage.getItem(KEY) ?? '[]') as string[]).includes(id);
+  } catch {
+    return false;
+  }
+}
+export function rememberEventRewarded(id: string): void {
+  try {
+    const list = JSON.parse(localStorage.getItem(KEY) ?? '[]') as string[];
+    if (!list.includes(id)) localStorage.setItem(KEY, JSON.stringify([...list, id].slice(-300)));
+  } catch {
+    /* ignore */
+  }
+}

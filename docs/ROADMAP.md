@@ -193,3 +193,11 @@ Run `supabase/033_ads_video.sql`, `034_rewards_expansion.sql` and `035_friend_sc
 - **Videos in ads.** An ad can have a video link: a YouTube link (opens in YouTube) or a direct .mp4 link (plays inside the ad). Add it in Admin, Ads.
 - **Bigger Rewards Store.** Digital products can be an e-book, novel, coupon, gift card, discount voucher, subscription, template, download or other. Percentage discounts (50, 80, 90 or any percent) with optional start and end dates. A limit on how many times one person can get a reward. Categories you create (Admin, Rewards, Store categories) with filter chips in the store. All prices are worked out in the database, so they cannot be tricked.
 - **Find a Friend scan record.** Every scan is recorded with its outcome (rewarded, already invited, own code, limit reached, bad code, no event), shown in Analysis, Find a Friend.
+- **Where content appears (Admin, owner only).** Tick which kinds of content (rewards, places, Billboard posts, games) may drop into Home, Discover, Billboards, Games and Rewards. No database update needed.
+- **News on Home is occasional.** About half of visits show one or two stories picked at random from the news pool (not always the most popular), and nowhere else outside the News section.
+- **Load test kit:** `loadtest/snacktic-k6.js` and `docs/LOAD_TEST.md` (100 to 2,000 students). Run it against a copy of the project, not the live one.
+
+## Update 033
+Run `supabase/036_event_points.sql`, then `check_migrations.sql`.
+- **News is no longer on Home.** It lives only in its own News tab in Discover (shown once stories exist), plus its page in Admin.
+- **Crumb Points for looking at an event.** In Admin, Events, each event has "Crumb Points for looking at this event" (0 means none, up to 50). A signed-in student who opens the event and keeps it open for the set time earns those points once. The time is set in Admin, Points and limits (starts at 3 seconds). The amount is not shown in advance; after earning, a small "+N Crumb Points" note appears. The server runs the clock and there is a limit of 20 event rewards a day per student.

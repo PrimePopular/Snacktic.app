@@ -6,9 +6,11 @@ export interface RewardSettings {
   signupBonus: number;
   /** The seven daily login amounts, day 1 first. */
   dailyLogin: number[];
+  /** How many seconds a student must keep an event open to earn its points. */
+  eventViewSeconds: number;
 }
 
-export const DEFAULT_REWARD_SETTINGS: RewardSettings = { signupBonus: 10, dailyLogin: [5, 8, 10, 12, 15, 20, 30] };
+export const DEFAULT_REWARD_SETTINGS: RewardSettings = { signupBonus: 10, dailyLogin: [5, 8, 10, 12, 15, 20, 30], eventViewSeconds: 3 };
 
 let cached: RewardSettings | null = null;
 
@@ -17,10 +19,12 @@ export async function getRewardSettings(force = false): Promise<RewardSettings> 
   if (cached && !force) return cached;
   if (!supabase) return DEFAULT_REWARD_SETTINGS;
   try {
-    const { data, error } = await supabase.from('reward_settings').select('signup_bonus, daily_login').limit(1).maybeSingle();
-    if (error || !data) return DEFAULT_REWARD_SETTINGS;
-    const row = data as { signup_bonus: number; daily_login: number[] };
-    cached = { signupBonus: row.signup_bonus, dailyLogin: row.daily_login.length === 7 ? row.daily_login : DEFAULT_REWARD_SETTINGS.dailyLogin };
+    // The seconds column arrives with supabase/036; read without it if that has not been run.
+    let res = await supabase.from('reward_settings').select('signup_bonus, daily_login, event_view_seconds').limit(1).maybeSingle();
+    if (res.error) res = await supabase.from('reward_settings').select('signup_bonus, daily_login').limit(1).maybeSingle();
+    if (res.error || !res.data) return DEFAULT_REWARD_SETTINGS;
+    const row = res.data as { signup_bonus: number; daily_login: number[]; event_view_seconds?: number };
+    cached = { signupBonus: row.signup_bonus, dailyLogin: row.daily_login.length === 7 ? row.daily_login : DEFAULT_REWARD_SETTINGS.dailyLogin, eventViewSeconds: row.event_view_seconds ?? 3 };
     return cached;
   } catch {
     return DEFAULT_REWARD_SETTINGS;
@@ -30,7 +34,9 @@ export async function getRewardSettings(force = false): Promise<RewardSettings> 
 /** Owner only. */
 export async function saveRewardSettings(input: RewardSettings): Promise<void> {
   if (!supabase) throw new Error('The database is not connected yet.');
-  const { error } = await supabase.from('reward_settings').update({ signup_bonus: input.signupBonus, daily_login: input.dailyLogin }).eq('id', true);
+  let { error } = await supabase.from('reward_settings').update({ signup_bonus: input.signupBonus, daily_login: input.dailyLogin, event_view_seconds: input.eventViewSeconds }).eq('id', true);
+  // Before supabase/036 there is no seconds column: save the rest.
+  if (error && /event_view_seconds/.test(error.message)) ({ error } = await supabase.from('reward_settings').update({ signup_bonus: input.signupBonus, daily_login: input.dailyLogin }).eq('id', true));
   if (error) throw new Error(error.message);
   cached = input;
 }

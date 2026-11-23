@@ -5,7 +5,6 @@ import { DailyReward } from '../../features/daily';
 import { BillboardStream } from '../../features/billboards';
 import { CrossBonus } from '../../features/bonus';
 import { CrossFeature } from '../../features/cross';
-import { CrossNews } from '../../features/news';
 import type { Ad, Nudge } from '../../features/ads';
 import { listLiveAnnouncements } from '../../features/announcements';
 import { WeatherCard } from '../../features/weather';
@@ -221,7 +220,6 @@ export default function HomePage() {
               );
             })}
           </ul>
-          <CrossNews />
           <CrossFeature section="home" count={2} />
           <CrossBonus section="home" />
           <p className="home-more">

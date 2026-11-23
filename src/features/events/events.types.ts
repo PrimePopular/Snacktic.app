@@ -21,6 +21,8 @@ export interface EventItem {
   contactName: string;
   contactPhone: string;
   contactLink: string;
+  /** Crumb Points a student earns once for opening and reading this event (0 means none). Never shown to students in advance. */
+  points: number;
   published: boolean;
   createdAt: string;
 }
@@ -36,5 +38,7 @@ export interface EventInput {
   contactName: string;
   contactPhone: string;
   contactLink: string;
+  /** Leave undefined to keep the points as they are. */
+  points?: number;
   published: boolean;
 }
